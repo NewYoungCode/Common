@@ -16,7 +16,7 @@
 class ConfigIni {
 private:
 	size_t buffSize = 129;
-	std::string filename;
+	std::string filename; 
 	DWORD GetValue(const std::string & section, const std::string & key, const std::string & defaultValue, const std::string & filename, std::string & outResult) const;
 	bool SetValue(const std::string & section, const std::string & key, const std::string & Value, const std::string & absoluteFilename) const;
 public:
