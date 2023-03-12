@@ -31,21 +31,22 @@
     <ClCompile Include="WinTool.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConfigIni.h" />
-    <ClInclude Include="FileSystem.h" />
-    <ClInclude Include="General.h" />
-    <ClInclude Include="HttpClient.h" />
-    <ClInclude Include="HttpUtility.h" />
-    <ClInclude Include="JsonCpp.h" />
-    <ClInclude Include="os.h" />
-    <ClInclude Include="Socket.h" />
-    <ClInclude Include="Text.h" />
-    <ClInclude Include="ThreadPool.hpp" />
-    <ClInclude Include="Time.hpp" />
-    <ClInclude Include="WebClient.h" />
-    <ClInclude Include="WinTool.h" />
-    <ClInclude Include="OrcaleClient.hpp" />
-    <ClInclude Include="MySqlClient.hpp" />
+    <ClInclude Include="include\ConfigIni.h" />
+    <ClInclude Include="include\FileSystem.h" />
+    <ClInclude Include="include\General.h" />
+    <ClInclude Include="include\HttpClient.h" />
+    <ClInclude Include="include\HttpUtility.h" />
+    <ClInclude Include="include\JsonCpp.h" />
+    <ClInclude Include="include\MySqlClient.hpp" />
+    <ClInclude Include="include\OrcaleClient.hpp" />
+    <ClInclude Include="include\os.h" />
+    <ClInclude Include="include\Regedit.hpp" />
+    <ClInclude Include="include\Socket.hpp" />
+    <ClInclude Include="include\Text.h" />
+    <ClInclude Include="include\ThreadPool.hpp" />
+    <ClInclude Include="include\Time.hpp" />
+    <ClInclude Include="include\WebClient.h" />
+    <ClInclude Include="include\WinTool.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -121,13 +122,13 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>../include;../include/occi;../include/curl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;include/occi;include/curl</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
       </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,7 +140,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <AdditionalIncludeDirectories>../include;../include/occi;../include/curl</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;include/occi;include/curl</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -147,7 +148,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

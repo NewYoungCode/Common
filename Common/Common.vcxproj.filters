@@ -47,49 +47,52 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ConfigIni.h">
+    <ClInclude Include="include\ConfigIni.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="FileSystem.h">
+    <ClInclude Include="include\FileSystem.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="General.h">
+    <ClInclude Include="include\General.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HttpClient.h">
+    <ClInclude Include="include\HttpClient.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="HttpUtility.h">
+    <ClInclude Include="include\HttpUtility.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="JsonCpp.h">
+    <ClInclude Include="include\JsonCpp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="os.h">
+    <ClInclude Include="include\MySqlClient.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Socket.h">
+    <ClInclude Include="include\OrcaleClient.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Text.h">
+    <ClInclude Include="include\os.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ThreadPool.hpp">
+    <ClInclude Include="include\Regedit.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Time.hpp">
+    <ClInclude Include="include\Socket.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WebClient.h">
+    <ClInclude Include="include\Text.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="WinTool.h">
+    <ClInclude Include="include\ThreadPool.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="OrcaleClient.hpp">
+    <ClInclude Include="include\Time.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MySqlClient.hpp">
+    <ClInclude Include="include\WebClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\WinTool.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
