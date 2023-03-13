@@ -29,7 +29,7 @@ ConfigIni::ConfigIni(const std::string& filename, const std::string &defaultSect
 	this->filename = filename;
 	this->section = defaultSection;
 	if (!File::Exists(filename) && create) {
-		printf("file not Found ! Created !\n");
+		printf("file not Found ! Created !\n%s\n", filename.c_str());
 		std::ofstream ofs(filename, std::ios::app);
 		ofs.close();
 	}

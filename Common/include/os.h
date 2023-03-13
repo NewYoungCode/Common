@@ -7,7 +7,6 @@ namespace Log {
 		OutputDebugStringA(("\n"));
 		std::string appFilename = Path::StartFileName();
 		std::string appName = Path::GetFileNameWithoutExtension(appFilename);
-
 #ifdef _DEBUG
 		//程序放在当前目录
 		std::string dir = Path::GetDirectoryName(appFilename) + "\\" + appName + "_Log";
@@ -37,12 +36,20 @@ namespace Log {
 	}
 
 	template<typename ...T>
-	inline void Info(const std::string& formatStr, T...args) {
+	void Info(const std::string& formatStr, T... args) {
 		int len = formatStr.length();
-		char* buf = new char[1024 * 1024 * 5]{ 0 };//5M的内存
-		sprintf_s((buf), 1024 * 1024 * 5 - 1, formatStr.c_str(), std::forward<T>(args)...);
+		int size = 1024 * 1024 * 5;//5M的内存
+		char* buf = new char[size] { 0 };
+		sprintf_s(buf, size - 1, formatStr.c_str(), std::forward<T>(args)...);
 		LogA(buf);
 		delete buf;
+	}
+
+	template<typename ...T>
+	void Debug(const std::string& formatStr, T... args) {
+#ifdef _DEBUG
+		Info(formatStr, args);
+#endif
 	}
 
 }

@@ -19,10 +19,10 @@ namespace Time {
 	/// </summary>
 	/// <param name="str"></param>
 	/// <returns></returns>
-	inline time_t StringToTimeStamp(const std::string& str) {
+	inline time_t StringToTimeStamp(const std::string& str,const std::string& format= "%d-%d-%d %d:%d:%d") {
 		struct tm tm_;
 		int year=0, month=0, day=0, hour=0, minute=0, second=0;
-		::sscanf_s(str.c_str(), "%d-%d-%d %d:%d:%d", &year, &month, &day, &hour, &minute, &second);
+		::sscanf_s(str.c_str(), format.c_str(), &year, &month, &day, &hour, &minute, &second);
 		tm_.tm_year = year - 1900;
 		tm_.tm_mon = month - 1;
 		tm_.tm_mday = day;

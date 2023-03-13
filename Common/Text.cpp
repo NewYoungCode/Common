@@ -78,16 +78,16 @@ namespace Text {
 		free(cStr);
 		return newStr;
 	}
-	size_t  Replace(std::string  &str, const std::string & oldText, const std::string & newText)
+	size_t  Replace(std::string& str_in_out, const std::string& oldText, const std::string& newText)
 	{
-		std::string &newStr = str;
+		std::string& newStr = str_in_out;
 		size_t pos;
-		pos = str.find(oldText);
-		size_t count = 0;
+		pos = newStr.find(oldText);
+		size_t count=0;//Ìæ»»´ÎÊý
 		for (; pos != std::string::npos;) {
 			newStr.replace(pos, oldText.size(), newText);
-			count++;
 			pos = newStr.find(oldText);
+			count++;
 		}
 		return count;
 	}
