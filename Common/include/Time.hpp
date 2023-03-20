@@ -7,11 +7,11 @@ namespace Time {
 	/// </summary>
 	/// <param name="time_"></param>
 	/// <returns></returns>
-	inline std::string TimeStampToString(time_t time_) {
+	inline std::string TimeStampToString(time_t time_,const std::string &format= "%Y-%m-%d %H:%M:%S") {
 		char timeStr[64]{ 0 };
 		struct tm* ttime;
 		ttime = ::localtime(&time_);
-		::strftime(timeStr, 64, "%Y-%m-%d %H:%M:%S", ttime);
+		::strftime(timeStr, 64, format.c_str(), ttime);
 		return std::string(timeStr);
 	}
 	/// <summary>
@@ -30,7 +30,7 @@ namespace Time {
 		tm_.tm_min = minute;
 		tm_.tm_sec = second;
 		tm_.tm_isdst = 0;
-		time_t timeStamp = mktime(&tm_);
+		time_t timeStamp = ::mktime(&tm_);
 		return timeStamp;
 	}
 

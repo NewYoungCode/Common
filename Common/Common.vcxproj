@@ -31,10 +31,12 @@
     <ClCompile Include="WinTool.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Chat.hpp" />
     <ClInclude Include="include\ConfigIni.h" />
     <ClInclude Include="include\FileSystem.h" />
     <ClInclude Include="include\General.h" />
     <ClInclude Include="include\HttpClient.h" />
+    <ClInclude Include="include\HttpClient.hpp" />
     <ClInclude Include="include\HttpUtility.h" />
     <ClInclude Include="include\JsonCpp.h" />
     <ClInclude Include="include\MySqlClient.hpp" />

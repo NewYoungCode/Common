@@ -95,5 +95,11 @@
     <ClInclude Include="include\WinTool.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="include\HttpClient.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Chat.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
