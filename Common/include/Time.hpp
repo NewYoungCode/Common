@@ -7,7 +7,7 @@ namespace Time {
 	/// </summary>
 	/// <param name="time_"></param>
 	/// <returns></returns>
-	inline std::string TimeStampToString(time_t time_,const std::string &format= "%Y-%m-%d %H:%M:%S") {
+	inline std::string TimeStampToString(time_t time_, const std::string& format = "%Y-%m-%d %H:%M:%S") {
 		char timeStr[64]{ 0 };
 		struct tm* ttime;
 		ttime = ::localtime(&time_);
@@ -19,9 +19,9 @@ namespace Time {
 	/// </summary>
 	/// <param name="str"></param>
 	/// <returns></returns>
-	inline time_t StringToTimeStamp(const std::string& str,const std::string& format= "%d-%d-%d %d:%d:%d") {
+	inline time_t StringToTimeStamp(const std::string& str, const std::string& format = "%d-%d-%d %d:%d:%d") {
 		struct tm tm_;
-		int year=0, month=0, day=0, hour=0, minute=0, second=0;
+		int year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
 		::sscanf_s(str.c_str(), format.c_str(), &year, &month, &day, &hour, &minute, &second);
 		tm_.tm_year = year - 1900;
 		tm_.tm_mon = month - 1;
@@ -32,6 +32,19 @@ namespace Time {
 		tm_.tm_isdst = 0;
 		time_t timeStamp = ::mktime(&tm_);
 		return timeStamp;
+	}
+
+	inline SYSTEMTIME StringToSYSTEMTIME(const std::string& str, const std::string& format = "%d-%d-%d %d:%d:%d") {
+		SYSTEMTIME tm_;
+		int year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
+		::sscanf_s(str.c_str(), format.c_str(), &year, &month, &day, &hour, &minute, &second);
+		tm_.wYear = year;
+		tm_.wMonth = month;
+		tm_.wDay = day;
+		tm_.wHour = hour;
+		tm_.wMinute = minute;
+		tm_.wSecond = second;
+		return tm_;
 	}
 
 	inline time_t FileTimeToTime(const FILETIME& ft) {

@@ -1,6 +1,22 @@
 #pragma once
 #include "General.h"
-
+struct StopWatch {
+private:
+	std::chrono::system_clock::time_point beg_t;
+public:
+	StopWatch() {
+		beg_t = std::chrono::system_clock::now();    //
+	}
+	static time_t Now() {
+		auto nowTime = std::chrono::system_clock::now();    //
+		return std::chrono::system_clock::to_time_t(nowTime);
+	}
+	inline time_t ElapsedMilliseconds() {
+		auto end_t = std::chrono::system_clock::now();    //
+		std::chrono::duration<double> diff = end_t - beg_t;//
+		return std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();//
+	}
+};
 namespace Log {
 	inline void LogA(const std::string& text) {
 		OutputDebugStringA(text.c_str());
@@ -46,7 +62,7 @@ namespace Log {
 	}
 
 	template<typename ...T>
-	void Debug(const std::string& formatStr, T... args) {
+	inline void Debug(const std::string& formatStr, T... args) {
 #ifdef _DEBUG
 		Info(formatStr, args);
 #endif

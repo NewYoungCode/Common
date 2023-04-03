@@ -71,6 +71,7 @@ int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 
 	return 0;
 }
 CURL* WebClient::Init(const std::string& strUrl, std::string& strResponse, int nTimeout) {
+	strResponse.clear();
 	CURL* curl = curl_easy_init();
 	if (!curl) {
 		return curl;
