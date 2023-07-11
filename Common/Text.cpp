@@ -2,192 +2,216 @@
 #include "Text.h"
 //定义................................................
 namespace Text {
-	size_t FindCount(const std::string&str, const std::string&ch_) {
-		size_t pos = str.find(ch_);
-		size_t count = 1;
-		if (pos == std::string::npos) {
-			return 0;
-		}
-		while ((pos = str.find(ch_, pos + ch_.size())) != std::string::npos) {
-			count++;
+	size_t Utf8String::length() const {
+		auto* p = this->c_str();
+		size_t pos = 0, count = 0;
+		while (p[pos] && pos < this->size()) {
+			if ((p[pos] & 0xc0) != 0x80) {
+				count++;
+			}
+			pos++;
 		}
 		return count;
 	}
+	Utf8String::Utf8String() {}
+	Utf8String::Utf8String(const std::string& str)noexcept {
+		this->resize(str.size());
+		::memcpy((void*)c_str(), str.c_str(), str.size());
+	}
+	Utf8String::Utf8String(const char* szbuf)noexcept {
+		if (szbuf == NULL)return;
+		size_t len = ::strlen(szbuf);
+		this->resize(len);
+		::memcpy((void*)c_str(), szbuf, len);
+	}
+	Utf8String::Utf8String(const wchar_t* szbuf)noexcept {
+		if (szbuf == NULL)return;
+		Utf8String::UnicodeToUTF8(szbuf, this);
+	}
+	Utf8String::Utf8String(const std::wstring& wstr)noexcept {
+		Utf8String::UnicodeToUTF8(wstr, this);
+	}
 
-	DWORD IPStringToDWORD(const std::string&ipStr) {
-		BYTE buf[4]{ 0 };
-		auto ipBytes = Text::Split(ipStr, ".");
-		buf[0] = std::stoi(ipBytes.at(0));
-		buf[1] = std::stoi(ipBytes.at(1));
-		buf[2] = std::stoi(ipBytes.at(2));
-		buf[3] = std::stoi(ipBytes.at(3));
-		return *((DWORD*)buf);
+	//常用函数
+	Utf8String Utf8String::Erase(const char& _char)const {
+		Utf8String newStr(*this);
+		Utf8String::Erase(&newStr, _char);
+		return newStr;
+	}
+	std::vector<Text::Utf8String> Utf8String::Split(const Utf8String& ch_)const {
+		std::vector<Text::Utf8String> arr;
+		Utf8String::Split(*this, ch_, &arr);
+		return arr;
+	}
+	Utf8String Utf8String::Replace(const Utf8String& oldText, const Utf8String& newText) const
+	{
+		Utf8String newStr = *this;
+		Utf8String::Replace(&newStr, oldText, newText);
+		return newStr;
+	}
+	Utf8String Utf8String::Tolower() const
+	{
+		Utf8String str(*this);
+		Utf8String::Tolower(&str);
+		return str;
+	}
+	Utf8String Utf8String::Toupper() const
+	{
+		Utf8String str(*this);
+		Utf8String::Toupper(&str);
+		return str;
+	}
+	void Utf8String::append(const Utf8String& text)
+	{
+		__super::append(text);
+	}
+	std::wstring Utf8String::utf16() const {
+		std::wstring wstr;
+		Utf8String::UTF8ToUnicode(*this, &wstr);
+		return wstr;
+	}
+	std::string Utf8String::ansi() const {
+		std::string str;
+		Utf8String::UTF8ToANSI(*this, &str);
+		return str;
+	}
+
+	void Utf8String::AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr) {
+		std::wstring& wstrCmd = *out_wstr;
+		int bytes = ::MultiByteToWideChar(codePage, 0, src_str.c_str(), src_str.size(), NULL, 0);
+		wstrCmd.resize(bytes);
+		bytes = ::MultiByteToWideChar(codePage, 0, src_str.c_str(), src_str.size(), const_cast<wchar_t*>(wstrCmd.c_str()), wstrCmd.size());
+	}
+	void Utf8String::UnicodeToAny(const std::wstring& wstr, UINT codePage, std::string* out_str) {
+		std::string& strCmd = *out_str;
+		int bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), NULL, 0, NULL, NULL);
+		strCmd.resize(bytes);
+		bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.c_str()), strCmd.size(), NULL, NULL);
+	}
+
+	//以下是静态函数
+	void Utf8String::ANSIToUniCode(const std::string& str, std::wstring* outStr)
+	{
+		AnyToUnicode(str, ::GetACP(), outStr);
+	}
+	void Utf8String::UnicodeToANSI(const std::wstring& wstr, std::string* outStr)
+	{
+		UnicodeToAny(wstr, ::GetACP(), outStr);
+	}
+
+	void Utf8String::GBKToUTF8(const std::string& str, std::string* outStr) {
+		const int gbkCodePage = 936;
+		std::wstring wstr;
+		AnyToUnicode(str, gbkCodePage, &wstr);
+		UnicodeToUTF8(wstr, outStr);
+	}
+
+	void Utf8String::UTF8ToGBK(const std::string& str, std::string* outStr) {
+		const int gbkCodePage = 936;
+		std::wstring wstr;
+		UTF8ToUnicode(str, &wstr);
+		UnicodeToAny(wstr, gbkCodePage, outStr);
+	}
+
+	void Utf8String::ANSIToUTF8(const std::string& str, std::string* outStr)
+	{
+		UINT codePage = ::GetACP();
+		if (codePage == CP_UTF8) {
+			*outStr = str;//如果本身就是utf8则不需要转换
+			return;
+		}
+		std::wstring wstr;
+		AnyToUnicode(str, codePage, &wstr);
+		UnicodeToUTF8(wstr, outStr);
+	}
+	void Utf8String::UTF8ToANSI(const std::string& str, std::string* outStr) {
+		UINT codePage = ::GetACP();
+		if (codePage == CP_UTF8) {
+			*outStr = str;//如果本身就是utf8则不需要转换
+			return;
+		}
+		std::wstring wstr;
+		UTF8ToUnicode(str, &wstr);
+		UnicodeToAny(wstr, codePage, outStr);
+	}
+	void Utf8String::UnicodeToUTF8(const std::wstring& wstr, std::string* outStr)
+	{
+		UnicodeToAny(wstr, CP_UTF8, outStr);
+	}
+	void Utf8String::UTF8ToUnicode(const std::string& str, std::wstring* outStr) {
+		AnyToUnicode(str, CP_UTF8, outStr);
 	}
 
 
-	std::string IPDWORDToString(DWORD&ip) {
-		BYTE *bytes = (BYTE*)&ip;
-		char buf[16];
-		sprintf_s(buf, 15, "%d.%d.%d.%d", buf[0], buf[1], buf[2], buf[3]);
-		return std::string(buf);
-	}
-
-	void Trim(std::string &str) {
-		CHAR *bufStr = new CHAR[str.size()]{ 0 };
-		size_t pos = 0;
-		char count = 0;
-		for (auto &it : str) {
-			if (it == ' ') {
-				continue;
+	void Utf8String::Tolower(std::string* str_in_out)
+	{
+		std::string& str = *str_in_out;
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			char& ch = (char&)str.c_str()[i];
+			if (ch >= 65 && ch <= 90) {
+				ch += 32;
 			}
+		}
+	}
+	void Utf8String::Toupper(std::string* str_in_out)
+	{
+		std::string& str = *str_in_out;
+		for (size_t i = 0; i < str.size(); i++)
+		{
+			char& ch = (char&)str.c_str()[i];
+			if (ch >= 97 && ch <= 122) {
+				ch -= 32;
+			}
+		}
+	}
+	void Utf8String::Erase(std::string* str_in_out, const char& _char) {
+		const Utf8String& self = *str_in_out;
+		char* bufStr = new char[self.size() + 1]{ 0 };
+		size_t pos = 0;
+		for (auto& it : self) {
+			if (_char == it)continue;
 			bufStr[pos] = it;
 			pos++;
 		}
-		str = bufStr;
-		delete bufStr;
+		*str_in_out = bufStr;
+		delete[] bufStr;
 	}
-	std::string ToUpper(const std::string&str) {
-		char* cStr = (char*)malloc(str.size() + 1);
-		size_t pos = 0;
-		for (auto ch : str) {
-			char newCh = ch;
-			if (ch >= 97 && ch <= 122) {
-				newCh = ch - 32;
-			}
-			cStr[pos] = newCh;
-			pos++;
-		}
-		cStr[str.size()] = 0;
-		std::string newStr = cStr;
-		free(cStr);
-		return newStr;
-	}
-	std::string ToLower(const std::string&str) {
-		char* cStr = (char*)malloc(str.size() + 1);
-		size_t pos = 0;
-		for (auto ch : str) {
-			char newCh = ch;
-			if (ch >= 65 && ch <= 90) {
-				newCh = ch + 32;
-			}
-			cStr[pos] = newCh;
-			pos++;
-		}
-		cStr[str.size()] = 0;
-		std::string newStr = cStr;
-		free(cStr);
-		return newStr;
-	}
-	size_t  Replace(std::string& str_in_out, const std::string& oldText, const std::string& newText)
+	void Utf8String::Replace(std::string* str_in_out, const std::string& oldText, const std::string& newText)
 	{
-		std::string& newStr = str_in_out;
+		std::string& newStr = *str_in_out;
 		size_t pos;
 		pos = newStr.find(oldText);
-		size_t count=0;//替换次数
-		for (; pos != std::string::npos;) {
+		while (pos != std::string::npos)
+		{
 			newStr.replace(pos, oldText.size(), newText);
 			pos = newStr.find(oldText);
-			count++;
 		}
-		return count;
 	}
-	std::string ReplaceAll(const std::string &str, const std::string & oldText, const std::string & newText) {
-		std::string newStr = str;
-		Replace(newStr, oldText, newText);
-		return newStr;
-	}
-	std::vector<std::string> Split(const std::string& str, const std::string& ch_) {
-		std::vector<std::string> arr;
-		if (str.empty()) return arr;
-		std::string buf = str;
+	void Utf8String::Split(const std::string& str_in, const std::string& ch_, std::vector<Utf8String>* strs_out) {
+
+		std::vector<Utf8String>& arr = *strs_out;
+		arr.clear();
+		if (str_in.empty()) return;
+
+		std::string buf = str_in;
 		size_t pos = buf.find(ch_);
 		if (pos == std::string::npos) {
-			arr.push_back(str);
-			return arr;
+			arr.push_back(buf);
+			return;
 		}
-		for (; pos != std::string::npos;) {
-			arr.push_back(buf.substr(0, pos));
+		while (pos != std::string::npos) {
+			auto item = buf.substr(0, pos);
+			if (!item.empty()) {
+				arr.push_back(item);
+			}
 			buf = buf.erase(0, pos + ch_.size());
 			pos = buf.find(ch_);
 			if (pos == std::string::npos) {
-				arr.push_back(buf);
+				if (!buf.empty()) {
+					arr.push_back(buf);
+				}
 			}
 		}
-		return arr;
-	}
-	std::wstring Substr(const std::wstring &str, size_t starIndex, size_t count) {
-		return str.substr(starIndex, count);
-	}
-	std::string Substr(const std::string &str, size_t starIndex, size_t count) {
-		std::wstring newStr = Text::ANSIToUniCode(str).substr(starIndex, count);
-		return Text::UnicodeToANSI(newStr);
-	}
-	std::wstring ANSIToUniCode(const std::string &str)
-	{
-		int bytes = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.size(), NULL, 0);
-		std::wstring wstrCmd;
-		wstrCmd.resize(bytes);
-		bytes = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.size(), const_cast<wchar_t*>(wstrCmd.c_str()), wstrCmd.size());
-		return wstrCmd;
-	}
-	std::string UnicodeToANSI(const std::wstring &wstr)
-	{
-		int bytes = ::WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), wstr.size(), NULL, 0, NULL, NULL);
-		std::string strCmd;
-		strCmd.resize(bytes);
-		bytes = ::WideCharToMultiByte(CP_ACP, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.data()), strCmd.size(), NULL, NULL);
-		return strCmd;
-	}
-	std::string UnicodeToUTF8(const std::wstring &wstr)
-	{
-		int bytes = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wstr.size(), NULL, 0, NULL, NULL);
-		std::string strCmd;
-		strCmd.resize(bytes);
-		bytes = ::WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.data()), strCmd.size(), NULL, NULL);
-		return strCmd;
-	}
-	std::string UTF8ToANSI(const std::string& str)
-	{
-		int nwLen = MultiByteToWideChar(CP_UTF8, 0, str.c_str(), -1, NULL, 0);
-		wchar_t* pwBuf = new wchar_t[nwLen + 1];
-		memset(pwBuf, 0, nwLen * 2 + 2);
-		MultiByteToWideChar(CP_UTF8, 0, str.c_str(), str.length(), pwBuf, nwLen);
-		int nLen = WideCharToMultiByte(CP_ACP, 0, pwBuf, -1, NULL, NULL, NULL, NULL);
-		char* pBuf = new char[nLen + 1];
-		memset(pBuf, 0, nLen + 1);
-		WideCharToMultiByte(CP_ACP, 0, pwBuf, nwLen, pBuf, nLen, NULL, NULL);
-		std::string strRet = pBuf;
-
-		delete[]pBuf;
-		delete[]pwBuf;
-		pBuf = NULL;
-		pwBuf = NULL;
-		return strRet;
-	}
-	std::string ANSIToUTF8(const std::string& str)
-	{
-		int nwLen = ::MultiByteToWideChar(CP_ACP, 0, str.c_str(), -1, NULL, 0);
-		wchar_t* pwBuf = new wchar_t[nwLen + 1];
-		ZeroMemory(pwBuf, nwLen * 2 + 2);
-		::MultiByteToWideChar(CP_ACP, 0, str.c_str(), str.length(), pwBuf, nwLen);
-		int nLen = ::WideCharToMultiByte(CP_UTF8, 0, pwBuf, -1, NULL, NULL, NULL, NULL);
-		char* pBuf = new char[nLen + 1];
-		ZeroMemory(pBuf, nLen + 1);
-		::WideCharToMultiByte(CP_UTF8, 0, pwBuf, nwLen, pBuf, nLen, NULL, NULL);
-		std::string strRet(pBuf);
-		delete[]pwBuf;
-		delete[]pBuf;
-		pwBuf = NULL;
-		pBuf = NULL;
-		return strRet;
-	}
-
-	bool EraseString(std::string &out_in_str, const std::string& in_oldStr) {
-		auto pos = out_in_str.find(in_oldStr);
-		if (pos == 0) {
-			out_in_str.erase(pos, in_oldStr.size());
-			return true;
-		}
-		return false;
 	}
 };

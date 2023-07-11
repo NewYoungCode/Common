@@ -1,96 +1,45 @@
 #pragma once
-#include "General.h"
+#include <Windows.h>
+#include <list>
+#include <vector>
+#include <string>
 namespace Text {
-	DWORD IPStringToDWORD(const std::string&ipStr);
-	std::string IPDWORDToString(DWORD&ip);
-	//Ñ°ÕÒ×Ö·û´®ÀïÃæ×Ö·û¸öÊý
-	size_t FindCount(const std::string&str, const std::string&ch_);
-	//È¥³ýÇ°ºó¿Õ¸ñ
-	void Trim(std::string &str);
-	//°üº¬´óÐ´µÄ×ÖÄ¸×ªÐ¡Ð´
-	std::string ToLower(const std::string&str);
-	//°üº¬Ð¡Ð´µÄ×ÖÄ¸×ª´óÐ´
-	std::string ToUpper(const std::string&str);
-	//ANSIToUniCode
-	std::wstring ANSIToUniCode(const std::string &wstr);
-	//UnicodeToANSI
-	std::string UnicodeToANSI(const std::wstring &wstr);
-	//UnicodeToUTF8
-	std::string UnicodeToUTF8(const std::wstring &wstr);
-	//ANSIToUTF8
-	std::string ANSIToUTF8(const std::string &str);
-	//UTF8ToANSI
-	std::string UTF8ToANSI(const std::string &str);
-	//½ØÈ¡×Ö·û´®(¿í×Ö·û)
-	std::wstring Substr(const std::wstring &str, size_t starIndex, size_t count = std::string::npos);
-	//½ØÈ¡×Ö·û´®(Õ­×Ö·û)
-	std::string Substr(const std::string &str, size_t starIndex, size_t count = std::string::npos);
-	//Ö±½ÓÌæ»»×Ö·û²¢ÇÒ·µ»ØÐÞ¸Ä¸öÊý
-	size_t Replace(std::string &str, const std::string &oldText, const std::string & newText);
-	//Ö±½ÓÌæ»»×Ö·û²¢ÇÒ·µ»ØÐÞ¸ÄÖ®ºóµÄ×Ö·û´®
-	std::string ReplaceAll(const std::string &str, const std::string & oldText, const std::string & newText);
-	//×Ö·û´®·Ö¸î
-	std::vector<std::string> Split(const std::string& str, const std::string& ch);
-	//É¾³ý×Ö·û´®
-	bool EraseString(std::string &out_in_str, const std::string& in_oldStr);
-	template<typename ...T>
-	inline void Format(LPTSTR buf, size_t strCount, LPCTSTR formatStr, T...args) {
-#ifdef UNICODE
-		swprintf_s((buf), strCount, formatStr, std::forward<T>(args)...);
-#else
-		sprintf_s((buf), strCount, formatStr, std::forward<T>(args)...);
-#endif
-	}
-
-#define AUTOTEXT(str) const_cast<LPTSTR>(Text::Auto(str).c_str())
-	inline auto Auto(const std::string&str) {
-#ifdef UNICODE
-		return ANSIToUniCode(str);
-#else
-		return str;
-#endif 
-	}
-
-	inline	auto Auto(const std::wstring&wstr) {
-#ifdef UNICODE
-		return wstr;
-#else
-		return UnicodeToANSI(wstr);
-#endif 
-	}
-}
-
-#ifdef UNICODE
-#define TOUNICODE(str) str
-#define TOANSI(str) Text::UnicodeToANSI(str).c_str()
-#define BASESTRING std::wstring 
-#else
-#define TOANSI(str) str
-#define TOUNICODE(str) Text::ANSIToUniCode(str).c_str()
-#define BASESTRING std::string 
-#endif
-
-#ifdef  UNICODE
-//the TString is UNICODE
-struct TString :public BASESTRING {
-#else
-//the TString is ANSI 
-struct TString :public BASESTRING {
-#endif
-public:
-	TString() :BASESTRING() {}
-#ifdef UNICODE
-	TString(const std::string&str) : BASESTRING(Text::ANSIToUniCode(str)) {}
-	TString(const std::wstring&str) :BASESTRING(str) {}
-
-	TString(const char*str) :BASESTRING(Text::ANSIToUniCode(str)) {}
-	TString(const wchar_t* str) :BASESTRING(str) {}
-#else
-	TString(const std::wstring&str) : BASESTRING(Text::UnicodeToANSI(str)) {}
-	TString(const std::string&str) :BASESTRING(str) {}
-
-	TString(const wchar_t*str) : BASESTRING(Text::UnicodeToANSI(str)) {}
-	TString(const char* str) :BASESTRING(str) {}
-#endif
-#undef BASESTRING
+	class Utf8String :public std::string {
+	public:
+		//the utf8 length
+		size_t length() const;
+		Utf8String();
+		Utf8String(const std::string& str)noexcept;
+		Utf8String(const char* szbuf)noexcept;
+		Utf8String(const wchar_t* szbuf)noexcept;
+		Utf8String(const std::wstring& wstr)noexcept;
+		std::wstring utf16() const;
+		std::string ansi() const;
+		Utf8String Erase(const char& _char)const;
+		std::vector<Text::Utf8String> Split(const Utf8String& ch_)const;
+		Utf8String Replace(const Utf8String& oldText, const Utf8String& newText)const;
+		Utf8String Tolower()const;
+		Utf8String Toupper()const;
+		void append(const Utf8String& text);
+	private:
+		//base convert
+		static void AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr);
+		static void UnicodeToAny(const std::wstring& unicode_wstr, UINT codePage, std::string* out_str);
+		//
+		static void GBKToUTF8(const std::string& str, std::string* outStr);
+		static void UTF8ToGBK(const std::string& str, std::string* outStr);
+		static void ANSIToUniCode(const std::string& str, std::wstring* outStr);
+		static void ANSIToUTF8(const std::string& str, std::string* outStr);
+		static void UnicodeToANSI(const std::wstring& wstr, std::string* outStr);
+		static void UnicodeToUTF8(const std::wstring& wstr, std::string* outStr);
+		static void UTF8ToANSI(const std::string& str, std::string* outStr);
+		static void UTF8ToUnicode(const std::string& str, std::wstring* outStr);
+		//
+		static void Tolower(std::string* str_in_out);
+		static void Toupper(std::string* str_in_out);
+		static void Erase(std::string* str_in_out, const char& ch);
+		static void Replace(std::string* str_in_out, const std::string& oldText, const std::string& newText);
+		static void Split(const std::string& str_in, const std::string& ch, std::vector<Utf8String>* strs_out);
+	};
+#define utf8(text) EString(L##text)
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "General.h"
+#include "Common.h"
 #include <time.h>
 namespace Time {
 	/// <summary>

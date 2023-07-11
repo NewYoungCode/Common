@@ -56,7 +56,7 @@ size_t g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* 
 };
 
 size_t g_curl_download_callback(char* contents, size_t size, size_t nmemb, void* fielname) {
-	std::ofstream  ofs((char*)fielname, std::ios::app | std::ios::binary);
+	std::ofstream  ofs((wchar_t*)fielname, std::ios::app | std::ios::binary);
 	size_t count = size * nmemb;
 	ofs.write(contents, count);
 	ofs.flush();
@@ -214,7 +214,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 	return CleanUp(curl, code);
 
 };
-int WebClient::DownloadFile(const std::string& url, const std::string& _filename, const ProgressFunc& progressCallback, int nTimeout) {
+int WebClient::DownloadFile(const std::string& url, const std::wstring& _filename, const ProgressFunc& progressCallback, int nTimeout) {
 	std::string resp;
 	CURL* curl = Init(url, resp, nTimeout);
 	if (!curl) {

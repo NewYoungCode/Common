@@ -1,7 +1,7 @@
 #include "Time.hpp"
 namespace Time {
 	namespace Now {
-		std::string ToString(const std::string &format) {
+		std::string ToString(const std::string& format) {
 			SYSTEMTIME time;
 			GetLocalTime(&time);
 			std::string  year = std::to_string(time.wYear);//Äê
@@ -16,14 +16,14 @@ namespace Time {
 			Hour = Hour.size() == 1U ? "0" + Hour : Hour;
 			Minute = Minute.size() == 1U ? "0" + Minute : Minute;
 			Second = Second.size() == 1U ? "0" + Second : Second;
-			std::string formatStr = format;
-			formatStr = Text::ReplaceAll(formatStr, "yyyy", year);
-			formatStr = Text::ReplaceAll(formatStr, "MM", Month);
-			formatStr = Text::ReplaceAll(formatStr, "dd", Day);
-			formatStr = Text::ReplaceAll(formatStr, "hh", Hour);
-			formatStr = Text::ReplaceAll(formatStr, "mm", Minute);
-			formatStr = Text::ReplaceAll(formatStr, "ss", Second);
-			formatStr = Text::ReplaceAll(formatStr, "mmmm", wMilliseconds);
+			Text::Utf8String formatStr = format;
+			formatStr = formatStr.Replace("yyyy", year);
+			formatStr = formatStr.Replace("MM", Month);
+			formatStr = formatStr.Replace("dd", Day);
+			formatStr = formatStr.Replace("hh", Hour);
+			formatStr = formatStr.Replace("mm", Minute);
+			formatStr = formatStr.Replace("ss", Second);
+			formatStr = formatStr.Replace("mmmm", wMilliseconds);
 			return formatStr;
 		}
 	}

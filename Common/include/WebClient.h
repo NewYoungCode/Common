@@ -1,5 +1,5 @@
 #pragma once
-#include "General.h"
+#include "Common.h"
 
 #if USECURL
 //全局初始化curl
@@ -72,7 +72,7 @@ public:
 	Proxy* Proxy = NULL;
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
-	int DownloadFile(const std::string& strUrl, const std::string& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 20);
+	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 20);
 	int HttpGet(const std::string& strUrl, std::string& strResponse, int nTimeout = 20);
 	int HttpPost(const std::string& strUrl, const std::string& data, std::string& respone, int nTimeout = 20);
 	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string& respone, int nTimeout = 20);

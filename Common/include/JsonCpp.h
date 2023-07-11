@@ -1,5 +1,5 @@
 #pragma once
-#include "General.h"
+#include "Common.h"
 #if USEJSONCPP
 #include <json/json.h>
 #ifdef  _DEBUG

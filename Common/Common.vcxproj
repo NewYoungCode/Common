@@ -34,7 +34,7 @@
     <ClInclude Include="include\Chat.hpp" />
     <ClInclude Include="include\ConfigIni.h" />
     <ClInclude Include="include\FileSystem.h" />
-    <ClInclude Include="include\General.h" />
+    <ClInclude Include="include\Common.h" />
     <ClInclude Include="include\HttpClient.h" />
     <ClInclude Include="include\HttpClient.hpp" />
     <ClInclude Include="include\HttpUtility.h" />
@@ -61,13 +61,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>

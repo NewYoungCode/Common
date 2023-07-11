@@ -1,20 +1,20 @@
 #include "FileSystem.h"
 //定义....................................................................................................................
 namespace FileSystem {
-	void ReadFileInfoWin32(const std::string& directory, WIN32_FIND_DATAA&pNextInfo, std::vector<FileSystem::FileInfo>&result) {
-		std::string filename;
+	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result) {
+		Text::Utf8String filename;
 		filename.append(directory);
 		filename.append("\\");
 		filename.append(pNextInfo.cFileName);
-		Text::Replace(filename, "\\", "/");
-		Text::Replace(filename, "//", "/");
+		filename = filename.Replace("\\", "/");
+		filename = filename.Replace("//", "/");
 		struct FileSystem::FileInfo fileInfo;
 		if (pNextInfo.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) { //目录
 			fileInfo.FileType = FileType::Directory;
 			fileInfo.FullName = filename;
 			fileInfo.FileName = filename;
 		}
-		else if (FILE_ATTRIBUTE_ARCHIVE& pNextInfo.dwFileAttributes) {
+		else if (FILE_ATTRIBUTE_ARCHIVE & pNextInfo.dwFileAttributes) {
 			fileInfo.FileType = FileType::File;
 			fileInfo.FileName = pNextInfo.cFileName;
 			fileInfo.FullName = filename;
@@ -27,10 +27,10 @@ namespace FileSystem {
 			result.push_back(fileInfo);
 		}
 	}
-	size_t  Find(const std::string& directory, std::vector<FileSystem::FileInfo>&result, const std::string& pattern) {
+	size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern) {
 		HANDLE hFile = INVALID_HANDLE_VALUE;
-		WIN32_FIND_DATAA pNextInfo;
-		hFile = FindFirstFileA((directory + "\\" + pattern).c_str(), &pNextInfo);
+		WIN32_FIND_DATAW pNextInfo;
+		hFile = FindFirstFileW(Text::Utf8String(directory + "\\" + pattern).utf16().c_str(), &pNextInfo);
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
 			return 0;
@@ -38,7 +38,7 @@ namespace FileSystem {
 		if (pNextInfo.cFileName[0] != '.') {
 			ReadFileInfoWin32(directory, pNextInfo, result);
 		}
-		while (FindNextFileA(hFile, &pNextInfo))
+		while (FindNextFileW(hFile, &pNextInfo))
 		{
 			if (pNextInfo.cFileName[0] != '.') {
 				ReadFileInfoWin32(directory, pNextInfo, result);
@@ -49,9 +49,8 @@ namespace FileSystem {
 	};
 };
 namespace File {
-	bool Exists(const std::string&filename) {
-#ifdef _WINDEF_
-		DWORD dwAttr = GetFileAttributesA(filename.c_str());
+	bool Exists(const Text::Utf8String& filename) {
+		DWORD dwAttr = GetFileAttributesW(filename.utf16().c_str());
 		if (dwAttr == DWORD(-1)) {
 			return false;
 		}
@@ -59,90 +58,76 @@ namespace File {
 			return true;
 		}
 		return false;
-#else
-		//用stat函数在windows环境下可能会出现问题
-		struct stat buf;
-		int status = stat(filename.c_str(), &buf);
-		if (status == 0 && (buf.st_mode & S_IFREG) == S_IFREG) {
-			return true;
-		}
-		else {
-			return false;
-		}
-#endif
+
 	}
-	bool Create(const std::string &filename) {
+	bool Create(const Text::Utf8String& filename) {
 		File::Delete(filename);
 		std::ofstream ofs(filename.c_str(), std::ios::app);
 		ofs.close();
 		return true;
 	}
-	bool Delete(const std::string&filename) {
-		::remove(filename.c_str());
+	bool Delete(const Text::Utf8String& filename) {
+		::DeleteFileW(filename.utf16().c_str());
 		return !File::Exists(filename);
 	}
-	bool Move(const std::string &oldname, const std::string &newname) {
+	bool Move(const Text::Utf8String& oldname, const Text::Utf8String& newname) {
 		if (!File::Delete(newname)) {
 			printf("Move Faild !\n");
 			return false;
 		}
-		::rename(oldname.c_str(), newname.c_str());
+		::MoveFileExW(oldname.utf16().c_str(), newname.utf16().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
 		if (File::Exists(oldname)) {
 			return false;
 		}
 		return true;
 	}
-	void ReadFile(const  std::string &filename, std::string&outData) {
-		outData.clear();
-		std::ifstream *ifs = new std::ifstream(filename.c_str(), std::ios::binary);
+	void ReadFile(const  Text::Utf8String& filename, FileStream* outFileStream) {
+		outFileStream->clear();
+		std::ifstream* ifs = new std::ifstream(filename.c_str(), std::ios::binary);
 		std::stringstream ss;
 		ss << ifs->rdbuf();
 		ifs->close();
-		outData = ss.str();
+		*outFileStream = ss.str();
 		delete ifs;
 	}
-	void WriteFile(const std::stringstream & data, const std::string & filename)
+	void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename)
 	{
-		std::string buf = data.str();
 		File::Delete(filename);
-		std::ofstream *ofs = new std::ofstream(filename, std::ios::binary);
-		ofs->write(buf.c_str(), buf.size());
+		std::ofstream* ofs = new std::ofstream(filename, std::ios::binary);
+		ofs->write(fileStream->c_str(), fileStream->size());
 		ofs->flush();
 		ofs->close();
 		delete ofs;
 	}
-	void Copy(const std::string & src_filename, const std::string & des_filename, bool cover)
+	void Copy(const Text::Utf8String& src_filename, const Text::Utf8String& des_filename, bool cover)
 	{
-		std::string fileData;
-		File::ReadFile(src_filename, fileData);//读取源文件
-
+		FileStream fileData;
+		File::ReadFile(src_filename, &fileData);//读取源文件
 		if (cover) {
 			File::Delete(des_filename);
 		}
-
 		std::ofstream ofs(des_filename, std::ios::binary | std::ios::app);//写入到新的文件
 		ofs.write(fileData.c_str(), fileData.size());
 		ofs.flush();
 		ofs.close();
 	}
-	std::string CreateTempFile(const std::string&filename)
+	Text::Utf8String CreateTempFile(const Text::Utf8String& filename)
 	{
-		char buf[513]{ 0 };
-		GetTempPathA(512, buf);
-		std::string path = std::string(buf) + "\\" + Path::GetFileNameWithoutExtension(Path::StartFileName());
+		WCHAR buf[MAX_PATH]{ 0 };
+		GetTempPathW(512, buf);
+		Text::Utf8String path = Text::Utf8String(buf) + "\\" + Path::GetFileNameWithoutExtension(Path::StartFileName());
 		Path::Create(path);
 
-		std::string file = path + "\\" + filename;
+		Text::Utf8String file = path + "\\" + filename;
 		File::Create(file);
-
 		return file;
 	}
 };
 namespace Path {
 	void FileWatcher::TaskFunc()
 	{
-		std::vector<std::string> files;//启动加载当前文件
-		//std::vector<std::string> files = Path::SearchFiles(path, math.c_str());
+		std::vector<Text::Utf8String> files;//启动加载当前文件
+		//std::vector<Text::Utf8String> files = Path::SearchFiles(path, math.c_str());
 		for (; exit; )
 		{
 			//移除不存在的文件
@@ -150,14 +135,14 @@ namespace Path {
 			{
 				if (!File::Exists(files[i]))
 				{
-					std::vector<std::string>::iterator it = std::find(files.begin(), files.end(), files[i]);
+					std::vector<Text::Utf8String>::iterator it = std::find(files.begin(), files.end(), files[i]);
 					if (it != files.end()) {
 						files.erase(it);
 					}
 				}
 			}
 			//判断是否新增的文件s
-			std::vector<std::string> tmp = Path::SearchFiles(path, math.c_str());
+			std::vector<Text::Utf8String> tmp = Path::SearchFiles(path, math.c_str());
 			for (auto& item : tmp)
 			{
 				if (find(files.begin(), files.end(), item) == files.end())
@@ -172,7 +157,7 @@ namespace Path {
 			Sleep(sleep);
 		}
 	}
-	FileWatcher::FileWatcher(const std::string& path, const std::string& math, const std::function<void(const std::string& filename)>& callback, size_t sleep)
+	FileWatcher::FileWatcher(const Text::Utf8String& path, const Text::Utf8String& math, const std::function<void(const Text::Utf8String& filename)>& callback, size_t sleep)
 	{
 		this->sleep = sleep;
 		this->callback = callback;
@@ -184,18 +169,18 @@ namespace Path {
 	{
 		ctn = false;
 	}
-	bool Create(const std::string &path) {
-		_mkdir(path.c_str());
+	bool Create(const Text::Utf8String& path) {
+		::CreateDirectoryW(path.utf16().c_str(), NULL);
 		if (Path::Exists(path)) {
 			return true;
 		}
 		//创建多级目录
 		if (path.find(":") != size_t(-1)) {
-			std::string dir = path + "/";
-			Text::Replace(dir, "\\", "/");
-			Text::Replace(dir, "//", "/");
-			std::vector<std::string> arr = Text::Split(dir, "/");
-			std::string root;
+			Text::Utf8String dir = path + "/";
+			dir.Replace("\\", "/");
+			dir.Replace("//", "/");
+			std::vector<Text::Utf8String> arr = dir.Split("/");
+			Text::Utf8String root;
 			if (arr.size() > 0) {
 				root += arr[0] + "/";
 				for (size_t i = 1; i < arr.size(); i++)
@@ -205,17 +190,17 @@ namespace Path {
 					}
 					root += arr[i] + "/";
 					if (!Path::Exists(root)) {
-						_mkdir(root.c_str());
+						::CreateDirectoryW(root.utf16().c_str(), NULL);
 					}
 				}
 			}
 		}
 		return Path::Exists(path);
 	}
-	bool Delete(const std::string& directoryName) {
+	bool Delete(const Text::Utf8String& directoryName) {
 		std::vector<FileSystem::FileInfo>result;
 		FileSystem::Find(directoryName, result);
-		for (auto&it : result) {
+		for (auto& it : result) {
 			if (it.FileType == FileSystem::FileType::File) {
 				File::Delete(it.FullName);
 			}
@@ -223,19 +208,19 @@ namespace Path {
 				Path::Delete(it.FullName);
 			}
 		}
-		::_rmdir(directoryName.c_str());
+		::RemoveDirectoryW(directoryName.utf16().c_str());
 		return !Path::Exists(directoryName);
 	}
-	std::vector<std::string> SearchFiles(const std::string &path, const std::string &pattern)
+	std::vector<Text::Utf8String> SearchFiles(const Text::Utf8String& path, const Text::Utf8String& pattern)
 	{
-		std::vector<std::string> files;
+		std::vector<Text::Utf8String> files;
 		HANDLE hFile = INVALID_HANDLE_VALUE;
-		WIN32_FIND_DATAA pNextInfo;
-		std::string dir;
+		WIN32_FIND_DATAW pNextInfo;
+		Text::Utf8String dir;
 		dir.append(path);
 		dir.append("\\");
 		dir.append(pattern);
-		hFile = FindFirstFileA(dir.c_str(), &pNextInfo);
+		hFile = FindFirstFileW(dir.utf16().c_str(), &pNextInfo);
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
 			return files;
@@ -243,38 +228,35 @@ namespace Path {
 		WCHAR infPath[MAX_PATH] = { 0 };
 		if (pNextInfo.cFileName[0] != '.')
 		{
-			std::string filename;
+			Text::Utf8String filename;
 			filename.append(path);
 			filename.append("\\");
-			filename.append(pNextInfo.cFileName);
-			Text::Replace(filename, "\\", "/");
-			Text::Replace(filename, "//", "/");
+			filename.append(Text::Utf8String(pNextInfo.cFileName));
+			filename = filename.Replace("\\", "/");
+			filename = filename.Replace("//", "/");
 			files.push_back(filename);
 		}
-		while (FindNextFileA(hFile, &pNextInfo))
+		while (FindNextFileW(hFile, &pNextInfo))
 		{
 			if (pNextInfo.cFileName[0] == '.')
 			{
 				continue;
 			}
 			if (pNextInfo.dwFileAttributes == FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
-				std::string filename;
+				Text::Utf8String filename;
 				filename.append(path);
 				filename.append("\\");
 				filename.append(pNextInfo.cFileName);
-				Text::Replace(filename, "\\", "/");
-				Text::Replace(filename, "//", "/");
-
+				filename = filename.Replace("\\", "/");
+				filename = filename.Replace("//", "/");
 				files.push_back(filename);
-
 			}
 		}
 		FindClose(hFile);//避免内存泄漏
 		return files;
 	}
-#ifdef _WINDEF_
-	bool Exists(const std::string&path) {
-		DWORD dwAttr = GetFileAttributesA(path.c_str());
+	bool Exists(const Text::Utf8String& path) {
+		DWORD dwAttr = GetFileAttributesW(path.utf16().c_str());
 		if (dwAttr == DWORD(-1)) {
 			return false;
 		}
@@ -282,50 +264,38 @@ namespace Path {
 		{
 			return true;
 		}
+		return false;
+	}
 
-		return false;
-	}
-#else
-	//XP系统下判断可能会有问题
-	bool Exists(const std::string & path)
-	{
-		struct stat buf;
-		int status = stat(path.c_str(), &buf);
-		if (status == 0) {
-			return true;
-		}
-		return false;
-	}
-#endif
-	std::string GetFileNameWithoutExtension(const std::string &_filename) {
-		std::string str = _filename;
-		std::string &newStr = str;
-		Text::Replace(newStr, "\\", "/");
+	Text::Utf8String GetFileNameWithoutExtension(const Text::Utf8String& _filename) {
+		Text::Utf8String str = _filename;
+		Text::Utf8String& newStr = str;
+		newStr = newStr.Replace("\\", "/");
 		int bPos = newStr.rfind("/");
 		int ePos = newStr.rfind(".");
 		newStr = newStr.substr(bPos + 1, ePos - bPos - 1);
 		return newStr;
 	}
-	std::string GetDirectoryName(const std::string &_filename) {
-		std::string str = _filename;
-		std::string &newStr = str;
-		Text::Replace(newStr, "\\", "/");
+	Text::Utf8String GetDirectoryName(const Text::Utf8String& _filename) {
+		Text::Utf8String str = _filename;
+		Text::Utf8String& newStr = str;
+		newStr.Replace("\\", "/");
 		int pos = newStr.rfind("/");
 		return _filename.substr(0, pos);
 	}
-	std::string GetExtension(const std::string &_filename) {
+	Text::Utf8String GetExtension(const Text::Utf8String& _filename) {
 		size_t pos = _filename.rfind(".");
 		return pos == size_t(-1) ? "" : _filename.substr(pos);
 	}
-	std::string GetFileName(const std::string &filename) {
+	Text::Utf8String GetFileName(const Text::Utf8String& filename) {
 		return Path::GetFileNameWithoutExtension(filename) + Path::GetExtension(filename);
 	}
-	std::string StartPath() {
+	Text::Utf8String StartPath() {
 		return Path::GetDirectoryName(StartFileName());
 	}
-	std::string StartFileName() {
-		char exeFullPath[MAX_PATH - 1]{ 0 };
-		::GetModuleFileNameA(NULL, exeFullPath, MAX_PATH);
-		return std::string(exeFullPath);
+	Text::Utf8String StartFileName() {
+		WCHAR exeFullPath[MAX_PATH]{ 0 };
+		::GetModuleFileNameW(NULL, exeFullPath, MAX_PATH);
+		return Text::Utf8String(exeFullPath);
 	}
 };

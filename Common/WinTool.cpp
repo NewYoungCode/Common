@@ -11,7 +11,7 @@ namespace WinTool {
 		{
 			return;
 		}
-		typedef VOID(WINAPI *FuncGetSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
+		typedef VOID(WINAPI* FuncGetSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 		FuncGetSystemInfo funcGetNativeSystemInfo = (FuncGetSystemInfo)GetProcAddress(GetModuleHandle(TEXT("kernel32")), "GetNativeSystemInfo");
 		// 优先使用 "GetNativeSystemInfo" 函数来获取系统信息
 		// 函数 "GetSystemInfo" 存在系统位数兼容性问题
@@ -37,25 +37,25 @@ namespace WinTool {
 		}
 		return 32;
 	}
-	void __Encrypt(void *lpInbuf, DWORD dwInsize, void *lpOutbuf, DWORD *lpOutsize)
+	void __Encrypt(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
 	{
 		DWORD i;
 		for (i = 0; i < dwInsize; i++)
 		{
-			WORD s = (WORD)(i*i * 7 % 237 + 1);
-			*(((WORD *)lpOutbuf) + i) = (*(((BYTE *)lpInbuf) + i) + (BYTE)(i % 255)) & 0xff;
-			*(((WORD *)lpOutbuf) + i) *= s;
+			WORD s = (WORD)(i * i * 7 % 237 + 1);
+			*(((WORD*)lpOutbuf) + i) = (*(((BYTE*)lpInbuf) + i) + (BYTE)(i % 255)) & 0xff;
+			*(((WORD*)lpOutbuf) + i) *= s;
 		}
 		*lpOutsize = dwInsize * 2;
 	}
 
-	void __Bin2Text(void *lpInbuf, DWORD dwInsize, void *lpOutbuf, DWORD *lpOutsize)
+	void __Bin2Text(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
 	{
 		DWORD i = 0;
-		BYTE *tmpoutbuf = (BYTE *)lpOutbuf;
+		BYTE* tmpoutbuf = (BYTE*)lpOutbuf;
 		for (i = 0; i < dwInsize; i++)
 		{
-			BYTE inchar = *(((BYTE *)lpInbuf) + i);
+			BYTE inchar = *(((BYTE*)lpInbuf) + i);
 			*(tmpoutbuf + i * 2) = ((inchar & 0xf) > 9) ? ((inchar & 0xf) - 10 + 'A') : ((inchar & 0xf) + '0');
 			*(tmpoutbuf + i * 2 + 1) = (((inchar >> 4) & 0xf) > 9) ? (((inchar >> 4) & 0xf) - 10 + 'A') : (((inchar >> 4) & 0xf) + '0');
 		}
@@ -63,7 +63,7 @@ namespace WinTool {
 
 	}
 
-	void __Text16To64(void *lpBuf, DWORD dwSize)
+	void __Text16To64(void* lpBuf, DWORD dwSize)
 	{
 		DWORD i;
 		for (i = 0; i < dwSize; i++)
@@ -71,7 +71,7 @@ namespace WinTool {
 
 			BYTE	dwMul = (BYTE)((i * 237) >> 1) % 4;
 			BYTE	dwAdd = (BYTE)((i * 237) >> 2) % 4;
-			BYTE	*bSure = ((BYTE*)lpBuf) + i;
+			BYTE* bSure = ((BYTE*)lpBuf) + i;
 			*bSure -= '0';
 			if (*bSure > 9)*bSure -= 'A' - '9' - 1;
 			*bSure *= (dwMul + 1);
@@ -84,9 +84,9 @@ namespace WinTool {
 		}
 	}
 
-	BOOL __EncryptData(void *lpInbuf, DWORD dwInsize, void *lpOutbuf, DWORD *lpOutsize)
+	BOOL __EncryptData(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
 	{
-		void *tmpbuf = malloc(dwInsize * 2);
+		void* tmpbuf = malloc(dwInsize * 2);
 		DWORD outsize;
 		if (tmpbuf == NULL)
 			return FALSE;
@@ -96,7 +96,7 @@ namespace WinTool {
 		{
 			for (j = 0; j < outsize; j++)
 			{
-				if (i != j)*(((BYTE *)tmpbuf) + j) += *(((BYTE *)tmpbuf) + i);
+				if (i != j)*(((BYTE*)tmpbuf) + j) += *(((BYTE*)tmpbuf) + i);
 			}
 		}
 		__Bin2Text(tmpbuf, outsize, lpOutbuf, lpOutsize);
@@ -107,7 +107,7 @@ namespace WinTool {
 	}
 
 #ifndef _WIN64
-	BOOL GetCPUID(char *szCPUID)
+	BOOL GetCPUID(char* szCPUID)
 	{
 		unsigned long s1, s2;
 		unsigned char vendor_id[] = "------------";
@@ -209,7 +209,7 @@ namespace WinTool {
 			RtlZeroMemory(szCode, sizeof(szCode));
 			for (int i = 0; i < 32; i++)
 			{
-				szCode[i] = szData[i*outsize / 32];
+				szCode[i] = szData[i * outsize / 32];
 				if (szCode[i] >= 'a' && szCode[i] <= 'z')szCode[i] -= 'a' - 'A';
 			}
 			szCode[16] = 0;
@@ -254,20 +254,16 @@ namespace WinTool {
 		return FALSE;
 	}
 
-	std::vector<PROCESSENTRY32> FindProcessInfo(const std::string& _proccname) {
+	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname) {
 
-		std::vector<PROCESSENTRY32> infos;
+		std::vector<PROCESSENTRY32W> infos;
 		HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
-		PROCESSENTRY32 pe;
-		pe.dwSize = sizeof(PROCESSENTRY32);
-		for (auto status = ::Process32First(hSnapshot, &pe); status != FALSE; status = ::Process32Next(hSnapshot, &pe)) {
-			pe.dwSize = sizeof(PROCESSENTRY32);
-#ifdef UNICODE
-			std::string item = Text::UnicodeToANSI(pe.szExeFile);
-#else
-			std::string item = pe.szExeFile;
-#endif
+		PROCESSENTRY32W pe;
+		pe.dwSize = sizeof(PROCESSENTRY32W);
+		for (auto status = ::Process32FirstW(hSnapshot, &pe); status != FALSE; status = ::Process32NextW(hSnapshot, &pe)) {
+			pe.dwSize = sizeof(PROCESSENTRY32W);
+			Text::Utf8String item = pe.szExeFile;
 			//不传进程名称查询所有
 			if (_proccname.empty()) {
 				infos.push_back(pe);
@@ -282,17 +278,17 @@ namespace WinTool {
 		CloseHandle(hSnapshot);
 		return infos;
 	}
-	std::vector<DWORD> FindProcessId(const std::string& _proccname)
+	std::vector<DWORD> FindProcessId(const Text::Utf8String& _proccname)
 	{
 		std::vector<DWORD> processIds;
 		auto list = FindProcessInfo(_proccname);
-		for (auto &it : list) {
+		for (auto& it : list) {
 			processIds.push_back(it.th32ProcessID);
 		}
 		return processIds;
 	}
 
-	HANDLE OpenProcess(const std::string& _proccname) {
+	HANDLE OpenProcess(const Text::Utf8String& _proccname) {
 		std::vector<DWORD> processIds;
 		auto list = FindProcessInfo(_proccname);
 		if (list.size() > 0) {
@@ -313,7 +309,7 @@ namespace WinTool {
 		HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, processId);
 		if (hProcess)
 		{
-			typedef BOOL(WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+			typedef BOOL(WINAPI* LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 			LPFN_ISWOW64PROCESS fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
 			if (NULL != fnIsWow64Process)
 			{
@@ -324,11 +320,11 @@ namespace WinTool {
 		return !bIsWow64;
 	}
 
-	std::string FindProcessFilename(DWORD processId)
+	Text::Utf8String FindProcessFilename(DWORD processId)
 	{
-		char buf[MAX_PATH]{ 0 };
+		WCHAR buf[MAX_PATH]{ 0 };
 		HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-		DWORD result = ::GetModuleFileNameExA(hProcess, NULL, buf, sizeof(buf) - 1);
+		DWORD result = ::GetModuleFileNameExW(hProcess, NULL, buf, sizeof(buf));
 		CloseHandle(hProcess);
 		return buf;
 	}
@@ -351,28 +347,28 @@ namespace WinTool {
 		}
 		return false;
 	}
-	bool GetAutoBootStatus(const std::string& filename) {
-		std::string bootstart = filename.empty() ? Path::StartFileName() : filename;
-		std::string appName = Path::GetFileNameWithoutExtension(bootstart);
+	bool GetAutoBootStatus(const Text::Utf8String& filename) {
+		Text::Utf8String bootstart = filename.empty() ? Path::StartFileName() : filename;
+		Text::Utf8String appName = Path::GetFileNameWithoutExtension(bootstart);
 		bool bResult = false;
 		HKEY subKey;
-		if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run\\"), NULL, KEY_ALL_ACCESS, &subKey))
+		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
 		{
 			return bResult;
 		}
 		//3、判断注册表项是否已经存在
-		char strDir[MAX_PATH]{ 0 };
+		WCHAR strDir[MAX_PATH]{ 0 };
 		DWORD nLength = MAX_PATH;
-		LSTATUS status = RegGetValue(subKey, NULL, AUTOTEXT(appName), REG_SZ, NULL, strDir, &nLength);
+		LSTATUS status = RegGetValueW(subKey, NULL, appName.utf16().c_str(), REG_SZ, NULL, strDir, &nLength);
 		if (status != ERROR_SUCCESS) {
-			if (bootstart == strDir) {
+			if (bootstart == Text::Utf8String(strDir)) {
 				bResult = true;
 			}
 		}
 		::RegCloseKey(subKey);
 		return bResult;
 	}
-	bool SetAutoBoot(const std::string& filename, bool bStatus)
+	bool SetAutoBoot(const Text::Utf8String& filename, bool bStatus)
 	{
 		//如果需要设置成自启动而且已经是自启动就返回true
 		if (bStatus && GetAutoBootStatus(filename)) {
@@ -381,25 +377,25 @@ namespace WinTool {
 		if (!bStatus && !GetAutoBootStatus(filename)) {
 			return true;
 		}
-		std::string bootstart = filename.empty() ? Path::StartFileName() : filename;
-		std::string appName = Path::GetFileNameWithoutExtension(bootstart);
+		Text::Utf8String bootstart = filename.empty() ? Path::StartFileName() : filename;
+		Text::Utf8String appName = Path::GetFileNameWithoutExtension(bootstart);
 		bool bResult = false;
 		HKEY subKey;
-		if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_LOCAL_MACHINE, TEXT("Software\\Microsoft\\Windows\\CurrentVersion\\Run\\"), NULL, KEY_ALL_ACCESS, &subKey))
+		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
 		{
 			return bResult;
 		}
 		if (bStatus)
 		{
-
-			if (ERROR_SUCCESS == ::RegSetValueEx(subKey, AUTOTEXT(appName), NULL, REG_SZ, (PBYTE)bootstart.c_str(), bootstart.size()))
+			auto wStr = bootstart.utf16();
+			if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.utf16().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
 			{
 				bResult = true;
 			}
 		}
 		else
 		{
-			if (ERROR_SUCCESS == ::RegDeleteValue(subKey, AUTOTEXT(appName)))
+			if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.utf16().c_str()))
 			{
 				bResult = true;
 			}
@@ -430,29 +426,29 @@ namespace WinTool {
 		CloseHandle(hToken);
 		return bResult;
 	}
-	bool CreateDesktopLnk(const std::string &pragmaFilename, const std::string &LnkName, const std::string& cmdline, const std::string& iconFilename) {
+	bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName, const Text::Utf8String& cmdline, const Text::Utf8String& iconFilename) {
 		HRESULT hr = CoInitialize(NULL);
 		bool bResult = false;
 		if (SUCCEEDED(hr))
 		{
-			IShellLink *pShellLink;
+			IShellLink* pShellLink;
 			hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&pShellLink);
 			if (SUCCEEDED(hr))
 			{
-				pShellLink->SetPath(AUTOTEXT(pragmaFilename));
-				pShellLink->SetWorkingDirectory(AUTOTEXT(Path::GetDirectoryName(pragmaFilename)));
-				pShellLink->SetArguments(AUTOTEXT(cmdline));
+				pShellLink->SetPath(pragmaFilename.utf16().c_str());
+				pShellLink->SetWorkingDirectory(Path::GetDirectoryName(pragmaFilename).utf16().c_str());
+				pShellLink->SetArguments(cmdline.utf16().c_str());
 				if (!iconFilename.empty())
 				{
-					pShellLink->SetIconLocation(AUTOTEXT(iconFilename), 0);
+					pShellLink->SetIconLocation(iconFilename.utf16().c_str(), 0);
 				}
 				IPersistFile* pPersistFile;
 				hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pPersistFile);
 				if (SUCCEEDED(hr))
 				{
-					char buf[MAX_PATH]{ 0 };
-					SHGetSpecialFolderPathA(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-					std::string userDesktop(buf);
+					WCHAR buf[MAX_PATH]{ 0 };
+					SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
+					Text::Utf8String userDesktop(buf);
 					if (!LnkName.empty()) {
 						userDesktop += "\\" + LnkName + ".lnk";
 					}
@@ -461,7 +457,7 @@ namespace WinTool {
 					}
 					//设置快捷方式地址
 					File::Delete(userDesktop);//删除旧的
-					hr = pPersistFile->Save(Text::ANSIToUniCode(userDesktop).c_str(), FALSE);
+					hr = pPersistFile->Save(userDesktop.utf16().c_str(), FALSE);
 					if (SUCCEEDED(hr))
 					{
 						bResult = true;
@@ -473,5 +469,92 @@ namespace WinTool {
 		}
 		CoUninitialize();
 		return bResult;
+	}
+	void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName) {
+		WCHAR buf[MAX_PATH]{ 0 };
+		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
+		Text::Utf8String userDesktop(buf);
+		if (!LnkName.empty()) {
+			userDesktop += "\\" + LnkName + ".lnk";
+		}
+		else {
+			userDesktop += "\\" + Path::GetFileNameWithoutExtension(pragmaFilename) + ".lnk";
+		}
+		//设置快捷方式地址
+		File::Delete(userDesktop);//删除旧的
+	}
+
+	LSTATUS RegSetSoftware(HKEY hKey, const Text::Utf8String& regKey, const Text::Utf8String& regValue) {
+		if (!regValue.empty()) {
+			auto wStr = regValue.utf16();
+			return RegSetValueExW(hKey, regKey.utf16().c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(wStr.c_str()), wStr.size() * 2);
+		}
+		return -1;
+	}
+
+	void UnRegisterSoftware(const Text::Utf8String& appName_en) {
+		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+		regKeyPath.append("\\" + appName_en);
+		HKEY subKey;
+		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), NULL, KEY_ALL_ACCESS, &subKey)) {
+			return;
+		}
+		::RegDeleteValueW(subKey, L"DisplayName");
+		::RegDeleteValueW(subKey, L"DisplayVersion");
+		::RegDeleteValueW(subKey, L"Publisher");
+		::RegDeleteValueW(subKey, L"UninstallString");
+		::RegDeleteValueW(subKey, L"InstallLocation");
+		// 关闭注册表键
+		RegCloseKey(subKey);
+	}
+
+	bool RegisterSoftware(const AppInfo& appInfo)
+	{
+		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.StartLocation));
+		// 创建注册表项
+		HKEY hKey;
+
+		SECURITY_DESCRIPTOR securityDesc;
+		if (!InitializeSecurityDescriptor(&securityDesc, SECURITY_DESCRIPTOR_REVISION))
+		{
+			DWORD error = GetLastError();
+			wprintf(L"无法初始化安全描述符。错误代码：%d\n", error);
+			return false;
+		}
+		if (!SetSecurityDescriptorDacl(&securityDesc, TRUE, NULL, FALSE))
+		{
+			DWORD error = GetLastError();
+			wprintf(L"无法设置DACL。错误代码：%d\n", error);
+			return false;
+		}
+		SECURITY_ATTRIBUTES attr;
+		attr.nLength = sizeof(attr);
+		attr.lpSecurityDescriptor = &securityDesc;
+		attr.bInheritHandle = FALSE;
+
+		LONG result = RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL);
+		if (result != ERROR_SUCCESS) {
+			std::cerr << "Failed to create registry key." << std::endl;
+			return false;
+		}
+		RegSetSoftware(hKey, L"DisplayName", appInfo.DisplayName);
+		RegSetSoftware(hKey, L"DisplayVersion", appInfo.DisplayVersion);
+		RegSetSoftware(hKey, L"Publisher", appInfo.DisplayAuthor);
+		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
+		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//安装位置
+
+		if (appInfo.DesktopLnk) {
+			WinTool::CreateDesktopLnk(appInfo.StartLocation, appInfo.DisplayName);
+		}
+		if (appInfo.AutoBoot) {
+			WinTool::SetAutoBoot(appInfo.StartLocation, true);
+		}
+		else {
+			WinTool::SetAutoBoot(appInfo.StartLocation, false);
+		}
+		// 关闭注册表键
+		RegCloseKey(hKey);
+		return true;
 	}
 };
