@@ -62,7 +62,7 @@ namespace File {
 	}
 	bool Create(const Text::Utf8String& filename) {
 		File::Delete(filename);
-		std::ofstream ofs(filename.c_str(), std::ios::app);
+		std::ofstream ofs(filename.utf16(), std::ios::app);
 		ofs.close();
 		return true;
 	}
@@ -83,7 +83,7 @@ namespace File {
 	}
 	void ReadFile(const  Text::Utf8String& filename, FileStream* outFileStream) {
 		outFileStream->clear();
-		std::ifstream* ifs = new std::ifstream(filename.c_str(), std::ios::binary);
+		std::ifstream* ifs = new std::ifstream(filename.utf16().c_str(), std::ios::binary);
 		std::stringstream ss;
 		ss << ifs->rdbuf();
 		ifs->close();
@@ -93,7 +93,7 @@ namespace File {
 	void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename)
 	{
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename, std::ios::binary);
+		std::ofstream* ofs = new std::ofstream(filename.utf16(), std::ios::binary);
 		ofs->write(fileStream->c_str(), fileStream->size());
 		ofs->flush();
 		ofs->close();
@@ -106,7 +106,7 @@ namespace File {
 		if (cover) {
 			File::Delete(des_filename);
 		}
-		std::ofstream ofs(des_filename, std::ios::binary | std::ios::app);//写入到新的文件
+		std::ofstream ofs(des_filename.utf16(), std::ios::binary | std::ios::app);//写入到新的文件
 		ofs.write(fileData.c_str(), fileData.size());
 		ofs.flush();
 		ofs.close();
@@ -279,7 +279,7 @@ namespace Path {
 	Text::Utf8String GetDirectoryName(const Text::Utf8String& _filename) {
 		Text::Utf8String str = _filename;
 		Text::Utf8String& newStr = str;
-		newStr.Replace("\\", "/");
+		newStr = newStr.Replace("\\", "/");
 		int pos = newStr.rfind("/");
 		return _filename.substr(0, pos);
 	}
