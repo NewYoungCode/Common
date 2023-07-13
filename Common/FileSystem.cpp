@@ -3,9 +3,9 @@
 namespace FileSystem {
 	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result) {
 		Text::Utf8String filename;
-		filename.append(directory);
-		filename.append("\\");
-		filename.append(pNextInfo.cFileName);
+		filename.Append(directory);
+		filename.Append("\\");
+		filename.Append(pNextInfo.cFileName);
 		filename = filename.Replace("\\", "/");
 		filename = filename.Replace("//", "/");
 		struct FileSystem::FileInfo fileInfo;
@@ -231,9 +231,9 @@ namespace Path {
 			}
 			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
 				Text::Utf8String filename;
-				filename.append(path);
-				filename.append("\\");
-				filename.append(pNextInfo.cFileName);
+				filename.Append(path);
+				filename.Append("\\");
+				filename.Append(pNextInfo.cFileName);
 				filename = filename.Replace("\\", "/");
 				filename = filename.Replace("//", "/");
 				files.push_back(filename);

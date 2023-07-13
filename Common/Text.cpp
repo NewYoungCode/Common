@@ -61,9 +61,13 @@ namespace Text {
 		Utf8String::Toupper(&str);
 		return str;
 	}
-	void Utf8String::append(const Utf8String& text)
+	void Utf8String::Append(const Utf8String& text)
 	{
 		__super::append(text);
+	}
+	size_t Utf8String::Find(const Utf8String& str, size_t Off)const
+	{
+		return __super::find(str, Off);
 	}
 	std::wstring Utf8String::utf16() const {
 		std::wstring wstr;

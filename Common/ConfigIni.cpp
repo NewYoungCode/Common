@@ -82,54 +82,54 @@ int  ConfigIni::ReadInt(const Text::Utf8String& key, int defaultValue, const Tex
 bool  ConfigIni::WriteValue(const Text::Utf8String& key, const Text::Utf8String& value, const Text::Utf8String& section)const {
 	return SetValue(section, key, value, filename);
 }
-//
-//std::vector<Text::Utf8String>  ConfigIni::GetSections() {
-//	std::vector<Text::Utf8String> list;
-//
-//	size_t maxSize = 1024 * 1024 * 20;//20M
-//	char* chSectionNames = new char[maxSize]{ 0 };
-//	GetPrivateProfileSectionNamesW(chSectionNames, maxSize, filename.c_str());
-//	size_t pos = 0;
-//	do
-//	{
-//		char buf[128]{ 0 };
-//		strcpy(buf, chSectionNames + pos);
-//		size_t len = strlen(buf);
-//		if (len == 0) {
-//			break;
-//		}
-//		list.push_back(buf);
-//		pos += len + 1;
-//	} while (true);
-//	delete chSectionNames;
-//	return list;
-//}
-//
-//void  ConfigIni::DeleteSection(const Text::Utf8String&section) {
-//	Text::Utf8String outData;
-//	File::ReadFile(filename, outData);
-//	Text::Utf8String id = "[" + section + "]";
-//	auto pos = outData.find(id);
-//	if (pos == -1) {
-//		return;
-//	}
-//	size_t count = 0;
-//	auto pos2 = outData.find("\r\n[", pos);
-//	count = pos2 - pos;
-//	if (pos2 != -1) {
-//		outData.erase(pos, count);
-//	}
-//	else {
-//		outData = outData.substr(0, pos);
-//	}
-//	Text::Replace(outData, "\r\n\r\n", "\r\n");
-//	std::ofstream ofs(filename, std::ios::binary);
-//	ofs.seekp(0);
-//	ofs.write(outData.c_str(), outData.size());
-//	ofs.flush();
-//	ofs.close();
-//	return;
-//}
+
+std::vector<Text::Utf8String>  ConfigIni::GetSections() {
+	std::vector<Text::Utf8String> list;
+
+	size_t maxSize = 1024 * 1024 * 20;//20M
+	WCHAR* chSectionNames = new WCHAR[maxSize]{ 0 };
+	GetPrivateProfileSectionNamesW(chSectionNames, maxSize, filename.utf16().c_str());
+	size_t pos = 0;
+	do
+	{
+		wchar_t buf[128]{ 0 };
+		::lstrcpyW(buf, chSectionNames + pos);
+		size_t len = lstrlenW(buf);
+		if (len == 0) {
+			break;
+		}
+		list.push_back(buf);
+		pos += len + 1;
+	} while (true);
+	delete chSectionNames;
+	return list;
+}
+
+void  ConfigIni::DeleteSection(const Text::Utf8String& section) {
+	Text::Utf8String outData;
+	File::ReadFile(filename, &outData);
+	Text::Utf8String id = "[" + section + "]";
+	auto pos = outData.find(id);
+	if (pos == -1) {
+		return;
+	}
+	size_t count = 0;
+	auto pos2 = outData.find("\r\n[", pos);
+	count = pos2 - pos;
+	if (pos2 != -1) {
+		outData.erase(pos, count);
+	}
+	else {
+		outData = outData.substr(0, pos);
+	}
+	outData = outData.Replace("\r\n\r\n", "\r\n");
+	std::ofstream ofs(filename, std::ios::binary | std::ios::app);
+	ofs.seekp(0);
+	ofs.write(outData.c_str(), outData.size());
+	ofs.flush();
+	ofs.close();
+	return;
+}
 //
 //SafeConfigIni::SafeConfigIni(const Text::Utf8String & filename, const Text::Utf8String & defaultSection, bool create, size_t buffSize)
 //{

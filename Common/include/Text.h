@@ -22,7 +22,8 @@ namespace Text {
 		Utf8String Replace(const Utf8String& oldText, const Utf8String& newText)const;
 		Utf8String Tolower()const;
 		Utf8String Toupper()const;
-		void append(const Utf8String& text);
+		void Append(const Utf8String& text);
+		size_t Find(const Utf8String& text, size_t Off = 0U)const;
 	private:
 		//base convert
 		static void AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr);
