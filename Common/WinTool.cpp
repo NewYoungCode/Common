@@ -235,24 +235,21 @@ namespace WinTool {
 		handle_data data;
 		data.processId = processId;
 		data.best_handle = 0;
-		EnumWindows(EnumWindowsCallback, (LPARAM)&data);
-		return data.best_handle;
-	}
-	BOOL CALLBACK EnumWindowsCallback(HWND handle, LPARAM lParam)
-	{
-		handle_data& data = *(handle_data*)lParam;
-		HWND hwnd = ::GetWindow(handle, GW_OWNER);
-		data.best_handle = handle;
-		return 0;
-
-		//unsigned long processId = 0;
+		EnumWindows([](HWND handle, LPARAM lParam)->BOOL {
+			handle_data& data = *(handle_data*)lParam;
+			HWND hwnd = ::GetWindow(handle, GW_OWNER);
+			data.best_handle = handle;
+			//unsigned long processId = 0;
 		//::GetWindowThreadProcessId(handle, &processId);
 		//if (data.processId != processId || !IsMainWindow(handle)) {
 		//	return TRUE;
 		//}
 		//data.best_handle = handle;
-		return FALSE;
+			return false;
+			}, (LPARAM)&data);
+		return data.best_handle;
 	}
+	
 
 	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname) {
 
@@ -357,11 +354,16 @@ namespace WinTool {
 			return bResult;
 		}
 		//3、判断注册表项是否已经存在
-		WCHAR strDir[MAX_PATH]{ 0 };
+		WCHAR wBuff[MAX_PATH]{ 0 };
 		DWORD nLength = MAX_PATH;
-		LSTATUS status = RegGetValueW(subKey, NULL, appName.utf16().c_str(), REG_SZ, NULL, strDir, &nLength);
+		LSTATUS status = RegGetValueW(subKey, NULL, appName.utf16().c_str(), REG_SZ, NULL, wBuff, &nLength);
 		if (status != ERROR_SUCCESS) {
-			if (bootstart == Text::Utf8String(strDir)) {
+			bootstart = bootstart.Replace("\\", "/");
+			bootstart = bootstart.Replace("//", "/");
+			Text::Utf8String strDir = wBuff;
+			strDir = strDir.Replace("\\", "/");
+			strDir = strDir.Replace("//", "/");
+			if (bootstart == strDir) {
 				bResult = true;
 			}
 		}
@@ -370,36 +372,34 @@ namespace WinTool {
 	}
 	bool SetAutoBoot(const Text::Utf8String& filename, bool bStatus)
 	{
-		//如果需要设置成自启动而且已经是自启动就返回true
-		if (bStatus && GetAutoBootStatus(filename)) {
-			return true;
-		}
-		if (!bStatus && !GetAutoBootStatus(filename)) {
-			return true;
-		}
 		Text::Utf8String bootstart = filename.empty() ? Path::StartFileName() : filename;
 		Text::Utf8String appName = Path::GetFileNameWithoutExtension(bootstart);
-		bool bResult = false;
 		HKEY subKey;
+		bool bResult = false;
 		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
 		{
-			return bResult;
+			return false;
 		}
-		if (bStatus)
+		do
 		{
-			auto wStr = bootstart.utf16();
-			if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.utf16().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
+			if (bStatus == true)
 			{
-				bResult = true;
+				auto wStr = bootstart.utf16();
+				if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.utf16().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
+				{
+					bResult = true;
+					break;
+				}
 			}
-		}
-		else
-		{
-			if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.utf16().c_str()))
+			else
 			{
-				bResult = true;
+				if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.utf16().c_str()))
+				{
+					bResult = true;
+					break;
+				}
 			}
-		}
+		} while (false);
 		::RegCloseKey(subKey);
 		return bResult;
 	}
@@ -502,6 +502,7 @@ namespace WinTool {
 		::RegDeleteValueW(subKey, L"DisplayName");
 		::RegDeleteValueW(subKey, L"DisplayVersion");
 		::RegDeleteValueW(subKey, L"Publisher");
+		::RegDeleteValueW(subKey, L"DisplayIcon");
 		::RegDeleteValueW(subKey, L"UninstallString");
 		::RegDeleteValueW(subKey, L"InstallLocation");
 		// 关闭注册表键
@@ -533,13 +534,17 @@ namespace WinTool {
 		attr.lpSecurityDescriptor = &securityDesc;
 		attr.bInheritHandle = FALSE;
 
-		LONG result = RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL);
-		if (result != ERROR_SUCCESS) {
-			std::cerr << "Failed to create registry key." << std::endl;
+		if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), NULL, KEY_ALL_ACCESS, &hKey) || \
+			ERROR_SUCCESS == RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL)) {
+			std::cout << "SUCCESS" << std::endl;
+		}
+		else {
 			return false;
 		}
+
 		RegSetSoftware(hKey, L"DisplayName", appInfo.DisplayName);
 		RegSetSoftware(hKey, L"DisplayVersion", appInfo.DisplayVersion);
+		RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//安装位置
 		RegSetSoftware(hKey, L"Publisher", appInfo.DisplayAuthor);
 		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
 		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//安装位置
@@ -557,4 +562,98 @@ namespace WinTool {
 		RegCloseKey(hKey);
 		return true;
 	}
-};
+
+
+
+	// 头文件包含
+#ifdef WIN32_LEAN_AND_MEAN
+#undef WIN32_LEAN_AND_MEAN
+#endif
+#include <WinSock.h>
+#include <Windows.h>
+#include <Iphlpapi.h>
+#include <iostream>
+#pragma comment(lib,"iphlpapi.lib")
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
+	int GetAdptersInfo(std::vector<MyAdpterInfo>& adpterInfo)
+	{
+		PIP_ADAPTER_INFO pAdapterInfo;
+		PIP_ADAPTER_INFO pAdapter = NULL;
+		DWORD dwRetVal = 0;
+		UINT i;
+
+		/* variables used to print DHCP time info */
+		struct tm newtime;
+		char buffer[32];
+		errno_t error = 0;
+
+		ULONG ulOutBufLen = sizeof(IP_ADAPTER_INFO);
+		pAdapterInfo = (IP_ADAPTER_INFO*)MALLOC(sizeof(IP_ADAPTER_INFO));
+		if (pAdapterInfo == NULL)
+		{
+			printf("Error allocating memory needed to call GetAdaptersinfo\n");
+			return -1;
+		}
+		// Make an initial call to GetAdaptersInfo to get
+		// the necessary size into the ulOutBufLen variable
+		if (GetAdaptersInfo(pAdapterInfo, &ulOutBufLen) == ERROR_BUFFER_OVERFLOW)
+		{
+			FREE(pAdapterInfo);
+			pAdapterInfo = (IP_ADAPTER_INFO*)MALLOC(ulOutBufLen);
+			if (pAdapterInfo == NULL)
+			{
+				printf("Error allocating memory needed to call GetAdaptersinfo\n");
+				return -1;    //    error data return
+			}
+		}
+
+		if ((dwRetVal = GetAdaptersInfo(pAdapterInfo, &ulOutBufLen)) == NO_ERROR)
+		{
+			pAdapter = pAdapterInfo;
+			while (pAdapter)
+			{
+				MyAdpterInfo info;
+				info.Name = std::string(pAdapter->AdapterName);
+				info.Description = std::string(pAdapter->Description);
+				info.Type = pAdapter->Type;
+				char buffer[20];
+				sprintf_s(buffer, "%.2x-%.2x-%.2x-%.2x-%.2x-%.2x", pAdapter->Address[0],
+					pAdapter->Address[1], pAdapter->Address[2], pAdapter->Address[3],
+					pAdapter->Address[4], pAdapter->Address[5]);
+				info.MacAddress = std::string(buffer);
+				IP_ADDR_STRING* pIpAddrString = &(pAdapter->IpAddressList);
+				do
+				{
+					info.Ip.push_back(std::string(pIpAddrString->IpAddress.String));
+					pIpAddrString = pIpAddrString->Next;
+				} while (pIpAddrString);
+				pAdapter = pAdapter->Next;
+				adpterInfo.push_back(info);
+			}
+			if (pAdapterInfo)
+				FREE(pAdapterInfo);
+			return 0;    // normal return
+		}
+		else
+		{
+			if (pAdapterInfo)
+				FREE(pAdapterInfo);
+			printf("GetAdaptersInfo failed with error: %d\n", dwRetVal);
+			return 1;    //    null data return
+		}
+	}
+	double GetDiskFreeSize(const Text::Utf8String& path) {
+		ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
+		std::wstring wStr = path.utf16();
+		if (wStr.size() > 0) {
+			std::wstring drive = path.utf16().substr(0, 1); // 设置你要查询的磁盘路径
+			drive += L":\\";
+			if (GetDiskFreeSpaceExW(drive.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
+				double freeSpaceGB = static_cast<double>(freeBytesAvailable.QuadPart) / (1024 * 1024 * 1024);
+				return freeSpaceGB;
+			}
+		}
+		return 0;
+	};
+}

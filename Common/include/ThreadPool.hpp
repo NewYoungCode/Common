@@ -28,23 +28,18 @@ public:
 				while (true)
 				{
 					std::function<void()> task;
-					{
-
-						std::unique_lock<std::mutex> lock(this->m_queue_mutex);
-
-						this->m_condition.wait(lock, [this]()->bool {
-							return this->stop || !this->m_tasks.empty();
+					std::unique_lock<std::mutex> lock(this->m_queue_mutex);
+					this->m_condition.wait(lock, [this]()->bool {
+						return this->stop || !this->m_tasks.empty();
 						});
-
-						if (this->stop && this->m_tasks.empty()) {
-							return;
-						}
-						task = std::move(this->m_tasks.front());
-						this->m_tasks.pop();
+					if (this->stop && this->m_tasks.empty()) {
+						return;
 					}
+					task = std::move(this->m_tasks.front());
+					this->m_tasks.pop();
 					task();
 				}
-			});
+				});
 		}
 	}
 
@@ -68,7 +63,7 @@ public:
 
 			m_tasks.emplace([task]() {
 				(*task)();
-			});
+				});
 		}
 		m_condition.notify_one();
 		return res;

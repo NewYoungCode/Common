@@ -3,6 +3,8 @@
 #include <list>
 #include <vector>
 #include <string>
+#include <sstream>
+#include <iomanip>
 namespace Text {
 	class Utf8String :public std::string {
 	public:
@@ -42,4 +44,11 @@ namespace Text {
 		static void Split(const std::string& str_in, const std::string& ch, std::vector<Utf8String>* strs_out);
 	};
 #define utf8(text) EString(L##text)
+	/// <summary>
+	/// 小数转字符串
+	/// </summary>
+	/// <param name="number">数值</param>
+	/// <param name="keepBitSize">保留位数</param>
+	/// <returns></returns>
+	extern Utf8String ToString(double number, int keepBitSize);
 };

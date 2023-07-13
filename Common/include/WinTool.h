@@ -12,7 +12,14 @@ namespace WinTool {
 		unsigned long processId;
 		HWND best_handle;
 	}handle_data;
-
+	typedef struct _MyAdpterInfo
+	{
+		std::vector<std::string> Ip;
+		std::string MacAddress;
+		std::string Description;
+		std::string Name;
+		UINT Type;
+	}MyAdpterInfo;
 	struct AppInfo {
 		/// <summary>
 		/// app名称
@@ -27,7 +34,7 @@ namespace WinTool {
 		/// </summary>
 		Text::Utf8String DisplayAuthor;
 		/// <summary>
-		/// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe
+		/// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
 		/// </summary>
 		Text::Utf8String StartLocation;
 		/// <summary>
@@ -44,41 +51,46 @@ namespace WinTool {
 		bool AutoBoot = false;
 	};
 	//给进程提权
-	BOOL EnablePrivilege(HANDLE process = NULL);
+	extern BOOL EnablePrivilege(HANDLE process = NULL);
 	//创建桌面快捷方式
-	bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName = L"", const Text::Utf8String& cmdline = L"", const Text::Utf8String& iconFilename = L"");
-	void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName);
-	bool RegisterSoftware(const AppInfo& appInfo);
-	void UnRegisterSoftware(const Text::Utf8String& appName_en);
+	extern bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName = L"", const Text::Utf8String& cmdline = L"", const Text::Utf8String& iconFilename = L"");
+	extern void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName);
+	extern bool RegisterSoftware(const AppInfo& appInfo);
+	extern 	void UnRegisterSoftware(const Text::Utf8String& appName_en);
 	//设置程序自启动
-	bool SetAutoBoot(const Text::Utf8String& filename = L"", bool enable = true);
+	extern bool SetAutoBoot(const Text::Utf8String& filename = L"", bool enable = true);
 	//获取程序自启动状态
-	bool GetAutoBootStatus(const Text::Utf8String& filename);
-	BOOL CALLBACK EnumWindowsCallback(HWND handle, LPARAM lParam);
-	HWND FindMainWindow(DWORD processId);
-	BOOL CALLBACK EnumWindowsCallback(HWND handle, LPARAM lParam);
+	extern bool GetAutoBootStatus(const Text::Utf8String& filename);
+	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息
-	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname);
+	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname);
 	//根据进程名称打开进程
-	HANDLE OpenProcess(const Text::Utf8String& _proccname);
+	extern HANDLE OpenProcess(const Text::Utf8String& _proccname);
 	//获取进程ID集合
-	std::vector<DWORD> FindProcessId(const Text::Utf8String& proccname);
+	extern std::vector<DWORD> FindProcessId(const Text::Utf8String& proccname);
 	//获取进程文件路径
-	Text::Utf8String FindProcessFilename(DWORD processId);
+	extern Text::Utf8String FindProcessFilename(DWORD processId);
 	//关闭所有进程
-	int CloseProcess(const std::vector<DWORD>& processIds);
+	extern int CloseProcess(const std::vector<DWORD>& processIds);
 	//使用进程ID关闭进程
-	bool CloseProcess(DWORD processId);
+	extern bool CloseProcess(DWORD processId);
 	//获取进程是不是64位的
-	bool Is64BitPorcess(DWORD processId);
-	bool Is86BitPorcess(DWORD processId);
+	extern bool Is64BitPorcess(DWORD processId);
+	extern bool Is86BitPorcess(DWORD processId);
 	//获取当前进程ID
-	DWORD GetCurrentProcessId();
+	extern DWORD GetCurrentProcessId();
 	//获取系统信息
-	void SafeGetNativeSystemInfo(__out LPSYSTEM_INFO lpSystemInfo);
+	extern void SafeGetNativeSystemInfo(__out LPSYSTEM_INFO lpSystemInfo);
 	//获取系统位数
-	int GetSystemBits();
+	extern int GetSystemBits();
 	//获取计算机唯一识别码
-	std::string GetComputerID();
-
+	extern std::string GetComputerID();
+	//获取网卡相关
+	extern int GetAdptersInfo(std::vector<MyAdpterInfo>& adpterInfo);
+	/// <summary>
+	/// 获取磁盘可以用空间单位:GB
+	/// </summary>
+	/// <param name="path"></param>
+	/// <returns></returns>
+	extern double GetDiskFreeSize(const Text::Utf8String& path);
 };

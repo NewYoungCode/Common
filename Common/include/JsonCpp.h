@@ -13,8 +13,8 @@ private:
 	Json::Reader rd;
 public:
 	bool IsJson();
-	JObject(const Json::Value&right);
-	JObject& operator = (const Json::Value &other);
-	JObject(const std::string&jsonStr);
+	JObject(const Json::Value& right);
+	JObject& operator = (const Json::Value& other);
+	JObject(const std::string& jsonStr);
 };
 #endif

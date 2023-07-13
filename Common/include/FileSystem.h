@@ -6,25 +6,25 @@
 namespace File {
 	typedef std::string FileStream;
 	//创建文件
-	bool Create(const Text::Utf8String &filename);
+	extern bool Create(const Text::Utf8String& filename);
 	//删除文件
-	bool Delete(const Text::Utf8String &filename);
+	extern bool Delete(const Text::Utf8String& filename);
 	//判断文件是否存在
-	bool Exists(const Text::Utf8String& filename);
+	extern bool Exists(const Text::Utf8String& filename);
 	//文件移动或者改名
-	bool Move(const Text::Utf8String &oldname, const Text::Utf8String &newname);
+	extern bool Move(const Text::Utf8String& oldname, const Text::Utf8String& newname);
 	//读取文件并out返回
-	void ReadFile(const  Text::Utf8String &filename, FileStream * fileStream);
+	extern void ReadFile(const  Text::Utf8String& filename, FileStream* fileStream);
 	//写入文件
-	void WriteFile(const FileStream* fileStream, const Text::Utf8String & filename);
-	void Copy(const  Text::Utf8String &filename, const  Text::Utf8String &des_filename,bool cover=true);
-	Text::Utf8String CreateTempFile(const Text::Utf8String&filename);
+	extern void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename);
+	//拷贝文件
+	extern void Copy(const  Text::Utf8String& filename, const  Text::Utf8String& des_filename);
 }
 namespace Path {
 	//自己写的文件监控类
 	class FileWatcher {
 	private:
-		Text::Utf8String math = L"*.*";
+		Text::Utf8String math = "*.*";
 		Text::Utf8String path;
 		std::function<void(const Text::Utf8String& filename)> callback = NULL;
 		size_t sleep;
@@ -35,25 +35,25 @@ namespace Path {
 		~FileWatcher();
 	};
 	//创建路径  MultiDir:是否创建多级目录
-	bool Create(const Text::Utf8String &path);
+	extern bool Create(const Text::Utf8String& path);
 	//删除路径 如果存在子文件夹或者文件 将会递归删除
-	bool Delete(const Text::Utf8String& directoryName);
+	extern bool Delete(const Text::Utf8String& directoryName);
 	//通配符搜索文件
-	std::vector<Text::Utf8String> SearchFiles(const Text::Utf8String &path, const Text::Utf8String &pattern);
+	extern std::vector<Text::Utf8String> SearchFiles(const Text::Utf8String& path, const Text::Utf8String& pattern);
 	//检查路径是否存在
-	bool Exists(const Text::Utf8String &path);
+	extern bool Exists(const Text::Utf8String& path);
 	//获取文件名称(文件名称)
-	Text::Utf8String GetFileNameWithoutExtension(const Text::Utf8String &_filename);
+	extern Text::Utf8String GetFileNameWithoutExtension(const Text::Utf8String& _filename);
 	//获取文件目录名称(所在目录)
-	Text::Utf8String GetDirectoryName(const Text::Utf8String &_filename);
+	extern Text::Utf8String GetDirectoryName(const Text::Utf8String& _filename);
 	//获取文件名称+后缀
-	Text::Utf8String GetFileName(const Text::Utf8String &_filename);
+	extern Text::Utf8String GetFileName(const Text::Utf8String& _filename);
 	//获取文件后缀名(后缀名)
-	Text::Utf8String GetExtension(const Text::Utf8String &_filename);
+	extern Text::Utf8String GetExtension(const Text::Utf8String& _filename);
 	//获取进程所在绝对路径目录
-	Text::Utf8String	StartPath();
+	extern Text::Utf8String StartPath();
 	//获取进程所在绝对路径包含文件名称
-	Text::Utf8String	StartFileName();
+	extern Text::Utf8String StartFileName();
 };
 namespace FileSystem {
 	typedef enum : char {
@@ -64,7 +64,7 @@ namespace FileSystem {
 	struct FileInfo
 	{
 	private:
-		std::ifstream *fs = NULL;
+		std::ifstream* fs = NULL;
 	public:
 		unsigned long long StreamPos = 0;
 		struct _stat64 __stat;
@@ -73,7 +73,7 @@ namespace FileSystem {
 		Text::Utf8String FullName;
 		Text::Utf8String FileName;
 		bool ReadOnly = false;
-		size_t Read(char*_buf_, size_t _rdCount = 512) {
+		size_t Read(char* _buf_, size_t _rdCount = 512) {
 			size_t rdbufCount = _rdCount;
 			if (StreamPos + _rdCount >= __stat.st_size) {
 				rdbufCount = __stat.st_size - StreamPos;
@@ -82,7 +82,7 @@ namespace FileSystem {
 				return 0;
 			}
 			if (fs == NULL) {
-				fs = new std::ifstream(FullName, std::ios::binary);
+				fs = new std::ifstream(FullName.utf16(), std::ios::binary);
 			}
 			fs->seekg(StreamPos);
 			fs->read(_buf_, rdbufCount);
@@ -90,7 +90,7 @@ namespace FileSystem {
 			return rdbufCount;
 		}
 		FileInfo() {}
-		FileInfo(const Text::Utf8String&filename) {
+		FileInfo(const Text::Utf8String& filename) {
 			int status = _wstat64(filename.utf16().c_str(), &__stat);
 			if (status == 0 && (__stat.st_mode & S_IFREG) == S_IFREG) {
 				Extension = Path::GetExtension(filename);
@@ -113,6 +113,6 @@ namespace FileSystem {
 			}
 		}
 	};
-	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW&pNextInfo, std::vector<FileSystem::FileInfo>&result);
-	size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>&result, const Text::Utf8String& pattern = L"*.*");
+	extern void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result);
+	extern size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern = "*.*");
 }

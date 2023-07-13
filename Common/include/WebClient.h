@@ -72,11 +72,11 @@ public:
 	Proxy* Proxy = NULL;
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
-	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 20);
-	int HttpGet(const std::string& strUrl, std::string& strResponse, int nTimeout = 20);
-	int HttpPost(const std::string& strUrl, const std::string& data, std::string& respone, int nTimeout = 20);
-	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string& respone, int nTimeout = 20);
-	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string& respone, const ProgressFunc& progressCallback = NULL, int nTimeout = 30);
-	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout = 30);
+	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
+	int HttpGet(const std::string& strUrl, std::string& strResponse, int nTimeout = 60);
+	int HttpPost(const std::string& strUrl, const std::string& data, std::string& respone, int nTimeout = 60);
+	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string& respone, int nTimeout = 60);
+	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string& respone, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
+	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout = 60);
 };
 #endif

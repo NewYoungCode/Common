@@ -214,4 +214,10 @@ namespace Text {
 			}
 		}
 	}
+
+	Utf8String ToString(double number, int keepBitSize) {
+		std::ostringstream oss;
+		oss << std::fixed << std::setprecision(keepBitSize) << number;
+		return oss.str();
+	}
 };

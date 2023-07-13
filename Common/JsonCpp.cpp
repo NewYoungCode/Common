@@ -16,6 +16,7 @@ bool JObject::IsJson() {
 }
 
 JObject::JObject(const std::string&jsonStr) {
+	if (jsonStr.empty())return;
 	 this->b=rd.parse(jsonStr, *this);
 }
 #endif

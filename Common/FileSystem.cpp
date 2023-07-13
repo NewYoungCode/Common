@@ -9,12 +9,12 @@ namespace FileSystem {
 		filename = filename.Replace("\\", "/");
 		filename = filename.Replace("//", "/");
 		struct FileSystem::FileInfo fileInfo;
-		if (pNextInfo.dwFileAttributes == FILE_ATTRIBUTE_DIRECTORY) { //目录
+		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //目录
 			fileInfo.FileType = FileType::Directory;
 			fileInfo.FullName = filename;
 			fileInfo.FileName = filename;
 		}
-		else if (FILE_ATTRIBUTE_ARCHIVE & pNextInfo.dwFileAttributes) {
+		else if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
 			fileInfo.FileType = FileType::File;
 			fileInfo.FileName = pNextInfo.cFileName;
 			fileInfo.FullName = filename;
@@ -62,7 +62,7 @@ namespace File {
 	}
 	bool Create(const Text::Utf8String& filename) {
 		File::Delete(filename);
-		std::ofstream ofs(filename.utf16(), std::ios::app);
+		std::ofstream ofs(filename.utf16(), std::ios::binary | std::ios::app);
 		ofs.close();
 		return true;
 	}
@@ -93,34 +93,21 @@ namespace File {
 	void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename)
 	{
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.utf16(), std::ios::binary);
+		std::ofstream* ofs = new std::ofstream(filename.utf16(), std::ios::binary | std::ios::app);
 		ofs->write(fileStream->c_str(), fileStream->size());
 		ofs->flush();
 		ofs->close();
 		delete ofs;
 	}
-	void Copy(const Text::Utf8String& src_filename, const Text::Utf8String& des_filename, bool cover)
+	void Copy(const Text::Utf8String& src_filename, const Text::Utf8String& des_filename)
 	{
 		FileStream fileData;
 		File::ReadFile(src_filename, &fileData);//读取源文件
-		if (cover) {
-			File::Delete(des_filename);
-		}
+		File::Delete(des_filename);//直接覆盖
 		std::ofstream ofs(des_filename.utf16(), std::ios::binary | std::ios::app);//写入到新的文件
 		ofs.write(fileData.c_str(), fileData.size());
 		ofs.flush();
 		ofs.close();
-	}
-	Text::Utf8String CreateTempFile(const Text::Utf8String& filename)
-	{
-		WCHAR buf[MAX_PATH]{ 0 };
-		GetTempPathW(512, buf);
-		Text::Utf8String path = Text::Utf8String(buf) + "\\" + Path::GetFileNameWithoutExtension(Path::StartFileName());
-		Path::Create(path);
-
-		Text::Utf8String file = path + "\\" + filename;
-		File::Create(file);
-		return file;
 	}
 };
 namespace Path {
@@ -242,7 +229,7 @@ namespace Path {
 			{
 				continue;
 			}
-			if (pNextInfo.dwFileAttributes == FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
+			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
 				Text::Utf8String filename;
 				filename.append(path);
 				filename.append("\\");
