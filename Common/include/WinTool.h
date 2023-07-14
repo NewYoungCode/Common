@@ -93,4 +93,8 @@ namespace WinTool {
 	/// <param name="path"></param>
 	/// <returns></returns>
 	extern double GetDiskFreeSize(const Text::Utf8String& path);
+	//±‡¬Î º”√‹
+	extern void EnCode(const File::FileStream* fileData, File::FileStream* outData);
+	//Ω‚¬Î Ω‚√‹
+	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
 };

@@ -1,5 +1,5 @@
 //#pragma once
-//#include "General.h"
+//#include "Common.h"
 //#include <WinInet.h>
 //#include <Windows.h>
 //#pragma comment(lib,"wininet.lib")

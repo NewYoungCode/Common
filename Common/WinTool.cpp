@@ -249,7 +249,7 @@ namespace WinTool {
 			}, (LPARAM)&data);
 		return data.best_handle;
 	}
-	
+
 
 	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname) {
 
@@ -321,7 +321,7 @@ namespace WinTool {
 	{
 		WCHAR buf[MAX_PATH]{ 0 };
 		HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
-		DWORD result = ::GetModuleFileNameExW(hProcess, NULL, buf, sizeof(buf));
+		DWORD result = ::GetModuleFileNameExW(hProcess, NULL, buf, MAX_PATH);
 		CloseHandle(hProcess);
 		return buf;
 	}
@@ -358,12 +358,8 @@ namespace WinTool {
 		DWORD nLength = MAX_PATH;
 		LSTATUS status = RegGetValueW(subKey, NULL, appName.utf16().c_str(), REG_SZ, NULL, wBuff, &nLength);
 		if (status != ERROR_SUCCESS) {
-			bootstart = bootstart.Replace("\\", "/");
-			bootstart = bootstart.Replace("//", "/");
 			Text::Utf8String strDir = wBuff;
-			strDir = strDir.Replace("\\", "/");
-			strDir = strDir.Replace("//", "/");
-			if (bootstart == strDir) {
+			if (Path::GetFileName(strDir) == Path::GetFileName(bootstart)) {
 				bResult = true;
 			}
 		}
@@ -656,4 +652,30 @@ namespace WinTool {
 		}
 		return 0;
 	};
+	void EnCode(const File::FileStream* fileData, File::FileStream* outData) {
+		size_t stramSize = fileData->size();
+		char* memBytes = new char[stramSize];
+		for (size_t i = 0; i < stramSize; i++)
+		{
+			memBytes[i] = fileData->at(i) + 1;
+		}
+		outData->clear();
+		outData->reserve(stramSize);
+		outData->resize(stramSize);
+		::memcpy((void*)outData->c_str(), memBytes, stramSize);
+		delete[] memBytes;
+	}
+	void DeCode(const File::FileStream* fileData, File::FileStream* outData) {
+		size_t stramSize = fileData->size();
+		char* memBytes = new char[stramSize];
+		for (size_t i = 0; i < stramSize; i++)
+		{
+			memBytes[i] = fileData->at(i) - 1;
+		}
+		outData->clear();
+		outData->reserve(stramSize);
+		outData->resize(stramSize);
+		::memcpy((void*)outData->c_str(), memBytes, stramSize);
+		delete[] memBytes;
+	}
 }

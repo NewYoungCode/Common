@@ -25,7 +25,7 @@
 //	}
 //	headStr.append("\r\n\r\n");
 //	//::InternetSetOptionA(hintInternetOpen, INTERNET_OPTION_CONNECT_TIMEOUT, TEXT(""), NULL);//设置超时时
-//	HINTERNET hintInternetOpenUrl = InternetOpenUrl(hintInternetOpen, url.c_str(), headStr.c_str(), headStr.size(), INTERNET_FLAG_RELOAD, 0);
+//	HINTERNET hintInternetOpenUrl = InternetOpenUrlA(hintInternetOpen, url.c_str(), headStr.c_str(), headStr.size(), INTERNET_FLAG_RELOAD, 0);
 //	if (!hintInternetOpenUrl)
 //	{
 //		InternetCloseHandle(hintInternetOpen);
@@ -57,43 +57,43 @@
 //	return 0;
 //}
 //void HttpClient::Post(const std::string&url, std::string&respone) {
-//	LPCSTR lpszAccept[] =
-//	{
-//		// 响应头
-//		"*/*"
-//	};
-//	char szHeader[] =
-//	{
-//		// 如果提交的是表单,那么这个 MIME 一定要带!
-//		"Content-Type: application/x-www-form-urlencoded/r/n"
-//	};
-//	// 需要提交的数据就放下面这个变量
-//	char szPostData[] = "reginvcode=1b1733d743295385&action=reginvcodeck";
-//	// 寂寞党可以修改一下 UserAgent 哈哈,我喜欢 Chrome !
-//	HINTERNET hInet = InternetOpen("Mozilla/4.0 (Compatible; MSIE 6.0;)", INTERNET_OPEN_TYPE_DIRECT, NULL, INTERNET_INVALID_PORT_NUMBER, 0);
-//	// 第二个参数是主机的地址
-//	HINTERNET hConn = InternetConnect(hInet, "66.96.216.167", INTERNET_DEFAULT_HTTP_PORT, "", "", INTERNET_SERVICE_HTTP, 0, 1);
-//	// 第三个参数是 URL 的路径部分 你懂的,第五个参数是Referer,有些站判断来源地址,修改这里就好啦
-//	HINTERNET hPOSTs = HttpOpenRequest(hConn, "POST", "/register.php", HTTP_VERSION, "http://66.96.216.167/", lpszAccept, INTERNET_FLAG_DONT_CACHE, 1);
-//	BOOL bRequest = HttpSendRequest(hPOSTs, szHeader, lstrlen(szHeader), szPostData, lstrlen(szPostData));
-//	// 不需要接受回应的忽略下面的东东...
-//	char szBuffer[1024];
-//	DWORD dwByteRead = 0;
-//	// 防止乱码的方法就是建立完变量立即清空
-//	ZeroMemory(szBuffer, sizeof(szBuffer));
-//	// 循环读取缓冲区内容直到结束
-//	while (InternetReadFile(hPOSTs, szBuffer, sizeof(szBuffer), &dwByteRead) && dwByteRead > 0) {
-//		// 加入结束标记
-//		szBuffer[dwByteRead] = '/0';
-//		// 应该用变长字符串的 比如 AnsiString
+//	//LPCSTR lpszAccept[] =
+//	//{
+//	//	// 响应头
+//	//	"*/*"
+//	//};
+//	//char szHeader[] =
+//	//{
+//	//	// 如果提交的是表单,那么这个 MIME 一定要带!
+//	//	"Content-Type: application/x-www-form-urlencoded/r/n"
+//	//};
+//	//// 需要提交的数据就放下面这个变量
+//	//TCHAR szPostData[] = TEXT( "reginvcode=1b1733d743295385&action=reginvcodeck");
+//	//// 寂寞党可以修改一下 UserAgent 哈哈,我喜欢 Chrome !
+//	//HINTERNET hInet = InternetOpenW(L"Mozilla/4.0 (Compatible; MSIE 6.0;)", INTERNET_OPEN_TYPE_DIRECT, NULL, INTERNET_INVALID_PORT_NUMBER, 0);
+//	//// 第二个参数是主机的地址
+//	//HINTERNET hConn = InternetConnect(hInet, L"66.96.216.167", INTERNET_DEFAULT_HTTP_PORT, L"", L"", INTERNET_SERVICE_HTTP, 0, 1);
+//	//// 第三个参数是 URL 的路径部分 你懂的,第五个参数是Referer,有些站判断来源地址,修改这里就好啦
+//	//HINTERNET hPOSTs = HttpOpenRequestW(hConn, L"POST", L"/register.php", HTTP_VERSION, L"http://66.96.216.167/", lpszAccept, INTERNET_FLAG_DONT_CACHE, 1);
+//	//BOOL bRequest = HttpSendRequest(hPOSTs, szHeader, lstrlen(szHeader), szPostData, lstrlen(szPostData));
+//	//// 不需要接受回应的忽略下面的东东...
+//	//char szBuffer[1024];
+//	//DWORD dwByteRead = 0;
+//	//// 防止乱码的方法就是建立完变量立即清空
+//	//ZeroMemory(szBuffer, sizeof(szBuffer));
+//	//// 循环读取缓冲区内容直到结束
+//	//while (InternetReadFile(hPOSTs, szBuffer, sizeof(szBuffer), &dwByteRead) && dwByteRead > 0) {
+//	//	// 加入结束标记
+//	//	szBuffer[dwByteRead] = '/0';
+//	//	// 应该用变长字符串的 比如 AnsiString
 //
-//		// 清空缓冲区以备下一次读取
-//		ZeroMemory(szBuffer, sizeof(szBuffer));
+//	//	// 清空缓冲区以备下一次读取
+//	//	ZeroMemory(szBuffer, sizeof(szBuffer));
 //
 //
-//	}
-//	// 清理现场
-//	InternetCloseHandle(hPOSTs);
-//	InternetCloseHandle(hConn);
-//	InternetCloseHandle(hInet);
+//	//}
+//	//// 清理现场
+//	//InternetCloseHandle(hPOSTs);
+//	//InternetCloseHandle(hConn);
+//	//InternetCloseHandle(hInet);
 //}

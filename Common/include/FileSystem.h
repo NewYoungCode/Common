@@ -1,7 +1,8 @@
 #pragma once
 #include <sys/stat.h>
 #include <direct.h>
-#include "Common.h"
+#include <functional>
+#include <fstream>
 #include "Text.h"
 namespace File {
 	typedef std::string FileStream;
