@@ -1,4 +1,6 @@
 #include "HttpUtility.h"
+
+
 namespace HttpUtility {
 
 	unsigned char __base64__alphabet_map[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

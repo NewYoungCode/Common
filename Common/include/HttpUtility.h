@@ -1,5 +1,10 @@
 #pragma once
-#include "Common.h"
+#include <Windows.h>
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <assert.h>
 namespace HttpUtility {
 	// NOTE: This code came up with the following stackoverflow post:
 	// https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c

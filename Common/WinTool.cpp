@@ -107,7 +107,7 @@ namespace WinTool {
 	}
 
 #ifndef _WIN64
-	BOOL GetCPUID(char* szCPUID)
+	std::string GetCPUID()
 	{
 		unsigned long s1, s2;
 		unsigned char vendor_id[] = "------------";
@@ -141,13 +141,30 @@ namespace WinTool {
 			mov s2, ecx
 		}
 		sprintf(CPUID2, "%08X%08X", s1, s2);
-		//	strcpy(szCPUID, (const char *)vendor_id);
-		//	strcat(szCPUID, "{");
-		strcat(szCPUID, CPUID1);
-		strcat(szCPUID, CPUID2);
-		//	strcat(szCPUID, "}");
-		return TRUE;
-
+		std::string cpuid1 = CPUID1;
+		bool ok1 = false;
+		for (auto& ch : cpuid1) {
+			if (ch != '0') {
+				ok1 = true;
+				break;
+			}
+		}
+		std::string cpuid2 = CPUID2;
+		bool ok2 = false;
+		for (auto& ch : cpuid2) {
+			if (ch != '0') {
+				ok2 = true;
+				break;
+			}
+		}
+		std::string cpuid3;
+		if (ok1) {
+			cpuid3 += cpuid1;
+		}
+		if (ok2) {
+			cpuid3 += cpuid2;
+		}
+		return cpuid3;
 	}
 #endif // #ifndef _WIN64
 
@@ -197,7 +214,7 @@ namespace WinTool {
 #ifdef _WIN64
 			dwResult = FormatError(ERROR_NOT_SUPPORTED); break;
 #else
-			GetCPUID(szCode);
+			//GetCPUID(szCode);
 			szCode[32] = 0;
 #endif
 			//////////////////////////////////////////////////////////////////////////
@@ -219,12 +236,45 @@ namespace WinTool {
 
 		return dwResult;
 	}
+	std::string getMachineGuid() {
+		HKEY hKey;
+		std::string machineGuid;
 
+		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+			L"SOFTWARE\\Microsoft\\Cryptography",
+			0,
+			KEY_READ,
+			&hKey) == ERROR_SUCCESS) {
+			BYTE guidBytes[256];
+			DWORD bufferSize = sizeof(guidBytes);
+
+			if (RegQueryValueEx(hKey,
+				L"MachineGuid",
+				0,
+				NULL,
+				guidBytes,
+				&bufferSize) == ERROR_SUCCESS) {
+				machineGuid = std::string(reinterpret_cast<char*>(guidBytes));
+			}
+			RegCloseKey(hKey);
+		}
+		return machineGuid;
+	}
 	std::string GetComputerID()
 	{
-		CHAR szCUC[32] = { 0 };
-		__GetClientUniqueCode(szCUC);
-		return std::string(szCUC);
+		std::string mac;
+		std::vector<MyAdpterInfo> adpterInfo;
+		GetAdptersInfo(adpterInfo);
+		mac = adpterInfo.size() > 0 ? adpterInfo[0].MacAddress : "";
+		Text::Utf8String u8Str = mac + GetCPUID();
+		u8Str = u8Str.Replace("-", "");
+		u8Str = HttpUtility::Md5Encode(u8Str);
+		//if (u8Str.size() >= 32) {
+		//	std::string str1 = u8Str.substr(0, 16);
+		//	//std::string str2 = u8Str.substr(17, 16);
+		//	return str1;
+		//}
+		return u8Str;
 	}
 
 	DWORD GetCurrentProcessId() {
