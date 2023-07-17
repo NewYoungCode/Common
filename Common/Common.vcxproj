@@ -25,6 +25,7 @@
     <ClCompile Include="HttpUtility.cpp" />
     <ClCompile Include="JsonCpp.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SafeConfig.cpp" />
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="Time.cpp" />
     <ClCompile Include="WebClient.cpp" />
@@ -43,6 +44,7 @@
     <ClInclude Include="include\OrcaleClient.hpp" />
     <ClInclude Include="include\os.h" />
     <ClInclude Include="include\Regedit.hpp" />
+    <ClInclude Include="include\SafeConfig.h" />
     <ClInclude Include="include\Socket.hpp" />
     <ClInclude Include="include\Text.h" />
     <ClInclude Include="include\ThreadPool.hpp" />

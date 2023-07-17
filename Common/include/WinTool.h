@@ -80,8 +80,6 @@ namespace WinTool {
 	extern bool Is86BitPorcess(DWORD processId);
 	//获取当前进程ID
 	extern DWORD GetCurrentProcessId();
-	//获取系统信息
-	extern void SafeGetNativeSystemInfo(__out LPSYSTEM_INFO lpSystemInfo);
 	//获取系统位数
 	extern int GetSystemBits();
 	//获取计算机唯一识别码
@@ -98,4 +96,43 @@ namespace WinTool {
 	extern void EnCode(const File::FileStream* fileData, File::FileStream* outData);
 	//解码 解密
 	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
+	/// <summary>
+	/// 执行cmd并返回打印的字符
+	/// </summary>
+	/// <param name="cmdStr"></param>
+	/// <returns></returns>
+	extern Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr);
+	/// <summary>
+	/// 获取主板序唯一标识
+	/// </summary>
+	/// <returns></returns>
+	extern  Text::Utf8String GetBiosUUID();
+	/// <summary>
+	/// 获取CPU序列号
+	/// </summary>
+	/// <returns></returns>
+	extern Text::Utf8String GetCPUSerialNumber();
+	/// <summary>
+	/// 获取硬盘序列号
+	/// </summary>
+	/// <returns></returns>
+	extern  Text::Utf8String GetDiskSerialNumber();
+	/// <summary>
+	/// 获取首选网卡的mac地址
+	/// </summary>
+	/// <returns></returns>
+	extern  Text::Utf8String GetMacAddress();
+	/// <summary>
+	/// 获取操作系统的版本号
+	/// </summary>
+	/// <returns></returns>
+	extern Text::Utf8String GetWinVersion();
+	/// <summary>
+	/// 选择目录
+	/// </summary>
+	/// <param name="ownerWnd"></param>
+	/// <param name="defaultPath"></param>
+	/// <param name="title"></param>
+	/// <returns></returns>
+	extern Text::Utf8String ShowFolderDialog(HWND ownerWnd = NULL, Text::Utf8String defaultPath = "", Text::Utf8String title = "Select a directory");
 };

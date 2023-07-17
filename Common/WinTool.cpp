@@ -35,245 +35,16 @@ namespace WinTool {
 		{
 			return 64;
 		}
-		return 32;
-	}
-	void __Encrypt(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
-	{
-		DWORD i;
-		for (i = 0; i < dwInsize; i++)
-		{
-			WORD s = (WORD)(i * i * 7 % 237 + 1);
-			*(((WORD*)lpOutbuf) + i) = (*(((BYTE*)lpInbuf) + i) + (BYTE)(i % 255)) & 0xff;
-			*(((WORD*)lpOutbuf) + i) *= s;
-		}
-		*lpOutsize = dwInsize * 2;
+		return 86;
 	}
 
-	void __Bin2Text(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
-	{
-		DWORD i = 0;
-		BYTE* tmpoutbuf = (BYTE*)lpOutbuf;
-		for (i = 0; i < dwInsize; i++)
-		{
-			BYTE inchar = *(((BYTE*)lpInbuf) + i);
-			*(tmpoutbuf + i * 2) = ((inchar & 0xf) > 9) ? ((inchar & 0xf) - 10 + 'A') : ((inchar & 0xf) + '0');
-			*(tmpoutbuf + i * 2 + 1) = (((inchar >> 4) & 0xf) > 9) ? (((inchar >> 4) & 0xf) - 10 + 'A') : (((inchar >> 4) & 0xf) + '0');
-		}
-		*lpOutsize = dwInsize * 2;
-
-	}
-
-	void __Text16To64(void* lpBuf, DWORD dwSize)
-	{
-		DWORD i;
-		for (i = 0; i < dwSize; i++)
-		{
-
-			BYTE	dwMul = (BYTE)((i * 237) >> 1) % 4;
-			BYTE	dwAdd = (BYTE)((i * 237) >> 2) % 4;
-			BYTE* bSure = ((BYTE*)lpBuf) + i;
-			*bSure -= '0';
-			if (*bSure > 9)*bSure -= 'A' - '9' - 1;
-			*bSure *= (dwMul + 1);
-			*bSure += dwAdd;
-			if (*bSure < 10) *bSure += '0';
-			else if (*bSure < 36)*bSure += 'A' - 10;
-			else if (*bSure < 62)*bSure += 'a' - 36;
-			else if (*bSure == 62)*bSure = ':';
-			else if (*bSure == 63)*bSure = '_';
-		}
-	}
-
-	BOOL __EncryptData(void* lpInbuf, DWORD dwInsize, void* lpOutbuf, DWORD* lpOutsize)
-	{
-		void* tmpbuf = malloc(dwInsize * 2);
-		DWORD outsize;
-		if (tmpbuf == NULL)
-			return FALSE;
-		DWORD i, j;
-		__Encrypt(lpInbuf, dwInsize, tmpbuf, &outsize);
-		for (i = 0; i < outsize; i++)
-		{
-			for (j = 0; j < outsize; j++)
-			{
-				if (i != j)*(((BYTE*)tmpbuf) + j) += *(((BYTE*)tmpbuf) + i);
-			}
-		}
-		__Bin2Text(tmpbuf, outsize, lpOutbuf, lpOutsize);
-		__Text16To64(lpOutbuf, *lpOutsize);
-		free(tmpbuf);
-		return TRUE;
-
-	}
-
-#ifndef _WIN64
-	std::string GetCPUID()
-	{
-		unsigned long s1, s2;
-		unsigned char vendor_id[] = "------------";
-		char sel;
-		sel = '1';
-		char CPUID1[32];
-		char CPUID2[32];
-		memset(CPUID1, 0, sizeof(CPUID1));
-		memset(CPUID2, 0, sizeof(CPUID2));
-		__asm {
-			xor eax, eax
-			cpuid
-			mov dword ptr vendor_id, ebx
-			mov dword ptr vendor_id[+4], edx
-			mov dword ptr vendor_id[+8], ecx
-		}
-		__asm {
-			mov eax, 01h
-			xor edx, edx
-			cpuid
-			mov s1, edx
-			mov s2, eax
-		}
-		sprintf(CPUID1, "%08X%08X", s1, s2);
-		__asm {
-			mov eax, 03h
-			xor ecx, ecx
-			xor edx, edx
-			cpuid
-			mov s1, edx
-			mov s2, ecx
-		}
-		sprintf(CPUID2, "%08X%08X", s1, s2);
-		std::string cpuid1 = CPUID1;
-		bool ok1 = false;
-		for (auto& ch : cpuid1) {
-			if (ch != '0') {
-				ok1 = true;
-				break;
-			}
-		}
-		std::string cpuid2 = CPUID2;
-		bool ok2 = false;
-		for (auto& ch : cpuid2) {
-			if (ch != '0') {
-				ok2 = true;
-				break;
-			}
-		}
-		std::string cpuid3;
-		if (ok1) {
-			cpuid3 += cpuid1;
-		}
-		if (ok2) {
-			cpuid3 += cpuid2;
-		}
-		return cpuid3;
-	}
-#endif // #ifndef _WIN64
-
-	DWORD __GetClientUniqueCode(OUT LPSTR lpszCUC)
-	{
-		DWORD dwResult = 0;
-		//	DWORD dwSysDiskNum = 0;
-		//	PIDINFO lpID = NULL;
-		TCHAR szPath[MAX_PATH] = { 0 };
-
-		do
-		{
-			if (NULL == lpszCUC)
-			{
-				dwResult = FormatError(ERROR_INVALID_PARAMETER); break;
-			}
-			*lpszCUC = 0;
-			//////////////////////////////////////////////////////////////////////////
-	/*		DWORD dwBufBytes = max(sizeof(IDINFO),8192);
-			lpID = (PIDINFO)malloc(dwBufBytes);
-			if ( NULL == lpID )
-			{
-				dwResult = FormatError(ERROR_NOT_ENOUGH_MEMORY); break;
-			}
-			//////////////////////////////////////////////////////////////////////////
-			::GetWindowsDirectory( szPath, MAX_PATH-1 );
-			_tcsupr( szPath );
-			TCHAR cLetter = szPath[0];
-			sprintf( szPath, "\\\\.\\%C:", cLetter );
-			dwResult = GetDiskNumber( szPath, &dwSysDiskNum, NULL, NULL, NULL );
-			if ( dwResult )
-			{
-				FormatError(dwResult); break;
-			}
-			dwResult = GetDiskIdInfo(dwSysDiskNum, lpID);
-			if ( dwResult )
-			{
-				FormatError(dwResult); break;
-			}
-			//////////////////////////////////////////////////////////////////////////
-			CHAR szCode[64] = {0};
-			RtlZeroMemory(szCode, sizeof(szCode));
-			strcpy(szCode, lpID->sSerialNumber);
-			szCode[32] = 0;
-	*/		//////////////////////////////////////////////////////////////////////////
-			CHAR szCode[64] = { 0 };
-#ifdef _WIN64
-			dwResult = FormatError(ERROR_NOT_SUPPORTED); break;
-#else
-			//GetCPUID(szCode);
-			szCode[32] = 0;
-#endif
-			//////////////////////////////////////////////////////////////////////////
-			CHAR szData[MAX_PATH] = { 0 };
-			RtlZeroMemory(szData, sizeof(szData));
-			DWORD outsize = 0;
-			__EncryptData(szCode, strlen(szCode), szData, &outsize);
-			//////////////////////////////////////////////////////////////////////////
-			RtlZeroMemory(szCode, sizeof(szCode));
-			for (int i = 0; i < 32; i++)
-			{
-				szCode[i] = szData[i * outsize / 32];
-				if (szCode[i] >= 'a' && szCode[i] <= 'z')szCode[i] -= 'a' - 'A';
-			}
-			szCode[16] = 0;
-			strcpy(lpszCUC, szCode);
-		} while (0);
-		//	if ( lpID )	free(lpID);
-
-		return dwResult;
-	}
-	std::string getMachineGuid() {
-		HKEY hKey;
-		std::string machineGuid;
-
-		if (RegOpenKeyEx(HKEY_LOCAL_MACHINE,
-			L"SOFTWARE\\Microsoft\\Cryptography",
-			0,
-			KEY_READ,
-			&hKey) == ERROR_SUCCESS) {
-			BYTE guidBytes[256];
-			DWORD bufferSize = sizeof(guidBytes);
-
-			if (RegQueryValueEx(hKey,
-				L"MachineGuid",
-				0,
-				NULL,
-				guidBytes,
-				&bufferSize) == ERROR_SUCCESS) {
-				machineGuid = std::string(reinterpret_cast<char*>(guidBytes));
-			}
-			RegCloseKey(hKey);
-		}
-		return machineGuid;
-	}
 	std::string GetComputerID()
 	{
-		std::string mac;
-		std::vector<MyAdpterInfo> adpterInfo;
-		GetAdptersInfo(adpterInfo);
-		mac = adpterInfo.size() > 0 ? adpterInfo[0].MacAddress : "";
-		Text::Utf8String u8Str = mac + GetCPUID();
-		u8Str = u8Str.Replace("-", "");
+		auto cpuId = GetCPUSerialNumber();
+		auto biosId = GetBiosUUID();
+		auto mac = GetMacAddress();
+		Text::Utf8String u8Str = biosId + "_" + cpuId + "_" + mac;
 		u8Str = HttpUtility::Md5Encode(u8Str);
-		//if (u8Str.size() >= 32) {
-		//	std::string str1 = u8Str.substr(0, 16);
-		//	//std::string str2 = u8Str.substr(17, 16);
-		//	return str1;
-		//}
 		return u8Str;
 	}
 
@@ -727,5 +498,149 @@ namespace WinTool {
 		outData->resize(stramSize);
 		::memcpy((void*)outData->c_str(), memBytes, stramSize);
 		delete[] memBytes;
+	}
+
+	Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr) {
+		HANDLE hReadPipe = NULL; //读取管道
+		HANDLE hWritePipe = NULL; //写入管道	
+		PROCESS_INFORMATION pi{ 0 }; //进程信息	
+		STARTUPINFO	si{ 0 };	//控制命令行窗口信息
+		SECURITY_ATTRIBUTES sa{ 0 }; //安全属性
+		pi.hProcess = NULL;
+		pi.hThread = NULL;
+		si.cb = sizeof(STARTUPINFO);
+		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+		sa.lpSecurityDescriptor = NULL;
+		sa.bInheritHandle = TRUE;
+		char* szBuff = NULL;
+		do
+		{
+			//1.创建管道
+			if (!::CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
+				break;
+			}
+			//2.设置命令行窗口的信息为指定的读写管道
+			::GetStartupInfoW(&si);
+			si.hStdError = hWritePipe;
+			si.hStdOutput = hWritePipe;
+			si.wShowWindow = SW_HIDE; //隐藏命令行窗口
+			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
+			//3.创建获取命令行的进程
+			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.utf16().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+				break;
+			}
+			//4.等待读取返回的数据
+			::WaitForSingleObject(pi.hProcess, 1000 * 60);//等一分钟
+			size_t buffSize = ::GetFileSize(hReadPipe, NULL);
+			szBuff = new char[buffSize + 1]{ 0 };
+			unsigned long size = 0;
+			if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
+				break;
+			}
+		} while (false);
+		//清理工作
+		if (hWritePipe) {
+			CloseHandle(hWritePipe);
+		}
+		if (hReadPipe) {
+			CloseHandle(hReadPipe);
+		}
+		if (pi.hProcess) {
+			CloseHandle(pi.hProcess);
+		}
+		if (pi.hThread) {
+			CloseHandle(pi.hThread);
+		}
+		Text::Utf8String outResult(szBuff);
+		if (szBuff) {
+			delete[] szBuff;
+		}
+		return outResult;
+	}
+	Text::Utf8String GetBiosUUID() {
+		Text::Utf8String resultStr = ExecuteCmdLine("wmic csproduct get UUID");
+		resultStr = resultStr.Replace("UUID", "");
+		resultStr = resultStr.Replace(" ", "");
+		resultStr = resultStr.Replace("\r", "");
+		resultStr = resultStr.Replace("\n", "");
+		return resultStr;
+	}
+	Text::Utf8String GetCPUSerialNumber() {
+		Text::Utf8String resultStr = ExecuteCmdLine("wmic cpu get ProcessorId");
+		resultStr = resultStr.Replace("ProcessorId", "");
+		resultStr = resultStr.Replace(" ", "");
+		resultStr = resultStr.Replace("\r", "");
+		resultStr = resultStr.Replace("\n", "");
+		return resultStr;
+	}
+	Text::Utf8String GetDiskSerialNumber() {
+		Text::Utf8String resultStr = ExecuteCmdLine("wmic diskdrive get SerialNumber");
+		resultStr = resultStr.Replace("SerialNumber", "");
+		resultStr = resultStr.Replace(" ", "");
+		resultStr = resultStr.Replace("\r", "");
+		resultStr = resultStr.Replace("\n", "");
+		return resultStr;
+	}
+	Text::Utf8String GetMacAddress()
+	{
+		std::vector<MyAdpterInfo> adpterInfo;
+		GetAdptersInfo(adpterInfo);
+		return adpterInfo.size() > 0 ? adpterInfo[0].MacAddress : "";
+	}
+
+	Text::Utf8String GetWinVersion()
+	{
+		Text::Utf8String vname = "UnKnow";
+		typedef void(WINAPI* NTPROC)(DWORD*, DWORD*, DWORD*);
+		HINSTANCE hinst = NULL;;
+		DWORD dwMajor, dwMinor, dwBuildNumber;
+		NTPROC proc = NULL;
+		if ((hinst = ::LoadLibraryW(L"ntdll.dll")) && (proc = (NTPROC)GetProcAddress(hinst, "RtlGetNtVersionNumbers"))) {
+			proc(&dwMajor, &dwMinor, &dwBuildNumber);
+			dwBuildNumber = (DWORD)((LOWORD(dwBuildNumber)));
+			if (dwMajor == 10 && dwMinor == 0 && dwBuildNumber >= 22000)	//win 11
+			{
+				vname = "Windows 11";
+			}
+			else if (dwMajor == 10 && dwMinor == 0) {
+				vname = "Windows 10";
+			}
+			else if (dwMajor == 6 && dwMinor == 3)
+			{
+				vname = "Windows 8.1";
+			}
+			else if (dwMajor == 6 && dwMinor == 2) {
+				vname = "Windows 8";
+			}
+			else if (dwMajor == 6 && dwMinor == 1) {
+				vname = "Windows 7";
+			}
+			vname += "_x" + std::to_string(GetSystemBits()) + " " + std::to_string(dwBuildNumber);
+		}
+		if (hinst) {
+			::FreeLibrary(hinst);
+		}
+		return vname;
+	}
+
+	Text::Utf8String ShowFolderDialog(HWND ownerWnd, Text::Utf8String defaultPath, Text::Utf8String title) {
+		WCHAR selectedPath[MAX_PATH]{ 0 };
+		BROWSEINFOW browseInfo{ 0 };
+		browseInfo.hwndOwner = ownerWnd;
+		browseInfo.pszDisplayName = selectedPath;
+		auto wTitle = title.utf16();
+		browseInfo.lpszTitle = wTitle.c_str();
+		//设置根目录
+		LPITEMIDLIST pidlRoot;
+		::SHParseDisplayName(defaultPath.utf16().c_str(), NULL, &pidlRoot, 0, NULL);
+		browseInfo.pidlRoot = pidlRoot;
+		browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
+		LPITEMIDLIST itemIdList = SHBrowseForFolderW(&browseInfo);
+		if (itemIdList != nullptr) {
+			SHGetPathFromIDListW(itemIdList, selectedPath);//设置路径
+			CoTaskMemFree(itemIdList);//清理
+			return selectedPath;
+		}
+		return selectedPath;
 	}
 }
