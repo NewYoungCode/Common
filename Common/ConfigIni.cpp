@@ -7,11 +7,13 @@ DWORD ConfigIni::GetValue(const Text::Utf8String& section, const Text::Utf8Strin
 	WCHAR* buff = new WCHAR[buffSize]{ 0 };//数据量
 	long char_count = ::GetPrivateProfileStringW(_section.utf16().c_str(), key.utf16().c_str(), defaultValue.utf16().c_str(), buff, buffSize - 1, filename.utf16().c_str());
 	outResult = buff;
-	delete buff;
+	delete[] buff;
 	return char_count;
 }
 bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String& key, const Text::Utf8String& Value, const Text::Utf8String& absoluteFilename)const {
-
+	if (!File::Exists(filename)) {
+		File::Create(filename);
+	}
 	Text::Utf8String _section = section;
 	if (section.empty()) {
 		_section = this->section;
@@ -19,29 +21,17 @@ bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String
 	return ::WritePrivateProfileStringW(_section.utf16().c_str(), key.utf16().c_str(), Value.utf16().c_str(), absoluteFilename.utf16().c_str()) == 0 ? false : true;
 }
 
-ConfigIni::ConfigIni() {
-
-}
 //FileName //一定要绝对路径
-ConfigIni::ConfigIni(const Text::Utf8String& filename, const Text::Utf8String& defaultSection, bool create, size_t buffSize) {
+ConfigIni::ConfigIni(const Text::Utf8String& filename, const Text::Utf8String& defaultSection, size_t buffSize) {
 	this->buffSize = buffSize;
 	this->filename = filename;
 	this->section = defaultSection;
-
-	auto wStr = filename.utf16();
-
-	if (!File::Exists(filename) && create) {
-		File::Create(filename);
-	}
 }
 
 void ConfigIni::SetDefaultSection(const Text::Utf8String section) {
 	this->section = section;
 }
 
-bool  ConfigIni::DeleteKey(const Text::Utf8String& key, const Text::Utf8String& section) {
-	return ::WritePrivateProfileStringW(!section.empty() ? section.utf16().c_str() : this->section.utf16().c_str(), key.utf16().c_str(), NULL, filename.utf16().c_str()) == 0 ? false : true;
-}
 
 //读取ini中的字符
 Text::Utf8String  ConfigIni::ReadString(const Text::Utf8String& key, const Text::Utf8String& defaultValue, const Text::Utf8String& section) const {
