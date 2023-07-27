@@ -55,6 +55,17 @@ namespace Path {
 	extern Text::Utf8String StartPath();
 	//获取进程所在绝对路径包含文件名称
 	extern Text::Utf8String StartFileName();
+#undef GetTempPath
+	/// <summary>
+	/// 获取应用程序的临时目录
+	/// </summary>
+	/// <returns></returns>
+	extern Text::Utf8String GetTempPath();
+	/// <summary>
+	/// 获取应用程序数据存储目录 C:/Users/%s/AppData/Local/%s
+	/// </summary>
+	/// <returns></returns>
+	extern Text::Utf8String GetAppDataPath();
 };
 namespace FileSystem {
 	typedef enum : char {
