@@ -24,6 +24,7 @@
     <ClCompile Include="HttpClient.cpp" />
     <ClCompile Include="HttpUtility.cpp" />
     <ClCompile Include="JsonCpp.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SafeConfig.cpp" />
     <ClCompile Include="Text.cpp" />
@@ -40,6 +41,7 @@
     <ClInclude Include="include\HttpClient.hpp" />
     <ClInclude Include="include\HttpUtility.h" />
     <ClInclude Include="include\JsonCpp.h" />
+    <ClInclude Include="include\Log.h" />
     <ClInclude Include="include\MySqlClient.hpp" />
     <ClInclude Include="include\OrcaleClient.hpp" />
     <ClInclude Include="include\os.h" />

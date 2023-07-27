@@ -280,9 +280,33 @@ namespace Path {
 	Text::Utf8String StartPath() {
 		return Path::GetDirectoryName(StartFileName());
 	}
+	Text::Utf8String __FileSytem_StartFileName;
 	Text::Utf8String StartFileName() {
-		WCHAR exeFullPath[MAX_PATH]{ 0 };
-		::GetModuleFileNameW(NULL, exeFullPath, MAX_PATH);
-		return Text::Utf8String(exeFullPath);
+		if (__FileSytem_StartFileName.empty()) {
+			WCHAR exeFullPath[MAX_PATH]{ 0 };
+			::GetModuleFileNameW(NULL, exeFullPath, MAX_PATH);
+			__FileSytem_StartFileName = exeFullPath;
+		}
+		return __FileSytem_StartFileName;
+	}
+	Text::Utf8String GetTempPath()
+	{
+		WCHAR user[256]{ 0 };
+		DWORD len = 256;
+		::GetUserNameW(user, &len);
+		WCHAR temPath[256]{ 0 };
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).utf16().c_str());
+		Path::Create(temPath);
+		return Text::Utf8String(temPath);
+	}
+	Text::Utf8String GetAppDataPath()
+	{
+		WCHAR user[256]{ 0 };
+		DWORD len = 256;
+		::GetUserNameW(user, &len);
+		WCHAR localPath[256]{ 0 };
+		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).utf16().c_str());
+		Path::Create(localPath);
+		return Text::Utf8String(localPath);
 	}
 };
