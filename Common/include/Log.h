@@ -16,6 +16,7 @@ namespace Log {
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
 	inline void Info(const Text::Utf8String& formatStr, T ...args) {
+		if (!Enable)return;
 		__logMtx.lock();
 		int size = 1024 * 1024 * 5;//5MµÄÄÚ´æ
 		char* buf = new char[size] { 0 };
