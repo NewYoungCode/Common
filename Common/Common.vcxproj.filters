@@ -77,9 +77,6 @@
     <ClInclude Include="include\OrcaleClient.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="include\os.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="include\Regedit.hpp">
       <Filter>头文件</Filter>
     </ClInclude>

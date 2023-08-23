@@ -41,8 +41,10 @@ WebClient::~WebClient() {
 }
 size_t __g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone) {
 	size_t count = size * nmemb;
-	std::string* str = (std::string*)respone;
-	(*str).append(contents, count);
+	if (respone) {
+		std::string* str = (std::string*)respone;
+		(*str).append(contents, count);
+	}
 	//CURLE_WRITE_ERROR
 	return count;
 };
@@ -70,13 +72,15 @@ int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 
 	}
 	return 0;
 }
-CURL* WebClient::Init(const std::string& strUrl, std::string& strResponse, int nTimeout) {
-	strResponse.clear();
+CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int nTimeout) {
+	if (strResponse) {
+		strResponse->clear();
+	}
 	CURL* curl = curl_easy_init();
 	if (!curl) {
 		return curl;
 	}
-	this->ResponseData = &strResponse;
+	this->ResponseData = strResponse;
 	if (Proxy) {
 		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, Proxy->curl_proxytype); //代理模式
 		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy->host.c_str()); //代理服务器地址
@@ -137,7 +141,7 @@ long WebClient::CleanUp(void* curl, int code) {
 	curl_easy_cleanup(curl);
 	return RESPONSE_CODE;
 };
-int WebClient::HttpGet(const std::string& strUrl, std::string& strResponse, int nTimeout) {
+int WebClient::HttpGet(const std::string& strUrl, std::string* strResponse, int nTimeout) {
 	CURL* curl = Init(strUrl, strResponse, nTimeout);
 	if (!curl) {
 		return CURLE_FAILED_INIT;
@@ -145,7 +149,7 @@ int WebClient::HttpGet(const std::string& strUrl, std::string& strResponse, int 
 	CURLcode code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 };
-int WebClient::HttpPost(const std::string& url, const std::string& data, std::string& respone, int _timeout) {
+int WebClient::HttpPost(const std::string& url, const std::string& data, std::string* respone, int _timeout) {
 
 	CURL* curl = Init(url, respone, _timeout);
 	if (!curl) {
@@ -156,7 +160,7 @@ int WebClient::HttpPost(const std::string& url, const std::string& data, std::st
 	CURLcode code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 };
-int WebClient::UploadFile(const std::string& url, const std::string& filename, const std::string& field, std::string& respone, const ProgressFunc& progressCallback, int _timeout) {
+int WebClient::UploadFile(const std::string& url, const std::string& filename, const std::string& field, std::string* respone, const ProgressFunc& progressCallback, int _timeout) {
 
 	CURL* curl = Init(url, respone, _timeout);
 	if (!curl) {
@@ -182,7 +186,7 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 
 	return CleanUp(curl, code);
 };
-int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string& respone, int nTimeout) {
+int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* respone, int nTimeout) {
 
 	AddHeader("Content-Type", "multipart/form-data");
 	CURL* curl = Init(strUrl, respone, nTimeout);
@@ -216,7 +220,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 };
 int WebClient::DownloadFile(const std::string& url, const std::wstring& _filename, const ProgressFunc& progressCallback, int nTimeout) {
 	std::string resp;
-	CURL* curl = Init(url, resp, nTimeout);
+	CURL* curl = Init(url,&resp, nTimeout);
 	if (!curl) {
 		return CURLE_FAILED_INIT;
 	}
@@ -236,7 +240,7 @@ int WebClient::DownloadFile(const std::string& url, const std::wstring& _filenam
 int WebClient::FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout) {
 
 	std::string resp;
-	CURL* curl = Init(strUrl, resp, nTimeout);
+	CURL* curl = Init(strUrl, &resp, nTimeout);
 	if (!curl) {
 		return CURLE_FAILED_INIT;
 	}
