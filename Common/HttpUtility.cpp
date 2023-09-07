@@ -15,7 +15,7 @@ namespace HttpUtility {
 		41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 255, 255, 255, 255, 255
 	};
 
-	std::string base64_encode(const unsigned char *text, unsigned int text_len)
+	std::string base64_encode(const unsigned char* text, unsigned int text_len)
 	{
 		unsigned int i, j;
 		std::string base64Str;
@@ -46,7 +46,7 @@ namespace HttpUtility {
 		}
 		return base64Str;
 	}
-	std::string  base64_decode(const unsigned char *code, unsigned int code_len)
+	std::string  base64_decode(const unsigned char* code, unsigned int code_len)
 	{
 		//assert();  //如果它的条件返回错误，则终止程序执行。4的倍数。
 		if ((code_len & 0x03) == 0) {
@@ -86,63 +86,6 @@ namespace HttpUtility {
 		return str;
 	}
 
-
-	unsigned char ToHex(unsigned char x)
-	{
-		return  x > 9 ? x + 55 : x + 48;
-	}
-	unsigned char FromHex(unsigned char x)
-	{
-		unsigned char y;
-		if (x >= 'A' && x <= 'Z') y = x - 'A' + 10;
-		else if (x >= 'a' && x <= 'z') y = x - 'a' + 10;
-		else if (x >= '0' && x <= '9') y = x - '0';
-		else assert(0);
-		return y;
-	}
-	std::string UrlEncode(const std::string& str)
-	{
-		std::string strTemp = "";
-		size_t length = str.length();
-		for (size_t i = 0; i < length; i++)
-		{
-			if (isalnum((unsigned char)str[i]) ||
-				(str[i] == '-') ||
-				(str[i] == '_') ||
-				(str[i] == '.') ||
-				(str[i] == '~'))
-				strTemp += str[i];
-			else if (str[i] == ' ')
-				strTemp += "+";
-			else
-			{
-				strTemp += '%';
-				strTemp += ToHex((unsigned char)str[i] >> 4);
-				strTemp += ToHex((unsigned char)str[i] % 16);
-			}
-		}
-		return strTemp;
-	}
-	std::string UrlDecode(const std::string& str)
-	{
-		std::string strTemp = "";
-		size_t length = str.length();
-		for (size_t i = 0; i < length; i++)
-		{
-			if (str[i] == '+') strTemp += ' ';
-			else if (str[i] == '%')
-			{
-				assert(i + 2 < length);
-				unsigned char high = FromHex((unsigned char)str[++i]);
-				unsigned char low = FromHex((unsigned char)str[++i]);
-				strTemp += high * 16 + low;
-			}
-			else strTemp += str[i];
-		}
-		return strTemp;
-	}
-
-
 	typedef unsigned char byte;
 	typedef unsigned int uint32;
 	typedef unsigned int uint4;
@@ -153,29 +96,29 @@ namespace HttpUtility {
 		class MD5 {
 		public:
 			MD5();
-			MD5(const void *input, size_t length);
-			MD5(const string &str);
-			MD5(ifstream &in);
-			void update(const void *input, size_t length);
-			void update(const string &str);
-			void update(ifstream &in);
+			MD5(const void* input, size_t length);
+			MD5(const string& str);
+			MD5(ifstream& in);
+			void update(const void* input, size_t length);
+			void update(const string& str);
+			void update(ifstream& in);
 			const byte* digest();
 			string toString();
 			void reset();
 
 			inline uint4 rotate_left(uint4 x, int n);
-			inline void FF(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
-			inline void GG(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
-			inline void HH(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
-			inline void II(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
+			inline void FF(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
+			inline void GG(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
+			inline void HH(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
+			inline void II(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac);
 
 		private:
-			void update(const byte *input, size_t length);
+			void update(const byte* input, size_t length);
 			void final();
 			void transform(const byte block[64]);
-			void encode(const uint32 *input, byte *output, size_t length);
-			void decode(const byte *input, uint32 *output, size_t length);
-			string bytesToHexString(const byte *input, size_t length);
+			void encode(const uint32* input, byte* output, size_t length);
+			void decode(const byte* input, uint32* output, size_t length);
+			string bytesToHexString(const byte* input, size_t length);
 
 			/* class uncopyable */
 			MD5(const MD5&);
@@ -198,15 +141,15 @@ namespace HttpUtility {
 			};
 
 		};
-		string FileDigest(const string &file);
-		static std::string GetMd5FromFile(const std::string & filename) {
+		string FileDigest(const string& file);
+		static std::string GetMd5FromFile(const std::string& filename) {
 			ifstream fs(filename.c_str(), std::ios::binary);
 			MD5 md5(fs);
 			fs.close();
 			return md5.toString();
 		}
 
-		static std::string GetMd5FromString(const std::string & string) {
+		static std::string GetMd5FromString(const std::string& string) {
 			MD5 md5(string);
 			return md5.toString();
 		}
@@ -244,19 +187,19 @@ namespace HttpUtility {
 			return (x << n) | (x >> (32 - n));
 		}
 
-		inline void MD5::FF(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
+		inline void MD5::FF(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
 			a = rotate_left(a + F(b, c, d) + x + ac, s) + b;
 		}
 
-		inline void MD5::GG(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
+		inline void MD5::GG(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
 			a = rotate_left(a + G(b, c, d) + x + ac, s) + b;
 		}
 
-		inline void MD5::HH(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
+		inline void MD5::HH(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
 			a = rotate_left(a + H(b, c, d) + x + ac, s) + b;
 		}
 
-		inline void MD5::II(uint4 &a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
+		inline void MD5::II(uint4& a, uint4 b, uint4 c, uint4 d, uint4 x, uint4 s, uint4 ac) {
 			a = rotate_left(a + I(b, c, d) + x + ac, s) + b;
 		}
 
@@ -267,19 +210,19 @@ namespace HttpUtility {
 		}
 
 		/* Construct a MD5 object with a input buffer. */
-		inline MD5::MD5(const void *input, size_t length) {
+		inline MD5::MD5(const void* input, size_t length) {
 			reset();
 			update(input, length);
 		}
 
 		/* Construct a MD5 object with a string. */
-		inline MD5::MD5(const string &str) {
+		inline MD5::MD5(const string& str) {
 			reset();
 			update(str);
 		}
 
 		/* Construct a MD5 object with a file. */
-		inline MD5::MD5(ifstream &in) {
+		inline MD5::MD5(ifstream& in) {
 			reset();
 			update(in);
 		}
@@ -307,17 +250,17 @@ namespace HttpUtility {
 		}
 
 		/* Updating the context with a input buffer. */
-		inline void MD5::update(const void *input, size_t length) {
+		inline void MD5::update(const void* input, size_t length) {
 			update((const byte*)input, length);
 		}
 
 		/* Updating the context with a string. */
-		inline void MD5::update(const string &str) {
+		inline void MD5::update(const string& str) {
 			update((const byte*)str.c_str(), str.length());
 		}
 
 		/* Updating the context with a file. */
-		inline void MD5::update(ifstream &in) {
+		inline void MD5::update(ifstream& in) {
 
 			if (!in)
 				return;
@@ -337,7 +280,7 @@ namespace HttpUtility {
 		operation, processing another message block, and updating the
 		context.
 		*/
-		inline void MD5::update(const byte *input, size_t length) {
+		inline void MD5::update(const byte* input, size_t length) {
 
 			uint32 i, index, partLen;
 
@@ -430,7 +373,7 @@ namespace HttpUtility {
 			FF(c, d, a, b, x[14], S13, 0xa679438e); /* 15 */
 			FF(b, c, d, a, x[15], S14, 0x49b40821); /* 16 */
 
-								/* Round 2 */
+			/* Round 2 */
 			GG(a, b, c, d, x[1], S21, 0xf61e2562); /* 17 */
 			GG(d, a, b, c, x[6], S22, 0xc040b340); /* 18 */
 			GG(c, d, a, b, x[11], S23, 0x265e5a51); /* 19 */
@@ -448,7 +391,7 @@ namespace HttpUtility {
 			GG(c, d, a, b, x[7], S23, 0x676f02d9); /* 31 */
 			GG(b, c, d, a, x[12], S24, 0x8d2a4c8a); /* 32 */
 
-								/* Round 3 */
+			/* Round 3 */
 			HH(a, b, c, d, x[5], S31, 0xfffa3942); /* 33 */
 			HH(d, a, b, c, x[8], S32, 0x8771f681); /* 34 */
 			HH(c, d, a, b, x[11], S33, 0x6d9d6122); /* 35 */
@@ -466,7 +409,7 @@ namespace HttpUtility {
 			HH(c, d, a, b, x[15], S33, 0x1fa27cf8); /* 47 */
 			HH(b, c, d, a, x[2], S34, 0xc4ac5665); /* 48 */
 
-								/* Round 4 */
+			/* Round 4 */
 			II(a, b, c, d, x[0], S41, 0xf4292244); /* 49 */
 			II(d, a, b, c, x[7], S42, 0x432aff97); /* 50 */
 			II(c, d, a, b, x[14], S43, 0xab9423a7); /* 51 */
@@ -493,7 +436,7 @@ namespace HttpUtility {
 		/* Encodes input (ulong) into output (byte). Assumes length is
 		a multiple of 4.
 		*/
-		inline void MD5::encode(const uint32 *input, byte *output, size_t length) {
+		inline void MD5::encode(const uint32* input, byte* output, size_t length) {
 
 			for (size_t i = 0, j = 0; j < length; i++, j += 4) {
 				output[j] = (byte)(input[i] & 0xff);
@@ -506,7 +449,7 @@ namespace HttpUtility {
 		/* Decodes input (byte) into output (ulong). Assumes length is
 		a multiple of 4.
 		*/
-		inline void MD5::decode(const byte *input, uint32 *output, size_t length) {
+		inline void MD5::decode(const byte* input, uint32* output, size_t length) {
 
 			for (size_t i = 0, j = 0; j < length; i++, j += 4) {
 				output[i] = ((uint32)input[j]) | (((uint32)input[j + 1]) << 8) |
@@ -515,7 +458,7 @@ namespace HttpUtility {
 		}
 
 		/* Convert byte array to hex string. */
-		inline string MD5::bytesToHexString(const byte *input, size_t length) {
+		inline string MD5::bytesToHexString(const byte* input, size_t length) {
 			string str;
 			str.reserve(length << 1);
 			for (size_t i = 0; i < length; i++) {
@@ -535,7 +478,7 @@ namespace HttpUtility {
 
 
 		//得到二进制文件的MD5码
-		inline string FileDigest(const string &file) {
+		inline string FileDigest(const string& file) {
 			ifstream in(file.c_str(), std::ios::binary);
 			if (!in)
 				return "";
@@ -555,10 +498,208 @@ namespace HttpUtility {
 		}
 	}
 
-	std::string Md5EncodeFormFile(const std::string &filename) {
+	std::string Md5EncodeFormFile(const std::string& filename) {
 		return MD5::GetMd5FromFile(filename);
 	}
-	std::string Md5Encode(const std::string &strdata) {
+	std::string Md5Encode(const std::string& strdata) {
 		return MD5::GetMd5FromString(strdata);
 	}
-}
+
+
+	namespace detail {
+
+		inline bool is_hex(char c, int& v) {
+			if (0x20 <= c && isdigit(c)) {
+				v = c - '0';
+				return true;
+			}
+			else if ('A' <= c && c <= 'F') {
+				v = c - 'A' + 10;
+				return true;
+			}
+			else if ('a' <= c && c <= 'f') {
+				v = c - 'a' + 10;
+				return true;
+			}
+			return false;
+		}
+
+		inline bool from_hex_to_i(const std::string& s, size_t i, size_t cnt,
+			int& val) {
+			if (i >= s.size()) { return false; }
+
+			val = 0;
+			for (; cnt; i++, cnt--) {
+				if (!s[i]) { return false; }
+				int v = 0;
+				if (is_hex(s[i], v)) {
+					val = val * 16 + v;
+				}
+				else {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		inline std::string from_i_to_hex(size_t n) {
+			const char* charset = "0123456789abcdef";
+			std::string ret;
+			do {
+				ret = charset[n & 15] + ret;
+				n >>= 4;
+			} while (n > 0);
+			return ret;
+		}
+
+		inline size_t to_utf8(int code, char* buff) {
+			if (code < 0x0080) {
+				buff[0] = (code & 0x7F);
+				return 1;
+			}
+			else if (code < 0x0800) {
+				buff[0] = static_cast<char>(0xC0 | ((code >> 6) & 0x1F));
+				buff[1] = static_cast<char>(0x80 | (code & 0x3F));
+				return 2;
+			}
+			else if (code < 0xD800) {
+				buff[0] = static_cast<char>(0xE0 | ((code >> 12) & 0xF));
+				buff[1] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+				buff[2] = static_cast<char>(0x80 | (code & 0x3F));
+				return 3;
+			}
+			else if (code < 0xE000) { // D800 - DFFF is invalid...
+				return 0;
+			}
+			else if (code < 0x10000) {
+				buff[0] = static_cast<char>(0xE0 | ((code >> 12) & 0xF));
+				buff[1] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+				buff[2] = static_cast<char>(0x80 | (code & 0x3F));
+				return 3;
+			}
+			else if (code < 0x110000) {
+				buff[0] = static_cast<char>(0xF0 | ((code >> 18) & 0x7));
+				buff[1] = static_cast<char>(0x80 | ((code >> 12) & 0x3F));
+				buff[2] = static_cast<char>(0x80 | ((code >> 6) & 0x3F));
+				buff[3] = static_cast<char>(0x80 | (code & 0x3F));
+				return 4;
+			}
+
+			// NOTREACHED
+			return 0;
+		}
+
+		// NOTE: This code came up with the following stackoverflow post:
+		// https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c
+		inline std::string base64_encode(const std::string& in) {
+			static const auto lookup =
+				"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+			std::string out;
+			out.reserve(in.size());
+
+			int val = 0;
+			int valb = -6;
+
+			for (auto c : in) {
+				val = (val << 8) + static_cast<uint8_t>(c);
+				valb += 8;
+				while (valb >= 0) {
+					out.push_back(lookup[(val >> valb) & 0x3F]);
+					valb -= 6;
+				}
+			}
+
+			if (valb > -6) { out.push_back(lookup[((val << 8) >> (valb + 8)) & 0x3F]); }
+
+			while (out.size() % 4) {
+				out.push_back('=');
+			}
+
+			return out;
+		}
+
+		std::string encode_url(const std::string& s) {
+			std::string result;
+			result.reserve(s.size());
+
+			for (size_t i = 0; s[i]; i++) {
+				switch (s[i]) {
+				case ' ': result += "%20"; break;
+				case '+': result += "%2B"; break;
+				case '\r': result += "%0D"; break;
+				case '\n': result += "%0A"; break;
+				case '\'': result += "%27"; break;
+				case ',': result += "%2C"; break;
+					// case ':': result += "%3A"; break; // ok? probably...
+				case ';': result += "%3B"; break;
+				default:
+					auto c = static_cast<uint8_t>(s[i]);
+					if (c >= 0x80) {
+						result += '%';
+						char hex[4];
+						auto len = snprintf(hex, sizeof(hex) - 1, "%02X", c);
+						assert(len == 2);
+						result.append(hex, static_cast<size_t>(len));
+					}
+					else {
+						result += s[i];
+					}
+					break;
+				}
+			}
+
+			return result;
+		}
+
+		std::string decode_url(const std::string& s,
+			bool convert_plus_to_space) {
+			std::string result;
+
+			for (size_t i = 0; i < s.size(); i++) {
+				if (s[i] == '%' && i + 1 < s.size()) {
+					if (s[i + 1] == 'u') {
+						int val = 0;
+						if (from_hex_to_i(s, i + 2, 4, val)) {
+							// 4 digits Unicode codes
+							char buff[4];
+							size_t len = to_utf8(val, buff);
+							if (len > 0) { result.append(buff, len); }
+							i += 5; // 'u0000'
+						}
+						else {
+							result += s[i];
+						}
+					}
+					else {
+						int val = 0;
+						if (from_hex_to_i(s, i + 1, 2, val)) {
+							// 2 digits hex codes
+							result += static_cast<char>(val);
+							i += 2; // '00'
+						}
+						else {
+							result += s[i];
+						}
+					}
+				}
+				else if (convert_plus_to_space && s[i] == '+') {
+					result += ' ';
+				}
+				else {
+					result += s[i];
+				}
+			}
+
+			return result;
+		}
+	};
+
+	std::string UrlEncode(const std::string& str) {
+		return detail::encode_url(str);
+	}
+	std::string UrlDecode(const std::string& str, bool convert_plus_to_space) {
+		return detail::decode_url(str, convert_plus_to_space);
+	}
+
+};
