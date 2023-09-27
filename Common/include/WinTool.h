@@ -135,11 +135,4 @@ namespace WinTool {
 	/// <param name="title"></param>
 	/// <returns></returns>
 	extern Text::Utf8String ShowFolderDialog(HWND ownerWnd = NULL, Text::Utf8String defaultPath = "", Text::Utf8String title = "Select a directory");
-	/// <summary>
-	/// 保存dc到文件
-	/// </summary>
-	/// <param name="hdc"></param>
-	/// <param name="rect"></param>
-	/// <param name="filename"></param>
-	extern void SaveDCtoBMP(HDC hdc, const RECT& rect, const std::wstring& filename);
 };
