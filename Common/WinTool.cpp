@@ -87,7 +87,7 @@ namespace WinTool {
 				infos.push_back(pe);
 			}
 			else {
-				if (item == _proccname) {
+				if (item.Tolower() == _proccname.Tolower()) {
 					infos.push_back(pe);
 				}
 			}
