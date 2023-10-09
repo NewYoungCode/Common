@@ -94,7 +94,7 @@ namespace FileSystem {
 				return 0;
 			}
 			if (fs == NULL) {
-				fs = new std::ifstream(FullName.utf16(), std::ios::binary);
+				fs = new std::ifstream(FullName.unicode(), std::ios::binary);
 			}
 			fs->seekg(StreamPos);
 			fs->read(_buf_, rdbufCount);
@@ -103,7 +103,7 @@ namespace FileSystem {
 		}
 		FileInfo() {}
 		FileInfo(const Text::Utf8String& filename) {
-			int status = _wstat64(filename.utf16().c_str(), &__stat);
+			int status = _wstat64(filename.unicode().c_str(), &__stat);
 			if (status == 0 && (__stat.st_mode & S_IFREG) == S_IFREG) {
 				Extension = Path::GetExtension(filename);
 				FileName = Path::GetFileName(filename);

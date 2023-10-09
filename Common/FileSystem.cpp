@@ -30,7 +30,7 @@ namespace FileSystem {
 	size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern) {
 		HANDLE hFile = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAW pNextInfo;
-		hFile = FindFirstFileW(Text::Utf8String(directory + "\\" + pattern).utf16().c_str(), &pNextInfo);
+		hFile = FindFirstFileW(Text::Utf8String(directory + "\\" + pattern).unicode().c_str(), &pNextInfo);
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
 			return 0;
@@ -50,7 +50,7 @@ namespace FileSystem {
 };
 namespace File {
 	bool Exists(const Text::Utf8String& filename) {
-		DWORD dwAttr = GetFileAttributesW(filename.utf16().c_str());
+		DWORD dwAttr = GetFileAttributesW(filename.unicode().c_str());
 		if (dwAttr == DWORD(-1)) {
 			return false;
 		}
@@ -62,12 +62,12 @@ namespace File {
 	}
 	bool Create(const Text::Utf8String& filename) {
 		File::Delete(filename);
-		std::ofstream ofs(filename.utf16(), std::ios::binary | std::ios::app);
+		std::ofstream ofs(filename.unicode(), std::ios::binary | std::ios::app);
 		ofs.close();
 		return true;
 	}
 	bool Delete(const Text::Utf8String& filename) {
-		::DeleteFileW(filename.utf16().c_str());
+		::DeleteFileW(filename.unicode().c_str());
 		return !File::Exists(filename);
 	}
 	bool Move(const Text::Utf8String& oldname, const Text::Utf8String& newname) {
@@ -75,7 +75,7 @@ namespace File {
 			printf("Move Faild !\n");
 			return false;
 		}
-		::MoveFileExW(oldname.utf16().c_str(), newname.utf16().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
+		::MoveFileExW(oldname.unicode().c_str(), newname.unicode().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
 		if (File::Exists(oldname)) {
 			return false;
 		}
@@ -83,7 +83,7 @@ namespace File {
 	}
 	void ReadFile(const  Text::Utf8String& filename, FileStream* outFileStream) {
 		outFileStream->clear();
-		std::ifstream* ifs = new std::ifstream(filename.utf16().c_str(), std::ios::binary);
+		std::ifstream* ifs = new std::ifstream(filename.unicode().c_str(), std::ios::binary);
 		std::stringstream ss;
 		ss << ifs->rdbuf();
 		ifs->close();
@@ -93,7 +93,7 @@ namespace File {
 	void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename)
 	{
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.utf16(), std::ios::binary | std::ios::app);
+		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary | std::ios::app);
 		ofs->write(fileStream->c_str(), fileStream->size());
 		ofs->flush();
 		ofs->close();
@@ -104,7 +104,7 @@ namespace File {
 		FileStream fileData;
 		File::ReadFile(src_filename, &fileData);//读取源文件
 		File::Delete(des_filename);//直接覆盖
-		std::ofstream ofs(des_filename.utf16(), std::ios::binary | std::ios::app);//写入到新的文件
+		std::ofstream ofs(des_filename.unicode(), std::ios::binary | std::ios::app);//写入到新的文件
 		ofs.write(fileData.c_str(), fileData.size());
 		ofs.flush();
 		ofs.close();
@@ -157,7 +157,7 @@ namespace Path {
 		ctn = false;
 	}
 	bool Create(const Text::Utf8String& path) {
-		::CreateDirectoryW(path.utf16().c_str(), NULL);
+		::CreateDirectoryW(path.unicode().c_str(), NULL);
 		if (Path::Exists(path)) {
 			return true;
 		}
@@ -177,7 +177,7 @@ namespace Path {
 					}
 					root += arr[i] + "/";
 					if (!Path::Exists(root)) {
-						::CreateDirectoryW(root.utf16().c_str(), NULL);
+						::CreateDirectoryW(root.unicode().c_str(), NULL);
 					}
 				}
 			}
@@ -195,7 +195,7 @@ namespace Path {
 				Path::Delete(it.FullName);
 			}
 		}
-		::RemoveDirectoryW(directoryName.utf16().c_str());
+		::RemoveDirectoryW(directoryName.unicode().c_str());
 		return !Path::Exists(directoryName);
 	}
 	std::vector<Text::Utf8String> SearchFiles(const Text::Utf8String& path, const Text::Utf8String& pattern)
@@ -207,7 +207,7 @@ namespace Path {
 		dir.append(path);
 		dir.append("\\");
 		dir.append(pattern);
-		hFile = FindFirstFileW(dir.utf16().c_str(), &pNextInfo);
+		hFile = FindFirstFileW(dir.unicode().c_str(), &pNextInfo);
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
 			return files;
@@ -243,7 +243,7 @@ namespace Path {
 		return files;
 	}
 	bool Exists(const Text::Utf8String& path) {
-		DWORD dwAttr = GetFileAttributesW(path.utf16().c_str());
+		DWORD dwAttr = GetFileAttributesW(path.unicode().c_str());
 		if (dwAttr == DWORD(-1)) {
 			return false;
 		}
@@ -295,7 +295,7 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).utf16().c_str());
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
 		Path::Create(temPath);
 		return Text::Utf8String(temPath);
 	}
@@ -305,7 +305,7 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR localPath[256]{ 0 };
-		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).utf16().c_str());
+		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
 		Path::Create(localPath);
 		return Text::Utf8String(localPath);
 	}

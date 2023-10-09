@@ -5,7 +5,7 @@ DWORD ConfigIni::GetValue(const Text::Utf8String& section, const Text::Utf8Strin
 		_section = this->section;
 	}
 	WCHAR* buff = new WCHAR[buffSize]{ 0 };//数据量
-	long char_count = ::GetPrivateProfileStringW(_section.utf16().c_str(), key.utf16().c_str(), defaultValue.utf16().c_str(), buff, buffSize - 1, filename.utf16().c_str());
+	long char_count = ::GetPrivateProfileStringW(_section.unicode().c_str(), key.unicode().c_str(), defaultValue.unicode().c_str(), buff, buffSize - 1, filename.unicode().c_str());
 	outResult = buff;
 	delete[] buff;
 	return char_count;
@@ -18,7 +18,7 @@ bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String
 	if (section.empty()) {
 		_section = this->section;
 	}
-	return ::WritePrivateProfileStringW(_section.utf16().c_str(), key.utf16().c_str(), Value.utf16().c_str(), absoluteFilename.utf16().c_str()) == 0 ? false : true;
+	return ::WritePrivateProfileStringW(_section.unicode().c_str(), key.unicode().c_str(), Value.unicode().c_str(), absoluteFilename.unicode().c_str()) == 0 ? false : true;
 }
 
 //FileName //一定要绝对路径
@@ -78,7 +78,7 @@ std::vector<Text::Utf8String>  ConfigIni::GetSections() {
 
 	size_t maxSize = 1024 * 1024 * 20;//20M
 	WCHAR* chSectionNames = new WCHAR[maxSize]{ 0 };
-	GetPrivateProfileSectionNamesW(chSectionNames, maxSize, filename.utf16().c_str());
+	GetPrivateProfileSectionNamesW(chSectionNames, maxSize, filename.unicode().c_str());
 	size_t pos = 0;
 	do
 	{

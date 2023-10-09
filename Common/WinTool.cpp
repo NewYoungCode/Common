@@ -177,7 +177,7 @@ namespace WinTool {
 		//3、判断注册表项是否已经存在
 		WCHAR wBuff[MAX_PATH]{ 0 };
 		DWORD nLength = MAX_PATH;
-		LSTATUS status = RegGetValueW(subKey, NULL, appName.utf16().c_str(), REG_SZ, NULL, wBuff, &nLength);
+		LSTATUS status = RegGetValueW(subKey, NULL, appName.unicode().c_str(), REG_SZ, NULL, wBuff, &nLength);
 		if (status != ERROR_SUCCESS) {
 			Text::Utf8String strDir = wBuff;
 			if (Path::GetFileName(strDir) == Path::GetFileName(bootstart)) {
@@ -201,8 +201,8 @@ namespace WinTool {
 		{
 			if (bStatus == true)
 			{
-				auto wStr = bootstart.utf16();
-				if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.utf16().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
+				auto wStr = bootstart.unicode();
+				if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.unicode().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
 				{
 					bResult = true;
 					break;
@@ -210,7 +210,7 @@ namespace WinTool {
 			}
 			else
 			{
-				if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.utf16().c_str()))
+				if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.unicode().c_str()))
 				{
 					bResult = true;
 					break;
@@ -252,12 +252,12 @@ namespace WinTool {
 			hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLink, (void**)&pShellLink);
 			if (SUCCEEDED(hr))
 			{
-				pShellLink->SetPath(pragmaFilename.utf16().c_str());
-				pShellLink->SetWorkingDirectory(Path::GetDirectoryName(pragmaFilename).utf16().c_str());
-				pShellLink->SetArguments(cmdline.utf16().c_str());
+				pShellLink->SetPath(pragmaFilename.unicode().c_str());
+				pShellLink->SetWorkingDirectory(Path::GetDirectoryName(pragmaFilename).unicode().c_str());
+				pShellLink->SetArguments(cmdline.unicode().c_str());
 				if (!iconFilename.empty())
 				{
-					pShellLink->SetIconLocation(iconFilename.utf16().c_str(), 0);
+					pShellLink->SetIconLocation(iconFilename.unicode().c_str(), 0);
 				}
 				IPersistFile* pPersistFile;
 				hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pPersistFile);
@@ -274,7 +274,7 @@ namespace WinTool {
 					}
 					//设置快捷方式地址
 					File::Delete(userDesktop);//删除旧的
-					hr = pPersistFile->Save(userDesktop.utf16().c_str(), FALSE);
+					hr = pPersistFile->Save(userDesktop.unicode().c_str(), FALSE);
 					if (SUCCEEDED(hr))
 					{
 						bResult = true;
@@ -303,8 +303,8 @@ namespace WinTool {
 
 	LSTATUS RegSetSoftware(HKEY hKey, const Text::Utf8String& regKey, const Text::Utf8String& regValue) {
 		if (!regValue.empty()) {
-			auto wStr = regValue.utf16();
-			return RegSetValueExW(hKey, regKey.utf16().c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(wStr.c_str()), wStr.size() * 2);
+			auto wStr = regValue.unicode();
+			return RegSetValueExW(hKey, regKey.unicode().c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(wStr.c_str()), wStr.size() * 2);
 		}
 		return -1;
 	}
@@ -313,7 +313,7 @@ namespace WinTool {
 		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 		regKeyPath.append("\\" + appName_en);
 		HKEY subKey;
-		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), NULL, KEY_ALL_ACCESS, &subKey)) {
+		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &subKey)) {
 			return;
 		}
 		::RegDeleteValueW(subKey, L"DisplayName");
@@ -351,8 +351,8 @@ namespace WinTool {
 		attr.lpSecurityDescriptor = &securityDesc;
 		attr.bInheritHandle = FALSE;
 
-		if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), NULL, KEY_ALL_ACCESS, &hKey) || \
-			ERROR_SUCCESS == RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.utf16().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL)) {
+		if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &hKey) || \
+			ERROR_SUCCESS == RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL)) {
 			std::cout << "SUCCESS" << std::endl;
 		}
 		else {
@@ -462,9 +462,9 @@ namespace WinTool {
 	}
 	double GetDiskFreeSize(const Text::Utf8String& path) {
 		ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
-		std::wstring wStr = path.utf16();
+		std::wstring wStr = path.unicode();
 		if (wStr.size() > 0) {
-			std::wstring drive = path.utf16().substr(0, 1); // 设置你要查询的磁盘路径
+			std::wstring drive = path.unicode().substr(0, 1); // 设置你要查询的磁盘路径
 			drive += L":\\";
 			if (GetDiskFreeSpaceExW(drive.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
 				double freeSpaceGB = static_cast<double>(freeBytesAvailable.QuadPart) / (1024 * 1024 * 1024);
@@ -526,7 +526,7 @@ namespace WinTool {
 			si.wShowWindow = SW_HIDE; //隐藏命令行窗口
 			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
 			//3.创建获取命令行的进程
-			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.utf16().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.unicode().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				break;
 			}
 			//4.等待读取返回的数据
@@ -628,11 +628,11 @@ namespace WinTool {
 		BROWSEINFOW browseInfo{ 0 };
 		browseInfo.hwndOwner = ownerWnd;
 		browseInfo.pszDisplayName = selectedPath;
-		auto wTitle = title.utf16();
+		auto wTitle = title.unicode();
 		browseInfo.lpszTitle = wTitle.c_str();
 		//设置根目录
 		LPITEMIDLIST pidlRoot;
-		::SHParseDisplayName(defaultPath.utf16().c_str(), NULL, &pidlRoot, 0, NULL);
+		::SHParseDisplayName(defaultPath.unicode().c_str(), NULL, &pidlRoot, 0, NULL);
 		browseInfo.pidlRoot = pidlRoot;
 		browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 		LPITEMIDLIST itemIdList = SHBrowseForFolderW(&browseInfo);

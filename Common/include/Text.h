@@ -15,7 +15,7 @@ namespace Text {
 		Utf8String(const char* szbuf)noexcept;
 		Utf8String(const wchar_t* szbuf)noexcept;
 		Utf8String(const std::wstring& wstr)noexcept;
-		std::wstring utf16() const;
+		std::wstring unicode() const;
 		std::string ansi() const;
 		Utf8String Erase(const char& _char)const;
 		std::vector<Text::Utf8String> Split(const Utf8String& ch_)const;

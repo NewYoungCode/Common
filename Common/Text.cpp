@@ -69,7 +69,7 @@ namespace Text {
 	{
 		return __super::find(str, Off);
 	}
-	std::wstring Utf8String::utf16() const {
+	std::wstring Utf8String::unicode() const {
 		std::wstring wstr;
 		Utf8String::UTF8ToUnicode(*this, &wstr);
 		return wstr;

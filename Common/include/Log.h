@@ -26,7 +26,7 @@ namespace Log {
 		Text::Utf8String info(buf);
 		info = Time::Now::ToString("hh:mm:ss ") + info;
 		delete[] buf;
-		auto wstr = info.utf16();
+		auto wstr = info.unicode();
 		std::wcout << wstr;
 		OutputDebugStringW(wstr.c_str());
 		WriteLog(info);

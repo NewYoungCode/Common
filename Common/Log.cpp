@@ -13,7 +13,7 @@ namespace Log {
 #endif
 		Path::Create(logPath);
 		Text::Utf8String logFile = logPath + "\\" + Time::Now::ToString("yyyy-MM-dd") + ".txt";
-		std::ofstream ofs(logFile.utf16(), std::ios::binary | std::ios::app);
+		std::ofstream ofs(logFile.unicode(), std::ios::binary | std::ios::app);
 		ofs.write(log.c_str(), log.size());
 		ofs.flush();
 		ofs.close();
