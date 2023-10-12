@@ -644,4 +644,68 @@ namespace WinTool {
 		return selectedPath;
 	}
 
+	std::string GetMacAddress(DWORD ipAddress) {
+		BYTE macAddress[6];
+		DWORD macAddressLength = sizeof(macAddress);
+
+		DWORD result = SendARP(ipAddress, 0, macAddress, &macAddressLength);
+		if (result == NO_ERROR) {
+			std::ostringstream oss;
+			oss << std::hex << std::setfill('0');
+
+			for (int i = 0; i < 6; ++i) {
+				if (i > 0) {
+					oss << "-";
+				}
+				oss << std::setw(2) << static_cast<int>(macAddress[i]);
+			}
+
+			return oss.str();
+		}
+		else {
+			return "Failed to get MAC address.";
+		}
+	}
+	RouterInfo GetRouterInfo() {
+		RouterInfo info;
+		MIB_IPFORWARDTABLE* pForwardTable;
+		DWORD dwSize = 0;
+		// 获取所需的缓冲区大小
+		GetIpForwardTable(nullptr, &dwSize, false);
+		// 分配缓冲区
+		pForwardTable = (MIB_IPFORWARDTABLE*)malloc(dwSize);
+		if (pForwardTable == nullptr) {
+			std::cout << "Failed to allocate memory." << std::endl;
+			return info;
+		}
+		// 获取路由表信息
+		DWORD result = GetIpForwardTable(pForwardTable, &dwSize, false);
+		if (result != NO_ERROR) {
+			std::cout << "Failed to get IP forward table. Error code: " << result << std::endl;
+			free(pForwardTable);
+			return info;
+		}
+		// 查找默认网关
+		for (DWORD i = 0; i < pForwardTable->dwNumEntries; i++) {
+			MIB_IPFORWARDROW row = pForwardTable->table[i];
+			if (row.dwForwardDest == 0 && row.dwForwardProto == MIB_IPPROTO_NETMGMT) {
+				DWORD gatewayIp = row.dwForwardNextHop;
+				char ip[256]{ 0 };
+				UCHAR ip1 = ((gatewayIp >> 0) & 0xFF);
+				UCHAR ip2 = ((gatewayIp >> 8) & 0xFF);
+				UCHAR ip3 = ((gatewayIp >> 16) & 0xFF);
+				UCHAR ip4 = ((gatewayIp >> 24) & 0xFF);
+				sprintf(ip, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
+				info.IP = ip;
+				DWORD ipAddress = inet_addr(ip);  // 替换为你想要查询的IP地址
+				info.MAC = GetMacAddress(ipAddress);
+				info.MAC = info.MAC.Tolower();
+				break;
+			}
+		}
+		// 释放分配的内存
+		free(pForwardTable);
+		return info;
+	}
+
 }

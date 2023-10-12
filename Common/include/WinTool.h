@@ -9,6 +9,13 @@
 #include <process.h>
 
 namespace WinTool {
+	/// <summary>
+	/// 路由信息
+	/// </summary>
+	struct RouterInfo {
+		Text::Utf8String IP;
+		Text::Utf8String MAC;
+	};
 	typedef struct {
 		unsigned long processId;
 		HWND best_handle;
@@ -135,4 +142,9 @@ namespace WinTool {
 	/// <param name="title"></param>
 	/// <returns></returns>
 	extern Text::Utf8String ShowFolderDialog(HWND ownerWnd = NULL, Text::Utf8String defaultPath = "", Text::Utf8String title = "Select a directory");
+	/// <summary>
+	/// 获取路由信息
+	/// </summary>
+	/// <returns></returns>
+	extern RouterInfo GetRouterInfo();
 };
