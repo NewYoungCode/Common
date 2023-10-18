@@ -14,8 +14,7 @@ public:
 			});
 	}
 	virtual ~Thread() {
-		if (task->joinable()) {
-			task->join();
+		if (task) {
 			delete task;
 		}
 	}
