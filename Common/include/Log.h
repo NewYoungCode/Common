@@ -5,7 +5,6 @@
 namespace Log {
 	//是否启用日志
 	extern bool Enable;
-	extern std::mutex __logMtx;
 	extern void WriteLog(const Text::Utf8String& log);
 
 	template<typename ...T>
@@ -15,9 +14,8 @@ namespace Log {
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
-	inline void Info(const Text::Utf8String& formatStr,const T &...args) {
+	inline void Info(const Text::Utf8String& formatStr, const T &...args) {
 		if (!Enable)return;
-		__logMtx.lock();
 		int size = 1024 * 1024 * 5;//5M的内存
 		char* buf = new char[size] { 0 };
 		auto count = sprintf_s((buf), size, formatStr.c_str(), std::forward<const T&>(args)...);
@@ -30,6 +28,5 @@ namespace Log {
 		std::wcout << wstr;
 		OutputDebugStringW(wstr.c_str());
 		WriteLog(info);
-		__logMtx.unlock();
 	}
 };

@@ -2,7 +2,6 @@
 namespace Log {
 	//是否启用日志
 	bool Enable = false;
-	std::mutex __logMtx;
 	void WriteLog(const Text::Utf8String& log)
 	{
 		if (!Enable)return;
