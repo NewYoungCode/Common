@@ -295,6 +295,16 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp", user);
+		Path::Create(temPath);
+		return Text::Utf8String(temPath);
+	}
+	Text::Utf8String GetAppTempPath()
+	{
+		WCHAR user[256]{ 0 };
+		DWORD len = 256;
+		::GetUserNameW(user, &len);
+		WCHAR temPath[256]{ 0 };
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
 		Path::Create(temPath);
 		return Text::Utf8String(temPath);

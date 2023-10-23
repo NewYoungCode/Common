@@ -8,7 +8,7 @@ namespace Log {
 #ifdef _DEBUG
 		Text::Utf8String logPath = Path::StartPath() + "\\" + Path::GetFileNameWithoutExtension(Path::StartFileName()) + "_Log";
 #else
-		Text::Utf8String logPath = Path::GetTempPath() + "_Log";
+		Text::Utf8String logPath = Path::GetAppTempPath() + "_Log";
 #endif
 		Path::Create(logPath);
 		Text::Utf8String logFile = logPath + "\\" + Time::Now::ToString("yyyy-MM-dd") + ".txt";

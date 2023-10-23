@@ -57,10 +57,15 @@ namespace Path {
 	extern Text::Utf8String StartFileName();
 #undef GetTempPath
 	/// <summary>
-	/// 获取应用程序的临时目录
+	/// 获取应当前windows用户的临时目录
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetTempPath();
+	/// <summary>
+	/// 获取应用程序的临时目录
+	/// </summary>
+	/// <returns></returns>
+	extern Text::Utf8String GetAppTempPath();
 	/// <summary>
 	/// 获取应用程序数据存储目录 C:/Users/%s/AppData/Local/%s
 	/// </summary>
