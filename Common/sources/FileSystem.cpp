@@ -1,7 +1,7 @@
 #include "FileSystem.h"
 //定义....................................................................................................................
 namespace FileSystem {
-	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result) {
+	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern, bool loopSubDir = false) {
 		Text::Utf8String filename;
 		filename.Append(directory);
 		filename.Append("\\");
@@ -13,6 +13,9 @@ namespace FileSystem {
 			fileInfo.FileType = FileType::Directory;
 			fileInfo.FullName = filename;
 			fileInfo.FileName = filename;
+			if (loopSubDir) {
+				Find(filename, result, pattern, loopSubDir);
+			}
 		}
 		else if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
 			fileInfo.FileType = FileType::File;
@@ -27,21 +30,21 @@ namespace FileSystem {
 			result.push_back(fileInfo);
 		}
 	}
-	size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern) {
+	size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern, bool loopSubDir) {
 		HANDLE hFile = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAW pNextInfo;
-		hFile = FindFirstFileW(Text::Utf8String(directory + "\\" + pattern).unicode().c_str(), &pNextInfo);
+		hFile = FindFirstFileW(Text::Utf8String(directory + "/" + pattern).unicode().c_str(), &pNextInfo);
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
 			return 0;
 		}
 		if (pNextInfo.cFileName[0] != '.') {
-			ReadFileInfoWin32(directory, pNextInfo, result);
+			ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir);
 		}
 		while (FindNextFileW(hFile, &pNextInfo))
 		{
 			if (pNextInfo.cFileName[0] != '.') {
-				ReadFileInfoWin32(directory, pNextInfo, result);
+				ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir);
 			}
 		}
 		FindClose(hFile);//避免内存泄漏
@@ -164,8 +167,8 @@ namespace Path {
 		//创建多级目录
 		if (path.find(":") != size_t(-1)) {
 			Text::Utf8String dir = path + "/";
-			dir.Replace("\\", "/");
-			dir.Replace("//", "/");
+			dir = dir.Replace("\\", "/");
+			dir = dir.Replace("//", "/");
 			std::vector<Text::Utf8String> arr = dir.Split("/");
 			Text::Utf8String root;
 			if (arr.size() > 0) {
@@ -183,6 +186,25 @@ namespace Path {
 			}
 		}
 		return Path::Exists(path);
+	}
+	bool Copy(const Text::Utf8String& srcPath, const Text::Utf8String& desPath)
+	{
+		Text::Utf8String basePath = srcPath;
+		basePath = basePath.Replace("\\", "/");
+		basePath = basePath.Replace("//", "/");
+		std::vector<FileSystem::FileInfo>result;
+		FileSystem::Find(srcPath, result);
+		for (auto& it : result) {
+			Text::Utf8String fileName = it.FullName;
+			fileName = fileName.Replace(basePath, "");
+			if (it.FileType == FileSystem::FileType::File) {
+				File::Copy(it.FullName, desPath + "/" + fileName);
+			}
+			if (it.FileType == FileSystem::FileType::Directory) {
+				Path::Create(desPath + "/" + fileName);
+			}
+		}
+		return false;
 	}
 	bool Delete(const Text::Utf8String& directoryName) {
 		std::vector<FileSystem::FileInfo>result;
@@ -281,7 +303,7 @@ namespace Path {
 		return Path::GetDirectoryName(StartFileName());
 	}
 	Text::Utf8String __FileSytem_StartFileName;
-	Text::Utf8String StartFileName() {
+	const Text::Utf8String& StartFileName() {
 		if (__FileSytem_StartFileName.empty()) {
 			WCHAR exeFullPath[MAX_PATH]{ 0 };
 			::GetModuleFileNameW(NULL, exeFullPath, MAX_PATH);
@@ -305,7 +327,9 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
+		//预防命名冲突
+		auto pathMd5 = Text::Utf8String(MD5::FromString(Path::StartFileName())).unicode();
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, pathMd5.c_str());
 		Path::Create(temPath);
 		return Text::Utf8String(temPath);
 	}

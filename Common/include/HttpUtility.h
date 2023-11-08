@@ -17,8 +17,5 @@ namespace HttpUtility {
 	std::string UrlEncode(const std::string& str);
 	//url解码
 	std::string UrlDecode(const std::string& str, bool convert_plus_to_space = false);
-	//MD5编码
-	std::string Md5EncodeFormFile(const std::string& filename);
-	std::string Md5Encode(const std::string& strdata);
 	//少一个GZIP
 };

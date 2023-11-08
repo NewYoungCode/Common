@@ -1,6 +1,6 @@
 #pragma once
 #include "Common.h"
-#include "HttpUtility.h"
+#include "Md5.h"
 #include <TlHelp32.h>
 #include <ShlObj.h>
 #include <ShObjIdl.h>

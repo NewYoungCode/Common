@@ -4,6 +4,7 @@
 #include <functional>
 #include <fstream>
 #include "Text.h"
+#include "Md5.h"
 namespace File {
 	typedef std::string FileStream;
 	//创建文件
@@ -35,8 +36,10 @@ namespace Path {
 		FileWatcher(const Text::Utf8String& path, const Text::Utf8String& math, const std::function<void(const Text::Utf8String& filename)>& callback, size_t sleep = 500);
 		~FileWatcher();
 	};
-	//创建路径  MultiDir:是否创建多级目录
+	//创建路径
 	extern bool Create(const Text::Utf8String& path);
+	//拷贝目录所有文件到目标目录
+	extern bool Copy(const Text::Utf8String& srcPath, const Text::Utf8String& desPath);
 	//删除路径 如果存在子文件夹或者文件 将会递归删除
 	extern bool Delete(const Text::Utf8String& directoryName);
 	//通配符搜索文件
@@ -54,7 +57,7 @@ namespace Path {
 	//获取进程所在绝对路径目录
 	extern Text::Utf8String StartPath();
 	//获取进程所在绝对路径包含文件名称
-	extern Text::Utf8String StartFileName();
+	extern const Text::Utf8String& StartFileName();
 #undef GetTempPath
 	/// <summary>
 	/// 获取应当前windows用户的临时目录
@@ -130,6 +133,5 @@ namespace FileSystem {
 			}
 		}
 	};
-	extern void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result);
-	extern size_t  Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern = "*.*");
+	extern size_t Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern = "*.*", bool loopSubDir = false);
 }

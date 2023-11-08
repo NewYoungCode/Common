@@ -15,3 +15,11 @@ set_target_properties(Common PROPERTIES LINKER_LANGUAGE CXX)
 set_target_properties(Common PROPERTIES DEBUG_POSTFIX "_D")
 target_include_directories(Common PRIVATE ./Common/include ./Common/include/curl  ./Common/include/mysql ./Common/include/occi)
 target_link_directories(Common PRIVATE ./Common/lib)
+
+
+project(test)
+file(GLOB src ./test/*.*)
+add_executable(test ${src})
+target_include_directories(test PRIVATE ./Common/include)
+target_link_directories(test PRIVATE ./Common/lib)
+target_link_libraries(test PRIVATE Common)

@@ -44,7 +44,7 @@ namespace WinTool {
 		auto biosId = GetBiosUUID();
 		auto mac = GetMacAddress();
 		Text::Utf8String u8Str = biosId + "_" + cpuId + "_" + mac;
-		u8Str = HttpUtility::Md5Encode(u8Str);
+		u8Str = MD5::FromString(u8Str);
 		return u8Str;
 	}
 
