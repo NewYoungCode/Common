@@ -83,54 +83,18 @@ namespace FileSystem {
 	}FileType;
 	struct FileInfo
 	{
-	private:
-		std::ifstream* fs = NULL;
 	public:
 		unsigned long long StreamPos = 0;
-		struct _stat64 __stat;
 		FileType FileType = FileSystem::FileType::None;
 		Text::Utf8String Extension;
 		Text::Utf8String FullName;
 		Text::Utf8String FileName;
+		ULONGLONG FileSize = 0;
 		bool ReadOnly = false;
-		size_t Read(char* _buf_, size_t _rdCount = 512) {
-			size_t rdbufCount = _rdCount;
-			if (StreamPos + _rdCount >= __stat.st_size) {
-				rdbufCount = __stat.st_size - StreamPos;
-			}
-			if (rdbufCount == 0) {
-				return 0;
-			}
-			if (fs == NULL) {
-				fs = new std::ifstream(FullName.unicode(), std::ios::binary);
-			}
-			fs->seekg(StreamPos);
-			fs->read(_buf_, rdbufCount);
-			StreamPos += rdbufCount;
-			return rdbufCount;
-		}
 		FileInfo() {}
-		FileInfo(const Text::Utf8String& filename) {
-			int status = _wstat64(filename.unicode().c_str(), &__stat);
-			if (status == 0 && (__stat.st_mode & S_IFREG) == S_IFREG) {
-				Extension = Path::GetExtension(filename);
-				FileName = Path::GetFileName(filename);
-				FullName = filename;
-				FileType = FileType::File;
-			}
-		}
 		void Close() {
-			if (fs) {
-				fs->close();
-				delete fs;
-				fs = NULL;
-			}
 		}
 		~FileInfo() {
-			if (fs) {
-				fs->close();
-				delete fs;
-			}
 		}
 	};
 	extern size_t Find(const Text::Utf8String& directory, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern = "*.*", bool loopSubDir = false);

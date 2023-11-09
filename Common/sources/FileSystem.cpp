@@ -4,7 +4,7 @@ namespace FileSystem {
 	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern, bool loopSubDir = false) {
 		Text::Utf8String filename;
 		filename.Append(directory);
-		filename.Append("\\");
+		filename.Append("/");
 		filename.Append(pNextInfo.cFileName);
 		filename = filename.Replace("\\", "/");
 		filename = filename.Replace("//", "/");
@@ -22,6 +22,7 @@ namespace FileSystem {
 			fileInfo.FileName = pNextInfo.cFileName;
 			fileInfo.FullName = filename;
 			fileInfo.Extension = Path::GetExtension(filename);
+			fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
 		}
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
 			fileInfo.ReadOnly = true;
@@ -87,7 +88,7 @@ namespace File {
 	void ReadFile(const  Text::Utf8String& filename, FileStream* outFileStream) {
 		outFileStream->clear();
 		std::ifstream* ifs = new std::ifstream(filename.unicode().c_str(), std::ios::binary);
-		std::stringstream ss;
+		std::stringstream ss(std::ios::binary);
 		ss << ifs->rdbuf();
 		ifs->close();
 		*outFileStream = ss.str();
