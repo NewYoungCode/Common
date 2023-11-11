@@ -88,10 +88,12 @@ namespace File {
 	void ReadFile(const  Text::Utf8String& filename, FileStream* outFileStream) {
 		outFileStream->clear();
 		std::ifstream* ifs = new std::ifstream(filename.unicode().c_str(), std::ios::binary);
-		std::stringstream ss(std::ios::binary);
-		ss << ifs->rdbuf();
+		ifs->seekg(0, std::ios::end);
+		auto size = ifs->tellg();
+		outFileStream->resize(size);
+		ifs->seekg(0);
+		ifs->read((char*)outFileStream->c_str(), size);
 		ifs->close();
-		*outFileStream = ss.str();
 		delete ifs;
 	}
 	void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename)
@@ -99,6 +101,15 @@ namespace File {
 		File::Delete(filename);
 		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary | std::ios::app);
 		ofs->write(fileStream->c_str(), fileStream->size());
+		ofs->flush();
+		ofs->close();
+		delete ofs;
+	}
+	void WriteFile(const char* fileStream,size_t count, const Text::Utf8String& filename)
+	{
+		File::Delete(filename);
+		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary | std::ios::app);
+		ofs->write(fileStream, count);
 		ofs->flush();
 		ofs->close();
 		delete ofs;

@@ -19,6 +19,8 @@ namespace File {
 	extern void ReadFile(const  Text::Utf8String& filename, FileStream* fileStream);
 	//写入文件
 	extern void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename);
+	//写入文件
+	extern void WriteFile(const char* fileStream, size_t count, const Text::Utf8String& filename);
 	//拷贝文件
 	extern void Copy(const  Text::Utf8String& filename, const  Text::Utf8String& des_filename);
 }
@@ -84,13 +86,23 @@ namespace FileSystem {
 	struct FileInfo
 	{
 	public:
-		unsigned long long StreamPos = 0;
 		FileType FileType = FileSystem::FileType::None;
 		Text::Utf8String Extension;
 		Text::Utf8String FullName;
 		Text::Utf8String FileName;
 		ULONGLONG FileSize = 0;
 		bool ReadOnly = false;
+		FileInfo(const Text::Utf8String& fileName) {
+			if (File::Exists(fileName)) {
+				Extension = Path::GetExtension(fileName);
+				FileName = Path::GetFileName(fileName);
+				FullName = fileName;
+				FileType = FileType::File;
+				std::ifstream ifs(fileName.unicode(), std::ios::binary);
+				ifs.seekg(0, std::ios::end);
+				FileSize = ifs.tellg();
+			}
+		}
 		FileInfo() {}
 		void Close() {
 		}
