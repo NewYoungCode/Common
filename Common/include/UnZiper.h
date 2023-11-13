@@ -47,6 +47,7 @@ public:
 				Path::Create(itemName);
 			}
 			else {
+				File::Delete(itemName);
 				void* data = NULL;
 				zip.UnZipItem(ze, &data);
 				std::ofstream ofs(itemName.unicode(), std::ios::binary);
