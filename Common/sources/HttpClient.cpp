@@ -24,7 +24,7 @@
 //		headStr.append(it.first + ": " + it.second+"\r\n");
 //	}
 //	headStr.append("\r\n\r\n");
-//	//::InternetSetOptionA(hintInternetOpen, INTERNET_OPTION_CONNECT_TIMEOUT, TEXT(""), NULL);//ÉèÖÃ³¬Ê±Ê±
+//	//::InternetSetOptionA(hintInternetOpen, INTERNET_OPTION_CONNECT_TIMEOUT, TEXT(""), NULL);//è®¾ç½®è¶…æ—¶æ—¶
 //	HINTERNET hintInternetOpenUrl = InternetOpenUrlA(hintInternetOpen, url.c_str(), headStr.c_str(), headStr.size(), INTERNET_FLAG_RELOAD, 0);
 //	if (!hintInternetOpenUrl)
 //	{
@@ -32,7 +32,7 @@
 //		InternetCloseHandle(hintInternetOpenUrl);
 //		return 1;
 //	}
-//	//»ñÈ¡head
+//	//è·å–head
 //	DWORD dwByteSize = 0;
 //	DWORD dwSizeOfRq = 4;
 //	if (!HttpQueryInfoA(hintInternetOpenUrl, HTTP_QUERY_CONTENT_LENGTH | HTTP_QUERY_FLAG_NUMBER, (LPVOID)&dwByteSize, &dwSizeOfRq, NULL))
@@ -59,40 +59,40 @@
 //void HttpClient::Post(const std::string&url, std::string&respone) {
 //	//LPCSTR lpszAccept[] =
 //	//{
-//	//	// ÏìÓ¦Í·
+//	//	// å“åº”å¤´
 //	//	"*/*"
 //	//};
 //	//char szHeader[] =
 //	//{
-//	//	// Èç¹ûÌá½»µÄÊÇ±íµ¥,ÄÇÃ´Õâ¸ö MIME Ò»¶¨Òª´ø!
+//	//	// å¦‚æœæäº¤çš„æ˜¯è¡¨å•,é‚£ä¹ˆè¿™ä¸ª MIME ä¸€å®šè¦å¸¦!
 //	//	"Content-Type: application/x-www-form-urlencoded/r/n"
 //	//};
-//	//// ĞèÒªÌá½»µÄÊı¾İ¾Í·ÅÏÂÃæÕâ¸ö±äÁ¿
+//	//// éœ€è¦æäº¤çš„æ•°æ®å°±æ”¾ä¸‹é¢è¿™ä¸ªå˜é‡
 //	//TCHAR szPostData[] = TEXT( "reginvcode=1b1733d743295385&action=reginvcodeck");
-//	//// ¼ÅÄ¯µ³¿ÉÒÔĞŞ¸ÄÒ»ÏÂ UserAgent ¹ş¹ş,ÎÒÏ²»¶ Chrome !
+//	//// å¯‚å¯å…šå¯ä»¥ä¿®æ”¹ä¸€ä¸‹ UserAgent å“ˆå“ˆ,æˆ‘å–œæ¬¢ Chrome !
 //	//HINTERNET hInet = InternetOpenW(L"Mozilla/4.0 (Compatible; MSIE 6.0;)", INTERNET_OPEN_TYPE_DIRECT, NULL, INTERNET_INVALID_PORT_NUMBER, 0);
-//	//// µÚ¶ş¸ö²ÎÊıÊÇÖ÷»úµÄµØÖ·
+//	//// ç¬¬äºŒä¸ªå‚æ•°æ˜¯ä¸»æœºçš„åœ°å€
 //	//HINTERNET hConn = InternetConnect(hInet, L"66.96.216.167", INTERNET_DEFAULT_HTTP_PORT, L"", L"", INTERNET_SERVICE_HTTP, 0, 1);
-//	//// µÚÈı¸ö²ÎÊıÊÇ URL µÄÂ·¾¶²¿·Ö Äã¶®µÄ,µÚÎå¸ö²ÎÊıÊÇReferer,ÓĞĞ©Õ¾ÅĞ¶ÏÀ´Ô´µØÖ·,ĞŞ¸ÄÕâÀï¾ÍºÃÀ²
+//	//// ç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯ URL çš„è·¯å¾„éƒ¨åˆ† ä½ æ‡‚çš„,ç¬¬äº”ä¸ªå‚æ•°æ˜¯Referer,æœ‰äº›ç«™åˆ¤æ–­æ¥æºåœ°å€,ä¿®æ”¹è¿™é‡Œå°±å¥½å•¦
 //	//HINTERNET hPOSTs = HttpOpenRequestW(hConn, L"POST", L"/register.php", HTTP_VERSION, L"http://66.96.216.167/", lpszAccept, INTERNET_FLAG_DONT_CACHE, 1);
 //	//BOOL bRequest = HttpSendRequest(hPOSTs, szHeader, lstrlen(szHeader), szPostData, lstrlen(szPostData));
-//	//// ²»ĞèÒª½ÓÊÜ»ØÓ¦µÄºöÂÔÏÂÃæµÄ¶«¶«...
+//	//// ä¸éœ€è¦æ¥å—å›åº”çš„å¿½ç•¥ä¸‹é¢çš„ä¸œä¸œ...
 //	//char szBuffer[1024];
 //	//DWORD dwByteRead = 0;
-//	//// ·ÀÖ¹ÂÒÂëµÄ·½·¨¾ÍÊÇ½¨Á¢Íê±äÁ¿Á¢¼´Çå¿Õ
+//	//// é˜²æ­¢ä¹±ç çš„æ–¹æ³•å°±æ˜¯å»ºç«‹å®Œå˜é‡ç«‹å³æ¸…ç©º
 //	//ZeroMemory(szBuffer, sizeof(szBuffer));
-//	//// Ñ­»·¶ÁÈ¡»º³åÇøÄÚÈİÖ±µ½½áÊø
+//	//// å¾ªç¯è¯»å–ç¼“å†²åŒºå†…å®¹ç›´åˆ°ç»“æŸ
 //	//while (InternetReadFile(hPOSTs, szBuffer, sizeof(szBuffer), &dwByteRead) && dwByteRead > 0) {
-//	//	// ¼ÓÈë½áÊø±ê¼Ç
+//	//	// åŠ å…¥ç»“æŸæ ‡è®°
 //	//	szBuffer[dwByteRead] = '/0';
-//	//	// Ó¦¸ÃÓÃ±ä³¤×Ö·û´®µÄ ±ÈÈç AnsiString
+//	//	// åº”è¯¥ç”¨å˜é•¿å­—ç¬¦ä¸²çš„ æ¯”å¦‚ AnsiString
 //
-//	//	// Çå¿Õ»º³åÇøÒÔ±¸ÏÂÒ»´Î¶ÁÈ¡
+//	//	// æ¸…ç©ºç¼“å†²åŒºä»¥å¤‡ä¸‹ä¸€æ¬¡è¯»å–
 //	//	ZeroMemory(szBuffer, sizeof(szBuffer));
 //
 //
 //	//}
-//	//// ÇåÀíÏÖ³¡
+//	//// æ¸…ç†ç°åœº
 //	//InternetCloseHandle(hPOSTs);
 //	//InternetCloseHandle(hConn);
 //	//InternetCloseHandle(hInet);

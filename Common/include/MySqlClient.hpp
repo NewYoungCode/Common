@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 /*
-mysqlµÄÁ¬½ÓÀà
+mysqlçš„è¿æ¥ç±»
 */
 class MySqlClient
 {
@@ -25,9 +25,9 @@ public:
 	bool OpenConn();
 	void CloseConn();
 	MySqlClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& database, const std::string& charset = "utf8");
-	/*Ö´ĞĞ²éÑ¯*/
+	/*æ‰§è¡ŒæŸ¥è¯¢*/
 	bool  ExecuteQuery(const std::string& sql, std::string& result);
-	/*Ö´ĞĞÔöÉ¾¸Ä*/
+	/*æ‰§è¡Œå¢åˆ æ”¹*/
 	size_t ExecuteNoQuery(const std::string& sql);
 	virtual ~MySqlClient();
 };
@@ -36,15 +36,15 @@ inline bool MySqlClient::OpenConn()
 {
 	const char* unix_socket = NULL;
 	unsigned long client_flag = 0;
-	mysql_init(&mysql);               //³õÊ¼»¯
-	if ((mysql_real_connect(&mysql, host.c_str(), user.c_str(), pwd.c_str(), database.c_str(), port, unix_socket, client_flag)) == NULL) //Á¬½ÓMySQL
+	mysql_init(&mysql);               //åˆå§‹åŒ–
+	if ((mysql_real_connect(&mysql, host.c_str(), user.c_str(), pwd.c_str(), database.c_str(), port, unix_socket, client_flag)) == NULL) //è¿æ¥MySQL
 	{
-		//Êı¾İ¿â´ò¿ªÊ§°Ü
+		//æ•°æ®åº“æ‰“å¼€å¤±è´¥
 		printf("%s\n", mysql_error(&mysql));
 		return false;
 	}
 	else {
-		//Êı¾İ¿â´ò¿ª
+		//æ•°æ®åº“æ‰“å¼€
 		return true;
 	}
 }
@@ -76,14 +76,14 @@ inline bool MySqlClient::ExecuteQuery(const std::string& sql, std::string& resul
 	MYSQL_RES* result = NULL;
 	result = mysql_store_result(&mysql);
 	std::vector<std::string> fields;
-	//²éÑ¯Ê§°Ü
+	//æŸ¥è¯¢å¤±è´¥
 	if (!result) {
 		mysql_free_result(result);
 		CloseConn();
 		resultx = "[]";
 		return false;
 	}
-	//»ñÈ¡ÁĞÃû
+	//è·å–åˆ—å
 	size_t filedCount = mysql_num_fields(result);
 	for (size_t i = 0; i < filedCount; i++)
 	{
@@ -92,11 +92,11 @@ inline bool MySqlClient::ExecuteQuery(const std::string& sql, std::string& resul
 		//std::cout << name << std::endl;
 	}
 	std::string jsonArr = "[";
-	//»ñÈ¡Ã¿ĞĞµÄÊı¾İ
+	//è·å–æ¯è¡Œçš„æ•°æ®
 	MYSQL_ROW sql_row;
 	bool frist = true;
 	size_t rowCount = 0;
-	while (sql_row = mysql_fetch_row(result))//»ñÈ¡¾ßÌåµÄÊı¾İ
+	while (sql_row = mysql_fetch_row(result))//è·å–å…·ä½“çš„æ•°æ®
 	{
 		rowCount++;
 		jsonArr.append("{");
@@ -119,7 +119,7 @@ inline bool MySqlClient::ExecuteQuery(const std::string& sql, std::string& resul
 	}
 	jsonArr.erase(jsonArr.length() - 1, 1);
 	jsonArr.append("]");
-	//ÊÍ·Å
+	//é‡Šæ”¾
 	mysql_free_result(result);
 	CloseConn();
 	resultx = jsonArr;

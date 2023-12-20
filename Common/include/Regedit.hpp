@@ -4,9 +4,9 @@
 //#include <strsafe.h>
 //
 //namespace Regedit {
-//	//É¾³ıÖ¸¶¨key
+//	//åˆ é™¤æŒ‡å®škey
 //	BOOL DelKey(HKEY keyRoot, LPTSTR keyPath);
-//	//ÅĞ¶ÏÊÇ·ñ´æÔÚkey
+//	//åˆ¤æ–­æ˜¯å¦å­˜åœ¨key
 //	BOOL Exist(HKEY keyRoot, LPTSTR keyPath);
 //
 //	bool SetValue(HKEY hKey, const TString&key, const TString&value = TEXT(""));
@@ -128,9 +128,9 @@
 //public:
 //	Product(const TString&ProductName) {
 //		this->ProductName = ProductName;
-//		if (RegOpenKey(HKEY_CLASSES_ROOT, ProductName.c_str(), &hExtKey) != ERROR_SUCCESS)//Èç¹û´ò²»¿ª
+//		if (RegOpenKey(HKEY_CLASSES_ROOT, ProductName.c_str(), &hExtKey) != ERROR_SUCCESS)//å¦‚æœæ‰“ä¸å¼€
 //		{
-//			hExtKey = ::Regedit::CreateKey(HKEY_CLASSES_ROOT, ProductName);//¾Í´´½¨
+//			hExtKey = ::Regedit::CreateKey(HKEY_CLASSES_ROOT, ProductName);//å°±åˆ›å»º
 //		}
 //	}
 //	void SetValue(const TString&key, const TString&value) {
@@ -145,9 +145,9 @@
 //		}
 //		return bufStr;
 //	}
-//	Version GetVersion() {//´Ó×¢²á±íÖĞ»ñÈ¡³ÌĞò°æ±¾
+//	Version GetVersion() {//ä»æ³¨å†Œè¡¨ä¸­è·å–ç¨‹åºç‰ˆæœ¬
 //		TString localVer = GetValue("ver", "0.0.0.0");
-//		Version ver{ 0,0,0,0 };//µ±Ç°³ÌĞò°æ±¾
+//		Version ver{ 0,0,0,0 };//å½“å‰ç¨‹åºç‰ˆæœ¬
 //		auto vers = Text::Split(localVer, ".");
 //		ver.v1 = (WORD)std::stoi(vers.at(0));
 //		ver.v2 = (WORD)std::stoi(vers.at(1));
@@ -155,7 +155,7 @@
 //		ver.v4 = (WORD)std::stoi(vers.at(3));
 //		return ver;
 //	}
-//	void SetVersion(const Version&ver) {//ÉèÖÃĞÂ°æ±¾
+//	void SetVersion(const Version&ver) {//è®¾ç½®æ–°ç‰ˆæœ¬
 //		TCHAR newVer[MAX_PATH] = { 0 };
 //		Text::Format(newVer, MAX_PATH, "%d.%d.%d.%d", ver.v1, ver.v2, ver.v3, ver.v4);
 //		SetValue("ver", newVer);

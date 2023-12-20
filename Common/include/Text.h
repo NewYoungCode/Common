@@ -24,7 +24,7 @@ namespace Text {
 		Utf8String Toupper()const;
 		void Append(const Utf8String& text);
 		size_t Find(const Utf8String& text, size_t Off = 0U)const;
-	private:
+	public:
 		//base convert
 		static void AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr);
 		static void UnicodeToAny(const std::wstring& unicode_wstr, UINT codePage, std::string* out_str);
@@ -46,10 +46,10 @@ namespace Text {
 	};
 #define utf8(text) EString(L##text)
 	/// <summary>
-	/// Ğ¡Êı×ª×Ö·û´®
+	/// å°æ•°è½¬å­—ç¬¦ä¸²
 	/// </summary>
-	/// <param name="number">ÊıÖµ</param>
-	/// <param name="keepBitSize">±£ÁôÎ»Êı</param>
+	/// <param name="number">æ•°å€¼</param>
+	/// <param name="keepBitSize">ä¿ç•™ä½æ•°</param>
 	/// <returns></returns>
 	extern Utf8String ToString(double number, int keepBitSize);
 };

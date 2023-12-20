@@ -21,7 +21,7 @@ struct ZipItem
 };
 
 /// <summary>
-/// ×¨ÃÅ¸ºÔğ½âÑ¹ËõµÄÀà
+/// ä¸“é—¨è´Ÿè´£è§£å‹ç¼©çš„ç±»
 /// </summary>
 class UnZiper {
 	HZIP_U ptr = NULL;

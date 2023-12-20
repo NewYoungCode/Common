@@ -12,25 +12,25 @@
 #else
 #pragma comment(lib,"libcurl.lib")
 #endif // !_DEBUG
-#pragma comment(lib,"Crypt32.lib")//curlĞèÒªµÄ¿â
-#pragma comment(lib,"wldap32.lib")//curlĞèÒªµÄ¿â
-#pragma comment(lib,"ws2_32.lib") //curlĞèÒªµÄ¿â
+#pragma comment(lib,"Crypt32.lib")//curléœ€è¦çš„åº“
+#pragma comment(lib,"wldap32.lib")//curléœ€è¦çš„åº“
+#pragma comment(lib,"ws2_32.lib") //curléœ€è¦çš„åº“
 
 void Curl_Global_Init() {
 	curl_global_init(CURL_GLOBAL_ALL);
 }
 
-//½ÓÊÕÏìÓ¦body
+//æ¥æ”¶å“åº”body
 size_t g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone);
-//½ÓÊÕÏÂÔØÎÄ¼ş
+//æ¥æ”¶ä¸‹è½½æ–‡ä»¶
 size_t g_curl_download_callback(char* contents, size_t size, size_t nmemb, void* _fielname);
-//½ÓÊÜÉÏ´«»òÕßÏÂÔØ½ø¶È
+//æ¥å—ä¸Šä¼ æˆ–è€…ä¸‹è½½è¿›åº¦
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow);
 
-//¶¨Òå
+//å®šä¹‰
 WebClient::WebClient() {
 	if (!g_curl_bInit) {
-		curl_global_init(CURL_GLOBAL_ALL); //³õÊ¼»¯curl
+		curl_global_init(CURL_GLOBAL_ALL); //åˆå§‹åŒ–curl
 		g_curl_bInit = true;
 	}
 }
@@ -82,27 +82,27 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 	}
 	this->ResponseData = strResponse;
 	if (Proxy) {
-		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, Proxy->curl_proxytype); //´úÀíÄ£Ê½
-		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy->host.c_str()); //´úÀí·şÎñÆ÷µØÖ·
-		curl_easy_setopt(curl, CURLOPT_PROXYPORT, Proxy->port); //´úÀí·şÎñÆ÷¶Ë¿Ú
+		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, Proxy->curl_proxytype); //ä»£ç†æ¨¡å¼
+		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy->host.c_str()); //ä»£ç†æœåŠ¡å™¨åœ°å€
+		curl_easy_setopt(curl, CURLOPT_PROXYPORT, Proxy->port); //ä»£ç†æœåŠ¡å™¨ç«¯å£
 		if (!Proxy->user.empty() && !Proxy->password.empty()) {
-			curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, std::string(Proxy->user + ":" + Proxy->password).c_str()); //ÓÃ»§ÃÜÂë
+			curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, std::string(Proxy->user + ":" + Proxy->password).c_str()); //ç”¨æˆ·å¯†ç 
 		}
 	}
 	if (!Proxy_Str.empty()) {
-		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy_Str.c_str()); //´úÀí·şÎñÆ÷µØÖ·
+		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy_Str.c_str()); //ä»£ç†æœåŠ¡å™¨åœ°å€
 	}
 
-	//³õÊ¼»¯cookieÒıÇæ
-	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");    //³õÊ¼»¯cookieÒıÇæ,²ÅÄÜÕıÈ·½ÓÊÕµ½cookieÊı¾İ.
+	//åˆå§‹åŒ–cookieå¼•æ“
+	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");    //åˆå§‹åŒ–cookieå¼•æ“,æ‰èƒ½æ­£ç¡®æ¥æ”¶åˆ°cookieæ•°æ®.
 	if (!Cookies.empty()) {
 		curl_easy_setopt(curl, CURLOPT_COOKIE, Cookies.c_str());
 	}
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);	// ÑéÖ¤¶Ô·½µÄSSLÖ¤Êé
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);	//¸ù¾İÖ÷»úÑéÖ¤Ö¤ÊéµÄÃû³Æ
-	curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());//ÉèÖÃurlµØÖ·
-	curl_easy_setopt(curl, CURLOPT_TIMEOUT, nTimeout);//ÉèÖÃ³¬Ê±
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_receive_callback);//½ÓÊÜ»Øµ÷
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);	// éªŒè¯å¯¹æ–¹çš„SSLè¯ä¹¦
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);	//æ ¹æ®ä¸»æœºéªŒè¯è¯ä¹¦çš„åç§°
+	curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());//è®¾ç½®urlåœ°å€
+	curl_easy_setopt(curl, CURLOPT_TIMEOUT, nTimeout);//è®¾ç½®è¶…æ—¶
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_receive_callback);//æ¥å—å›è°ƒ
 
 	//curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strResponse);//
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);//
@@ -116,14 +116,14 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 };
 long WebClient::CleanUp(void* curl, int code) {
 	long RESPONSE_CODE = (int)code;
-	//Èç¹ûÖ´ĞĞ³É¹¦,
+	//å¦‚æœæ‰§è¡ŒæˆåŠŸ,
 	if (code == CURLE_OK)
 	{
-		//»ñÈ¡ÏìÓ¦µÄ×´Ì¬Âë
+		//è·å–å“åº”çš„çŠ¶æ€ç 
 		curl_easy_getinfo((CURL*)curl, CURLINFO_RESPONSE_CODE, &RESPONSE_CODE);
 
 		struct curl_slist* cookies = NULL;
-		curl_easy_getinfo((CURL*)curl, CURLINFO_COOKIELIST, &cookies);       //»ñµÃcookieÊı¾İ  
+		curl_easy_getinfo((CURL*)curl, CURLINFO_COOKIELIST, &cookies);       //è·å¾—cookieæ•°æ®  
 		int i = 1;
 		while (cookies)
 		{
@@ -173,9 +173,9 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 
 
 	if (progressCallback) {
-		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//½ÓÊÜÉÏ´«ÏÂÔØ½ø¶È
-		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//½«º¯Êı»Øµ÷º¯ÊıÉèÖÃ´«ÈëÖ¸Õë
-		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//½ø¶È»Øµ÷
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//æ¥å—ä¸Šä¼ ä¸‹è½½è¿›åº¦
+		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//å°†å‡½æ•°å›è°ƒå‡½æ•°è®¾ç½®ä¼ å…¥æŒ‡é’ˆ
+		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//è¿›åº¦å›è°ƒ
 	}
 
 	CURLcode  code = curl_easy_perform(curl);
@@ -195,7 +195,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 	}
 	struct curl_httppost* formpost = NULL;
 	struct curl_httppost* lastptr = NULL;
-	// ÉèÖÃ±íÍ·£¬±íÍ·ÄÚÈİ¿ÉÄÜ²»Í¬
+	// è®¾ç½®è¡¨å¤´ï¼Œè¡¨å¤´å†…å®¹å¯èƒ½ä¸åŒ
 	for (auto& item : fieldValues) {
 		if (item.FieldType == PostForm::FieldType::File) {
 			curl_formadd(&formpost, &lastptr,
@@ -208,7 +208,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 			curl_formadd(&formpost, &lastptr, CURLFORM_COPYNAME, item.FieldName.c_str(), CURLFORM_COPYCONTENTS, item.FieldValue.c_str(), CURLFORM_END);
 		}
 	}
-	// ÉèÖÃ±íµ¥²ÎÊı
+	// è®¾ç½®è¡¨å•å‚æ•°
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
 	CURLcode code = curl_easy_perform(curl);
 
@@ -225,13 +225,13 @@ int WebClient::DownloadFile(const std::string& url, const std::wstring& _filenam
 		return CURLE_FAILED_INIT;
 	}
 	File::Delete(_filename);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_download_callback);//½ÓÊÜÏÂÔØµÄ»Øµ÷º¯Êı
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, _filename.c_str()); //±£´æÎÄ¼şÃû
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_download_callback);//æ¥å—ä¸‹è½½çš„å›è°ƒå‡½æ•°
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, _filename.c_str()); //ä¿å­˜æ–‡ä»¶å
 
 	if (progressCallback) {
-		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//½ÓÊÜÉÏ´«ÏÂÔØ½ø¶È
-		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//½«º¯Êı»Øµ÷º¯ÊıÉèÖÃ´«ÈëÖ¸Õë
-		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//½ø¶È»Øµ÷
+		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//æ¥å—ä¸Šä¼ ä¸‹è½½è¿›åº¦
+		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//å°†å‡½æ•°å›è°ƒå‡½æ•°è®¾ç½®ä¼ å…¥æŒ‡é’ˆ
+		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//è¿›åº¦å›è°ƒ
 	}
 
 	CURLcode  code = curl_easy_perform(curl);

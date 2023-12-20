@@ -7,7 +7,7 @@
 //	bool b = s.Listen();
 //	for (; b;) {
 //		Socket client = s.Accep();
-//		printf("连接进入 %s %d\n", client.Address.c_str(), client.Port);
+//		printf("杩炴帴杩涘叆 %s %d\n", client.Address.c_str(), client.Port);
 //
 //		std::string resp;
 //		size_t pos = -1;
@@ -19,7 +19,7 @@
 //			int len = client.Receive(buf, sizeof(buf));
 //			if (len == -1 || len == 0) {
 //				client.Close();
-//				printf("客户端断开 %s %d\n", client.Address.c_str(), client.Port);
+//				printf("瀹㈡埛绔柇寮� %s %d\n", client.Address.c_str(), client.Port);
 //				break;
 //			}
 //			if (!end) {
@@ -48,7 +48,7 @@
 //			}
 //			if (end && body.size() >= length) {
 //				client.Close();
-//				printf("服务端断开 %s %d\n", client.Address.c_str(), client.Port);
+//				printf("鏈嶅姟绔柇寮� %s %d\n", client.Address.c_str(), client.Port);
 //				break;
 //			}
 //		}
@@ -77,7 +77,7 @@
 //				pos2 = str->find("}];", key.size() + pos1);
 //				if (pos2 != size_t(-1)) {
 //					*str = str->substr(pos1 + key.size(), pos2 - (pos1 + key.size())) + "}]";
-//					return 23;//终止
+//					return 23;//缁堟
 //				}
 //			}
 //			return count;

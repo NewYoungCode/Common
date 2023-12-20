@@ -1,6 +1,6 @@
 #include "Log.h"
 namespace Log {
-	//是否启用日志
+	//鏄惁鍚敤鏃ュ織
 	bool Enable = false;
 	void WriteLog(const Text::Utf8String& log)
 	{

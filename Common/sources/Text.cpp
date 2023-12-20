@@ -1,6 +1,6 @@
 #pragma once
 #include "Text.h"
-//¶¨Òå................................................
+//å®šä¹‰................................................
 namespace Text {
 	size_t Utf8String::length() const {
 		auto* p = this->c_str();
@@ -32,7 +32,7 @@ namespace Text {
 		Utf8String::UnicodeToUTF8(wstr, this);
 	}
 
-	//³£ÓÃº¯Êı
+	//å¸¸ç”¨å‡½æ•°
 	Utf8String Utf8String::Erase(const char& _char)const {
 		Utf8String newStr(*this);
 		Utf8String::Erase(&newStr, _char);
@@ -93,7 +93,7 @@ namespace Text {
 		bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.c_str()), strCmd.size(), NULL, NULL);
 	}
 
-	//ÒÔÏÂÊÇ¾²Ì¬º¯Êı
+	//ä»¥ä¸‹æ˜¯é™æ€å‡½æ•°
 	void Utf8String::ANSIToUniCode(const std::string& str, std::wstring* outStr)
 	{
 		AnyToUnicode(str, ::GetACP(), outStr);
@@ -121,7 +121,7 @@ namespace Text {
 	{
 		UINT codePage = ::GetACP();
 		if (codePage == CP_UTF8) {
-			*outStr = str;//Èç¹û±¾Éí¾ÍÊÇutf8Ôò²»ĞèÒª×ª»»
+			*outStr = str;//å¦‚æœæœ¬èº«å°±æ˜¯utf8åˆ™ä¸éœ€è¦è½¬æ¢
 			return;
 		}
 		std::wstring wstr;
@@ -131,7 +131,7 @@ namespace Text {
 	void Utf8String::UTF8ToANSI(const std::string& str, std::string* outStr) {
 		UINT codePage = ::GetACP();
 		if (codePage == CP_UTF8) {
-			*outStr = str;//Èç¹û±¾Éí¾ÍÊÇutf8Ôò²»ĞèÒª×ª»»
+			*outStr = str;//å¦‚æœæœ¬èº«å°±æ˜¯utf8åˆ™ä¸éœ€è¦è½¬æ¢
 			return;
 		}
 		std::wstring wstr;

@@ -3,20 +3,20 @@
 #include "Time.hpp"
 #include <mutex>
 namespace Log {
-	//ÊÇ·ñÆôÓÃÈÕÖ¾
+	//æ˜¯å¦å¯ç”¨æ—¥å¿—
 	extern bool Enable;
 	extern void WriteLog(const Text::Utf8String& log);
 
 	template<typename ...T>
 	/// <summary>
-	/// ´òÓ¡utf8µÄ×Ö·û
+	/// æ‰“å°utf8çš„å­—ç¬¦
 	/// </summary>
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
 	inline void Info(const Text::Utf8String& formatStr, const T &...args) {
 		if (!Enable)return;
-		int size = 1024 * 1024 * 5;//5MµÄÄÚ´æ
+		int size = 1024 * 1024 * 5;//5Mçš„å†…å­˜
 		char* buf = new char[size] { 0 };
 		auto count = sprintf_s((buf), size, formatStr.c_str(), std::forward<const T&>(args)...);
 		buf[count] = '\n';

@@ -4,7 +4,7 @@ namespace WinTool {
 #ifndef FormatError
 #define FormatError(x)	(x)
 #endif // FormatError
-	// »ñÈ¡ÏµÍ³ĞÅÏ¢
+	// è·å–ç³»ç»Ÿä¿¡æ¯
 	void SafeGetNativeSystemInfo(__out LPSYSTEM_INFO lpSystemInfo)
 	{
 		if (NULL == lpSystemInfo)
@@ -13,8 +13,8 @@ namespace WinTool {
 		}
 		typedef VOID(WINAPI* FuncGetSystemInfo)(LPSYSTEM_INFO lpSystemInfo);
 		FuncGetSystemInfo funcGetNativeSystemInfo = (FuncGetSystemInfo)GetProcAddress(GetModuleHandle(TEXT("kernel32")), "GetNativeSystemInfo");
-		// ÓÅÏÈÊ¹ÓÃ "GetNativeSystemInfo" º¯ÊıÀ´»ñÈ¡ÏµÍ³ĞÅÏ¢
-		// º¯Êı "GetSystemInfo" ´æÔÚÏµÍ³Î»Êı¼æÈİĞÔÎÊÌâ
+		// ä¼˜å…ˆä½¿ç”¨ "GetNativeSystemInfo" å‡½æ•°æ¥è·å–ç³»ç»Ÿä¿¡æ¯
+		// å‡½æ•° "GetSystemInfo" å­˜åœ¨ç³»ç»Ÿä½æ•°å…¼å®¹æ€§é—®é¢˜
 		if (NULL != funcGetNativeSystemInfo)
 		{
 			funcGetNativeSystemInfo(lpSystemInfo);
@@ -25,7 +25,7 @@ namespace WinTool {
 		}
 	}
 
-	// »ñÈ¡²Ù×÷ÏµÍ³Î»Êı
+	// è·å–æ“ä½œç³»ç»Ÿä½æ•°
 	int GetSystemBits()
 	{
 		SYSTEM_INFO si;
@@ -82,7 +82,7 @@ namespace WinTool {
 		for (auto status = ::Process32FirstW(hSnapshot, &pe); status != FALSE; status = ::Process32NextW(hSnapshot, &pe)) {
 			pe.dwSize = sizeof(PROCESSENTRY32W);
 			Text::Utf8String item = pe.szExeFile;
-			//²»´«½ø³ÌÃû³Æ²éÑ¯ËùÓĞ
+			//ä¸ä¼ è¿›ç¨‹åç§°æŸ¥è¯¢æ‰€æœ‰
 			if (_proccname.empty()) {
 				infos.push_back(pe);
 			}
@@ -174,7 +174,7 @@ namespace WinTool {
 		{
 			return bResult;
 		}
-		//3¡¢ÅĞ¶Ï×¢²á±íÏîÊÇ·ñÒÑ¾­´æÔÚ
+		//3ã€åˆ¤æ–­æ³¨å†Œè¡¨é¡¹æ˜¯å¦å·²ç»å­˜åœ¨
 		WCHAR wBuff[MAX_PATH]{ 0 };
 		DWORD nLength = MAX_PATH;
 		LSTATUS status = RegGetValueW(subKey, NULL, appName.unicode().c_str(), REG_SZ, NULL, wBuff, &nLength);
@@ -222,14 +222,14 @@ namespace WinTool {
 	}
 	BOOL EnablePrivilege(HANDLE process)
 	{
-		// µÃµ½ÁîÅÆ¾ä±ú
+		// å¾—åˆ°ä»¤ç‰Œå¥æŸ„
 		HANDLE hToken = NULL;
 		bool bResult = false;
 		if (OpenProcessToken(process ? process : ::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY | TOKEN_READ, &hToken)) {
-			// µÃµ½ÌØÈ¨Öµ
+			// å¾—åˆ°ç‰¹æƒå€¼
 			LUID luid;
 			if (LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
-				// ÌáÉıÁîÅÆ¾ä±úÈ¨ÏŞ
+				// æå‡ä»¤ç‰Œå¥æŸ„æƒé™
 				TOKEN_PRIVILEGES tp = {};
 				tp.PrivilegeCount = 1;
 				tp.Privileges[0].Luid = luid;
@@ -239,7 +239,7 @@ namespace WinTool {
 				}
 			}
 		}
-		// ¹Ø±ÕÁîÅÆ¾ä±ú
+		// å…³é—­ä»¤ç‰Œå¥æŸ„
 		CloseHandle(hToken);
 		return bResult;
 	}
@@ -264,7 +264,7 @@ namespace WinTool {
 				if (SUCCEEDED(hr))
 				{
 					WCHAR buf[MAX_PATH]{ 0 };
-					SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//»ñÈ¡µ±Ç°ÓÃ»§×ÀÃæÂ·¾¶
+					SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//è·å–å½“å‰ç”¨æˆ·æ¡Œé¢è·¯å¾„
 					Text::Utf8String userDesktop(buf);
 					if (!LnkName.empty()) {
 						userDesktop += "\\" + LnkName + ".lnk";
@@ -272,8 +272,8 @@ namespace WinTool {
 					else {
 						userDesktop += "\\" + Path::GetFileNameWithoutExtension(pragmaFilename) + ".lnk";
 					}
-					//ÉèÖÃ¿ì½İ·½Ê½µØÖ·
-					File::Delete(userDesktop);//É¾³ı¾ÉµÄ
+					//è®¾ç½®å¿«æ·æ–¹å¼åœ°å€
+					File::Delete(userDesktop);//åˆ é™¤æ—§çš„
 					hr = pPersistFile->Save(userDesktop.unicode().c_str(), FALSE);
 					if (SUCCEEDED(hr))
 					{
@@ -289,7 +289,7 @@ namespace WinTool {
 	}
 	void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName) {
 		WCHAR buf[MAX_PATH]{ 0 };
-		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//»ñÈ¡µ±Ç°ÓÃ»§×ÀÃæÂ·¾¶
+		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//è·å–å½“å‰ç”¨æˆ·æ¡Œé¢è·¯å¾„
 		Text::Utf8String userDesktop(buf);
 		if (!LnkName.empty()) {
 			userDesktop += "\\" + LnkName + ".lnk";
@@ -297,8 +297,8 @@ namespace WinTool {
 		else {
 			userDesktop += "\\" + Path::GetFileNameWithoutExtension(pragmaFilename) + ".lnk";
 		}
-		//ÉèÖÃ¿ì½İ·½Ê½µØÖ·
-		File::Delete(userDesktop);//É¾³ı¾ÉµÄ
+		//è®¾ç½®å¿«æ·æ–¹å¼åœ°å€
+		File::Delete(userDesktop);//åˆ é™¤æ—§çš„
 	}
 
 	LSTATUS RegSetSoftware(HKEY hKey, const Text::Utf8String& regKey, const Text::Utf8String& regValue) {
@@ -322,7 +322,7 @@ namespace WinTool {
 		::RegDeleteValueW(subKey, L"DisplayIcon");
 		::RegDeleteValueW(subKey, L"UninstallString");
 		::RegDeleteValueW(subKey, L"InstallLocation");
-		// ¹Ø±Õ×¢²á±í¼ü
+		// å…³é—­æ³¨å†Œè¡¨é”®
 		RegCloseKey(subKey);
 	}
 
@@ -330,20 +330,20 @@ namespace WinTool {
 	{
 		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.StartLocation));
-		// ´´½¨×¢²á±íÏî
+		// åˆ›å»ºæ³¨å†Œè¡¨é¡¹
 		HKEY hKey;
 
 		SECURITY_DESCRIPTOR securityDesc;
 		if (!InitializeSecurityDescriptor(&securityDesc, SECURITY_DESCRIPTOR_REVISION))
 		{
 			DWORD error = GetLastError();
-			wprintf(L"ÎŞ·¨³õÊ¼»¯°²È«ÃèÊö·û¡£´íÎó´úÂë£º%d\n", error);
+			wprintf(L"æ— æ³•åˆå§‹åŒ–å®‰å…¨æè¿°ç¬¦ã€‚é”™è¯¯ä»£ç ï¼š%d\n", error);
 			return false;
 		}
 		if (!SetSecurityDescriptorDacl(&securityDesc, TRUE, NULL, FALSE))
 		{
 			DWORD error = GetLastError();
-			wprintf(L"ÎŞ·¨ÉèÖÃDACL¡£´íÎó´úÂë£º%d\n", error);
+			wprintf(L"æ— æ³•è®¾ç½®DACLã€‚é”™è¯¯ä»£ç ï¼š%d\n", error);
 			return false;
 		}
 		SECURITY_ATTRIBUTES attr;
@@ -361,10 +361,10 @@ namespace WinTool {
 
 		RegSetSoftware(hKey, L"DisplayName", appInfo.DisplayName);
 		RegSetSoftware(hKey, L"DisplayVersion", appInfo.DisplayVersion);
-		RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//°²×°Î»ÖÃ
+		RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//å®‰è£…ä½ç½®
 		RegSetSoftware(hKey, L"Publisher", appInfo.DisplayAuthor);
 		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
-		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//°²×°Î»ÖÃ
+		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//å®‰è£…ä½ç½®
 
 		if (appInfo.DesktopLnk) {
 			WinTool::CreateDesktopLnk(appInfo.StartLocation, appInfo.DisplayName);
@@ -375,14 +375,14 @@ namespace WinTool {
 		else {
 			WinTool::SetAutoBoot(appInfo.StartLocation, false);
 		}
-		// ¹Ø±Õ×¢²á±í¼ü
+		// å…³é—­æ³¨å†Œè¡¨é”®
 		RegCloseKey(hKey);
 		return true;
 	}
 
 
 
-	// Í·ÎÄ¼ş°üº¬
+	// å¤´æ–‡ä»¶åŒ…å«
 #ifdef WIN32_LEAN_AND_MEAN
 #undef WIN32_LEAN_AND_MEAN
 #endif
@@ -464,7 +464,7 @@ namespace WinTool {
 		ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
 		std::wstring wStr = path.unicode();
 		if (wStr.size() > 0) {
-			std::wstring drive = path.unicode().substr(0, 1); // ÉèÖÃÄãÒª²éÑ¯µÄ´ÅÅÌÂ·¾¶
+			std::wstring drive = path.unicode().substr(0, 1); // è®¾ç½®ä½ è¦æŸ¥è¯¢çš„ç£ç›˜è·¯å¾„
 			drive += L":\\";
 			if (GetDiskFreeSpaceExW(drive.c_str(), &freeBytesAvailable, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
 				double freeSpaceGB = static_cast<double>(freeBytesAvailable.QuadPart) / (1024 * 1024 * 1024);
@@ -501,11 +501,11 @@ namespace WinTool {
 	}
 
 	Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr) {
-		HANDLE hReadPipe = NULL; //¶ÁÈ¡¹ÜµÀ
-		HANDLE hWritePipe = NULL; //Ğ´Èë¹ÜµÀ	
-		PROCESS_INFORMATION pi{ 0 }; //½ø³ÌĞÅÏ¢	
-		STARTUPINFO	si{ 0 };	//¿ØÖÆÃüÁîĞĞ´°¿ÚĞÅÏ¢
-		SECURITY_ATTRIBUTES sa{ 0 }; //°²È«ÊôĞÔ
+		HANDLE hReadPipe = NULL; //è¯»å–ç®¡é“
+		HANDLE hWritePipe = NULL; //å†™å…¥ç®¡é“	
+		PROCESS_INFORMATION pi{ 0 }; //è¿›ç¨‹ä¿¡æ¯	
+		STARTUPINFO	si{ 0 };	//æ§åˆ¶å‘½ä»¤è¡Œçª—å£ä¿¡æ¯
+		SECURITY_ATTRIBUTES sa{ 0 }; //å®‰å…¨å±æ€§
 		pi.hProcess = NULL;
 		pi.hThread = NULL;
 		si.cb = sizeof(STARTUPINFO);
@@ -515,22 +515,22 @@ namespace WinTool {
 		char* szBuff = NULL;
 		do
 		{
-			//1.´´½¨¹ÜµÀ
+			//1.åˆ›å»ºç®¡é“
 			if (!::CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
 				break;
 			}
-			//2.ÉèÖÃÃüÁîĞĞ´°¿ÚµÄĞÅÏ¢ÎªÖ¸¶¨µÄ¶ÁĞ´¹ÜµÀ
+			//2.è®¾ç½®å‘½ä»¤è¡Œçª—å£çš„ä¿¡æ¯ä¸ºæŒ‡å®šçš„è¯»å†™ç®¡é“
 			::GetStartupInfoW(&si);
 			si.hStdError = hWritePipe;
 			si.hStdOutput = hWritePipe;
-			si.wShowWindow = SW_HIDE; //Òş²ØÃüÁîĞĞ´°¿Ú
+			si.wShowWindow = SW_HIDE; //éšè—å‘½ä»¤è¡Œçª—å£
 			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-			//3.´´½¨»ñÈ¡ÃüÁîĞĞµÄ½ø³Ì
+			//3.åˆ›å»ºè·å–å‘½ä»¤è¡Œçš„è¿›ç¨‹
 			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.unicode().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				break;
 			}
-			//4.µÈ´ı¶ÁÈ¡·µ»ØµÄÊı¾İ
-			::WaitForSingleObject(pi.hProcess, 1000 * 60);//µÈÒ»·ÖÖÓ
+			//4.ç­‰å¾…è¯»å–è¿”å›çš„æ•°æ®
+			::WaitForSingleObject(pi.hProcess, 1000 * 60);//ç­‰ä¸€åˆ†é’Ÿ
 			size_t buffSize = ::GetFileSize(hReadPipe, NULL);
 			szBuff = new char[buffSize + 1] { 0 };
 			unsigned long size = 0;
@@ -538,7 +538,7 @@ namespace WinTool {
 				break;
 			}
 		} while (false);
-		//ÇåÀí¹¤×÷
+		//æ¸…ç†å·¥ä½œ
 		if (hWritePipe) {
 			CloseHandle(hWritePipe);
 		}
@@ -630,15 +630,15 @@ namespace WinTool {
 		browseInfo.pszDisplayName = selectedPath;
 		auto wTitle = title.unicode();
 		browseInfo.lpszTitle = wTitle.c_str();
-		//ÉèÖÃ¸ùÄ¿Â¼
+		//è®¾ç½®æ ¹ç›®å½•
 		LPITEMIDLIST pidlRoot;
 		::SHParseDisplayName(defaultPath.unicode().c_str(), NULL, &pidlRoot, 0, NULL);
 		browseInfo.pidlRoot = pidlRoot;
 		browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 		LPITEMIDLIST itemIdList = SHBrowseForFolderW(&browseInfo);
 		if (itemIdList != nullptr) {
-			SHGetPathFromIDListW(itemIdList, selectedPath);//ÉèÖÃÂ·¾¶
-			CoTaskMemFree(itemIdList);//ÇåÀí
+			SHGetPathFromIDListW(itemIdList, selectedPath);//è®¾ç½®è·¯å¾„
+			CoTaskMemFree(itemIdList);//æ¸…ç†
 			return selectedPath;
 		}
 		return selectedPath;
@@ -670,22 +670,22 @@ namespace WinTool {
 		RouterInfo info;
 		MIB_IPFORWARDTABLE* pForwardTable;
 		DWORD dwSize = 0;
-		// »ñÈ¡ËùĞèµÄ»º³åÇø´óĞ¡
+		// è·å–æ‰€éœ€çš„ç¼“å†²åŒºå¤§å°
 		GetIpForwardTable(nullptr, &dwSize, false);
-		// ·ÖÅä»º³åÇø
+		// åˆ†é…ç¼“å†²åŒº
 		pForwardTable = (MIB_IPFORWARDTABLE*)malloc(dwSize);
 		if (pForwardTable == nullptr) {
 			std::cout << "Failed to allocate memory." << std::endl;
 			return info;
 		}
-		// »ñÈ¡Â·ÓÉ±íĞÅÏ¢
+		// è·å–è·¯ç”±è¡¨ä¿¡æ¯
 		DWORD result = GetIpForwardTable(pForwardTable, &dwSize, false);
 		if (result != NO_ERROR) {
 			std::cout << "Failed to get IP forward table. Error code: " << result << std::endl;
 			free(pForwardTable);
 			return info;
 		}
-		// ²éÕÒÄ¬ÈÏÍø¹Ø
+		// æŸ¥æ‰¾é»˜è®¤ç½‘å…³
 		for (DWORD i = 0; i < pForwardTable->dwNumEntries; i++) {
 			MIB_IPFORWARDROW row = pForwardTable->table[i];
 			if (row.dwForwardDest == 0 && row.dwForwardProto == MIB_IPPROTO_NETMGMT) {
@@ -697,13 +697,13 @@ namespace WinTool {
 				UCHAR ip4 = ((gatewayIp >> 24) & 0xFF);
 				sprintf(ip, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
 				info.IP = ip;
-				DWORD ipAddress = inet_addr(ip);  // Ìæ»»ÎªÄãÏëÒª²éÑ¯µÄIPµØÖ·
+				DWORD ipAddress = inet_addr(ip);  // æ›¿æ¢ä¸ºä½ æƒ³è¦æŸ¥è¯¢çš„IPåœ°å€
 				info.MAC = GetMacAddress(ipAddress);
 				info.MAC = info.MAC.Tolower();
 				break;
 			}
 		}
-		// ÊÍ·Å·ÖÅäµÄÄÚ´æ
+		// é‡Šæ”¾åˆ†é…çš„å†…å­˜
 		free(pForwardTable);
 		return info;
 	}

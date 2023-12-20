@@ -34,7 +34,7 @@ inline bool OrcaleClient::OpenConn() {
 	{
 		std::string db = host + ":" + std::to_string(port) + "/" + server_name;
 		//outEnv = Environment::createEnvironment(Environment::DEFAULT);
-		outEnv = Environment::createEnvironment("ZHS16GBK", this->charset);//±àÂëÎÊÌâ
+		outEnv = Environment::createEnvironment("ZHS16GBK", this->charset);//ç¼–ç é—®é¢˜
 		outConn = outEnv->createConnection(user, pwd, db);
 		return true;
 	}
@@ -94,10 +94,10 @@ inline bool	OrcaleClient::ExecuteQuery(const std::string& sql, std::string& sqlR
 				fields.push_back(s);
 			}
 			sqlResult = "[";
-			//»ñÈ¡Ã¿ĞĞµÄÊı¾İ
+			//è·å–æ¯è¡Œçš„æ•°æ®
 			bool frist = true;
 			size_t rowCount = 0;
-			while (rset->next())//»ñÈ¡¾ßÌåµÄÊı¾İ
+			while (rset->next())//è·å–å…·ä½“çš„æ•°æ®
 			{
 				rowCount++;
 				sqlResult.append("{");

@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <corecrt_io.h>
 namespace MD5 {
-	//MD5±àÂë
+	//MD5ç¼–ç 
 	std::string FromFile(const std::wstring& filename);
 	std::string FromString(const std::string& string);
 };

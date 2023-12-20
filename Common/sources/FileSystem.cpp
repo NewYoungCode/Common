@@ -1,5 +1,5 @@
 #include "FileSystem.h"
-//¶¨Òå....................................................................................................................
+//å®šä¹‰....................................................................................................................
 namespace FileSystem {
 	void ReadFileInfoWin32(const Text::Utf8String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::Utf8String& pattern, bool loopSubDir = false) {
 		Text::Utf8String filename;
@@ -9,7 +9,7 @@ namespace FileSystem {
 		filename = filename.Replace("\\", "/");
 		filename = filename.Replace("//", "/");
 		struct FileSystem::FileInfo fileInfo;
-		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //Ä¿Â¼
+		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //ç›®å½•
 			fileInfo.FileType = FileType::Directory;
 			fileInfo.FullName = filename;
 			fileInfo.FileName = filename;
@@ -48,7 +48,7 @@ namespace FileSystem {
 				ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir);
 			}
 		}
-		FindClose(hFile);//±ÜÃâÄÚ´æĞ¹Â©
+		FindClose(hFile);//é¿å…å†…å­˜æ³„æ¼
 		return result.size();
 	};
 };
@@ -117,9 +117,9 @@ namespace File {
 	void Copy(const Text::Utf8String& src_filename, const Text::Utf8String& des_filename)
 	{
 		FileStream fileData;
-		File::ReadFile(src_filename, &fileData);//¶ÁÈ¡Ô´ÎÄ¼ş
-		File::Delete(des_filename);//Ö±½Ó¸²¸Ç
-		std::ofstream ofs(des_filename.unicode(), std::ios::binary | std::ios::app);//Ğ´Èëµ½ĞÂµÄÎÄ¼ş
+		File::ReadFile(src_filename, &fileData);//è¯»å–æºæ–‡ä»¶
+		File::Delete(des_filename);//ç›´æ¥è¦†ç›–
+		std::ofstream ofs(des_filename.unicode(), std::ios::binary | std::ios::app);//å†™å…¥åˆ°æ–°çš„æ–‡ä»¶
 		ofs.write(fileData.c_str(), fileData.size());
 		ofs.flush();
 		ofs.close();
@@ -128,11 +128,11 @@ namespace File {
 namespace Path {
 	void FileWatcher::TaskFunc()
 	{
-		std::vector<Text::Utf8String> files;//Æô¶¯¼ÓÔØµ±Ç°ÎÄ¼ş
+		std::vector<Text::Utf8String> files;//å¯åŠ¨åŠ è½½å½“å‰æ–‡ä»¶
 		//std::vector<Text::Utf8String> files = Path::SearchFiles(path, math.c_str());
 		for (; exit; )
 		{
-			//ÒÆ³ı²»´æÔÚµÄÎÄ¼ş
+			//ç§»é™¤ä¸å­˜åœ¨çš„æ–‡ä»¶
 			for (size_t i = 0; i < files.size(); i++)
 			{
 				if (!File::Exists(files[i]))
@@ -143,7 +143,7 @@ namespace Path {
 					}
 				}
 			}
-			//ÅĞ¶ÏÊÇ·ñĞÂÔöµÄÎÄ¼şs
+			//åˆ¤æ–­æ˜¯å¦æ–°å¢çš„æ–‡ä»¶s
 			std::vector<Text::Utf8String> tmp = Path::SearchFiles(path, math.c_str());
 			for (auto& item : tmp)
 			{
@@ -155,7 +155,7 @@ namespace Path {
 					}
 				}
 			}
-			//ÖµÔ½Ğ¡Ô½¾«×¼
+			//å€¼è¶Šå°è¶Šç²¾å‡†
 			Sleep(sleep);
 		}
 	}
@@ -176,7 +176,7 @@ namespace Path {
 		if (Path::Exists(path)) {
 			return true;
 		}
-		//´´½¨¶à¼¶Ä¿Â¼
+		//åˆ›å»ºå¤šçº§ç›®å½•
 		if (path.find(":") != size_t(-1)) {
 			Text::Utf8String dir = path + "/";
 			dir = dir.Replace("\\", "/");
@@ -263,7 +263,7 @@ namespace Path {
 			{
 				continue;
 			}
-			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //Èç¹ûÊÇÎÄ¼ş²ÅÒª
+			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //å¦‚æœæ˜¯æ–‡ä»¶æ‰è¦
 				Text::Utf8String filename;
 				filename.Append(path);
 				filename.Append("\\");
@@ -273,7 +273,7 @@ namespace Path {
 				files.push_back(filename);
 			}
 		}
-		FindClose(hFile);//±ÜÃâÄÚ´æĞ¹Â©
+		FindClose(hFile);//é¿å…å†…å­˜æ³„æ¼
 		return files;
 	}
 	bool Exists(const Text::Utf8String& path) {
@@ -339,7 +339,7 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
-		//Ô¤·ÀÃüÃû³åÍ»
+		//é¢„é˜²å‘½åå†²çª
 		auto pathMd5 = Text::Utf8String(MD5::FromString(Path::StartFileName())).unicode();
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, pathMd5.c_str());
 		Path::Create(temPath);

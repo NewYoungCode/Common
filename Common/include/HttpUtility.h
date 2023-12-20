@@ -13,9 +13,9 @@ namespace HttpUtility {
 	// https://stackoverflow.com/questions/180947/base64-decode-snippet-in-c
 	std::string base64_encode(const unsigned char* text, unsigned int text_len);
 	std::string  base64_decode(const unsigned char* code, unsigned int code_len);
-	//url编码
+	//url缂栫爜
 	std::string UrlEncode(const std::string& str);
-	//url解码
+	//url瑙ｇ爜
 	std::string UrlDecode(const std::string& str, bool convert_plus_to_space = false);
-	//少一个GZIP
+	//灏戜竴涓狦ZIP
 };

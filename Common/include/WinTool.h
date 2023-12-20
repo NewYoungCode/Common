@@ -10,7 +10,7 @@
 
 namespace WinTool {
 	/// <summary>
-	/// Â·ÓÉĞÅÏ¢
+	/// è·¯ç”±ä¿¡æ¯
 	/// </summary>
 	struct RouterInfo {
 		Text::Utf8String IP;
@@ -30,112 +30,112 @@ namespace WinTool {
 	}MyAdpterInfo;
 	struct AppInfo {
 		/// <summary>
-		/// appÃû³Æ
+		/// appåç§°
 		/// </summary>
 		Text::Utf8String DisplayName;
 		/// <summary>
-		/// °æ±¾ºÅ
+		/// ç‰ˆæœ¬å·
 		/// </summary>
 		Text::Utf8String DisplayVersion;
 		/// <summary>
-		/// ³ÌĞò×÷Õß
+		/// ç¨‹åºä½œè€…
 		/// </summary>
 		Text::Utf8String DisplayAuthor;
 		/// <summary>
-		/// ³ÌĞòÆô¶¯ÍêÕûÂ·¾¶ C:\\Program Files\\xxx\xxx.exe //ÕâÊÇ±ØĞëÒª´«µÄ
+		/// ç¨‹åºå¯åŠ¨å®Œæ•´è·¯å¾„ C:\\Program Files\\xxx\xxx.exe //è¿™æ˜¯å¿…é¡»è¦ä¼ çš„
 		/// </summary>
 		Text::Utf8String StartLocation;
 		/// <summary>
-		/// Ğ¶ÔØÖ´ĞĞµÄÃüÁîĞĞ
+		/// å¸è½½æ‰§è¡Œçš„å‘½ä»¤è¡Œ
 		/// </summary>
 		Text::Utf8String UninstallString;
 		/// <summary>
-		/// ÊÇ·ñ´´½¨×ÀÃæ¿ì½İ·½Ê½
+		/// æ˜¯å¦åˆ›å»ºæ¡Œé¢å¿«æ·æ–¹å¼
 		/// </summary>
 		bool DesktopLnk = true;
 		/// <summary>
-		/// ÊÇ·ñ¿ª»úÆô¶¯
+		/// æ˜¯å¦å¼€æœºå¯åŠ¨
 		/// </summary>
 		bool AutoBoot = false;
 	};
-	//¸ø½ø³ÌÌáÈ¨
+	//ç»™è¿›ç¨‹ææƒ
 	extern BOOL EnablePrivilege(HANDLE process = NULL);
-	//´´½¨×ÀÃæ¿ì½İ·½Ê½
+	//åˆ›å»ºæ¡Œé¢å¿«æ·æ–¹å¼
 	extern bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName = L"", const Text::Utf8String& cmdline = L"", const Text::Utf8String& iconFilename = L"");
 	extern void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName);
 	extern bool RegisterSoftware(const AppInfo& appInfo);
 	extern 	void UnRegisterSoftware(const Text::Utf8String& appName_en);
-	//ÉèÖÃ³ÌĞò×ÔÆô¶¯
+	//è®¾ç½®ç¨‹åºè‡ªå¯åŠ¨
 	extern bool SetAutoBoot(const Text::Utf8String& filename = L"", bool enable = true);
-	//»ñÈ¡³ÌĞò×ÔÆô¶¯×´Ì¬
+	//è·å–ç¨‹åºè‡ªå¯åŠ¨çŠ¶æ€
 	extern bool GetAutoBootStatus(const Text::Utf8String& filename);
 	extern HWND FindMainWindow(DWORD processId);
-	//»ñÈ¡½ø³ÌĞÅÏ¢
+	//è·å–è¿›ç¨‹ä¿¡æ¯
 	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname);
-	//¸ù¾İ½ø³ÌÃû³Æ´ò¿ª½ø³Ì
+	//æ ¹æ®è¿›ç¨‹åç§°æ‰“å¼€è¿›ç¨‹
 	extern HANDLE OpenProcess(const Text::Utf8String& _proccname);
-	//»ñÈ¡½ø³ÌID¼¯ºÏ
+	//è·å–è¿›ç¨‹IDé›†åˆ
 	extern std::vector<DWORD> FindProcessId(const Text::Utf8String& proccname);
-	//»ñÈ¡½ø³ÌÎÄ¼şÂ·¾¶
+	//è·å–è¿›ç¨‹æ–‡ä»¶è·¯å¾„
 	extern Text::Utf8String FindProcessFilename(DWORD processId);
-	//¹Ø±ÕËùÓĞ½ø³Ì
+	//å…³é—­æ‰€æœ‰è¿›ç¨‹
 	extern int CloseProcess(const std::vector<DWORD>& processIds);
-	//Ê¹ÓÃ½ø³ÌID¹Ø±Õ½ø³Ì
+	//ä½¿ç”¨è¿›ç¨‹IDå…³é—­è¿›ç¨‹
 	extern bool CloseProcess(DWORD processId);
-	//»ñÈ¡½ø³ÌÊÇ²»ÊÇ64Î»µÄ
+	//è·å–è¿›ç¨‹æ˜¯ä¸æ˜¯64ä½çš„
 	extern bool Is64BitPorcess(DWORD processId);
 	extern bool Is86BitPorcess(DWORD processId);
-	//»ñÈ¡µ±Ç°½ø³ÌID
+	//è·å–å½“å‰è¿›ç¨‹ID
 	extern DWORD GetCurrentProcessId();
-	//»ñÈ¡ÏµÍ³Î»Êı
+	//è·å–ç³»ç»Ÿä½æ•°
 	extern int GetSystemBits();
-	//»ñÈ¡¼ÆËã»úÎ¨Ò»Ê¶±ğÂë
+	//è·å–è®¡ç®—æœºå”¯ä¸€è¯†åˆ«ç 
 	extern std::string GetComputerID();
-	//»ñÈ¡Íø¿¨Ïà¹Ø
+	//è·å–ç½‘å¡ç›¸å…³
 	extern int GetAdptersInfo(std::vector<MyAdpterInfo>& adpterInfo);
 	/// <summary>
-	/// »ñÈ¡´ÅÅÌ¿ÉÒÔÓÃ¿Õ¼äµ¥Î»:GB
+	/// è·å–ç£ç›˜å¯ä»¥ç”¨ç©ºé—´å•ä½:GB
 	/// </summary>
 	/// <param name="path"></param>
 	/// <returns></returns>
 	extern double GetDiskFreeSize(const Text::Utf8String& path);
-	//±àÂë ¼ÓÃÜ
+	//ç¼–ç  åŠ å¯†
 	extern void EnCode(const File::FileStream* fileData, File::FileStream* outData);
-	//½âÂë ½âÃÜ
+	//è§£ç  è§£å¯†
 	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
 	/// <summary>
-	/// Ö´ĞĞcmd²¢·µ»Ø´òÓ¡µÄ×Ö·û
+	/// æ‰§è¡Œcmdå¹¶è¿”å›æ‰“å°çš„å­—ç¬¦
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
 	extern Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr);
 	/// <summary>
-	/// »ñÈ¡Ö÷°åĞòÎ¨Ò»±êÊ¶
+	/// è·å–ä¸»æ¿åºå”¯ä¸€æ ‡è¯†
 	/// </summary>
 	/// <returns></returns>
 	extern  Text::Utf8String GetBiosUUID();
 	/// <summary>
-	/// »ñÈ¡CPUĞòÁĞºÅ
+	/// è·å–CPUåºåˆ—å·
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetCPUSerialNumber();
 	/// <summary>
-	/// »ñÈ¡Ó²ÅÌĞòÁĞºÅ
+	/// è·å–ç¡¬ç›˜åºåˆ—å·
 	/// </summary>
 	/// <returns></returns>
 	extern  Text::Utf8String GetDiskSerialNumber();
 	/// <summary>
-	/// »ñÈ¡Ê×Ñ¡Íø¿¨µÄmacµØÖ·
+	/// è·å–é¦–é€‰ç½‘å¡çš„macåœ°å€
 	/// </summary>
 	/// <returns></returns>
 	extern  Text::Utf8String GetMacAddress();
 	/// <summary>
-	/// »ñÈ¡²Ù×÷ÏµÍ³µÄ°æ±¾ºÅ
+	/// è·å–æ“ä½œç³»ç»Ÿçš„ç‰ˆæœ¬å·
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetWinVersion();
 	/// <summary>
-	/// Ñ¡ÔñÄ¿Â¼
+	/// é€‰æ‹©ç›®å½•
 	/// </summary>
 	/// <param name="ownerWnd"></param>
 	/// <param name="defaultPath"></param>
@@ -143,7 +143,7 @@ namespace WinTool {
 	/// <returns></returns>
 	extern Text::Utf8String ShowFolderDialog(HWND ownerWnd = NULL, Text::Utf8String defaultPath = "", Text::Utf8String title = "Select a directory");
 	/// <summary>
-	/// »ñÈ¡Â·ÓÉĞÅÏ¢
+	/// è·å–è·¯ç”±ä¿¡æ¯
 	/// </summary>
 	/// <returns></returns>
 	extern RouterInfo GetRouterInfo();

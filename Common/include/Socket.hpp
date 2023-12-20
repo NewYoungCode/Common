@@ -15,7 +15,7 @@ private:
 	SOCKET socket = NULL;
 	sockaddr_in sockaddr;
 public:
-	//³õÊ¼»¯Ì×½Ó×Ö¿â
+	//åˆå§‹åŒ–å¥—æ¥å­—åº“
 	static bool Init() {
 		if (__wsadata__.wVersion == 0) {
 			int code = !WSAStartup(MAKEWORD(2, 2), &__wsadata__);
@@ -26,7 +26,7 @@ public:
 		}
 		return false;
 	}
-	//ÇåÀí
+	//æ¸…ç†
 	static void Cleanup() {
 		::WSACleanup();
 		__wsadata__.wVersion = 0;
@@ -67,7 +67,7 @@ inline bool Socket::Connect(const std::string& ip, size_t port)
 {
 	sockaddr.sin_addr.S_un.S_addr = inet_addr(ip.c_str());
 	sockaddr.sin_port = htons(port);
-	//´´½¨Ì×½Ó×Ö
+	//åˆ›å»ºå¥—æ¥å­—
 	socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (connect(socket, (SOCKADDR*)&sockaddr, sizeof(SOCKADDR)) == SOCKET_ERROR) {
 		printf("%s\n", "Connection failed");
@@ -78,7 +78,7 @@ inline bool Socket::Connect(const std::string& ip, size_t port)
 	}
 }
 inline bool Socket::Bind(const std::string& ip, size_t port) {
-	//TCPµÄ
+	//TCPçš„
 
 	socket = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (socket == INVALID_SOCKET) {

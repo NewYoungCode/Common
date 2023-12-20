@@ -2,18 +2,18 @@
 #include "Common.h"
 
 #if USECURL
-//全局初始化curl
+//鍏ㄥ眬鍒濆鍖朿url
 void Curl_Global_Init();
 
-//下载进度回调函数模型
+//涓嬭浇杩涘害鍥炶皟鍑芥暟妯″瀷
 typedef std::function<void(__int64 total, __int64 now, float rate)> ProgressFunc;
-//curl的初始化
+//curl鐨勫垵濮嬪寲
 static bool g_curl_bInit = false;
 class Proxy {
 public:
 	std::string host;
 	unsigned int port;
-	int curl_proxytype = 5;//类型值参见curl_proxytype
+	int curl_proxytype = 5;//绫诲瀷鍊煎弬瑙乧url_proxytype
 	std::string user;
 	std::string password;
 	inline Proxy(const std::string& host, size_t port, const int& curl_proxytype = 5, const std::string& user = "", const std::string& password = "") {
@@ -25,7 +25,7 @@ public:
 	}
 };
 namespace PostForm {
-	//字段类型
+	//瀛楁绫诲瀷
 	enum FieldType :char
 	{
 		None,
@@ -63,7 +63,7 @@ private:
 	void* Init(const std::string& url, std::string* resp, int timeOut);
 	long CleanUp(void* curl, int code);
 	std::map<std::string, std::string> Header;
-	void* curl_header = NULL;//类型参见 curl_slist
+	void* curl_header = NULL;//绫诲瀷鍙傝 curl_slist
 public:
 	std::string Cookies;
 	std::string Proxy_Str;

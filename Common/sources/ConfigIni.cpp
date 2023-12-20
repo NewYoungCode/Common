@@ -4,7 +4,7 @@ DWORD ConfigIni::GetValue(const Text::Utf8String& section, const Text::Utf8Strin
 	if (section.empty()) {
 		_section = this->section;
 	}
-	WCHAR* buff = new WCHAR[buffSize]{ 0 };//Êı¾İÁ¿
+	WCHAR* buff = new WCHAR[buffSize]{ 0 };//æ•°æ®é‡
 	long char_count = ::GetPrivateProfileStringW(_section.unicode().c_str(), key.unicode().c_str(), defaultValue.unicode().c_str(), buff, buffSize - 1, filename.unicode().c_str());
 	outResult = buff;
 	delete[] buff;
@@ -21,7 +21,7 @@ bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String
 	return ::WritePrivateProfileStringW(_section.unicode().c_str(), key.unicode().c_str(), Value.unicode().c_str(), absoluteFilename.unicode().c_str()) == 0 ? false : true;
 }
 
-//FileName //Ò»¶¨Òª¾ø¶ÔÂ·¾¶
+//FileName //ä¸€å®šè¦ç»å¯¹è·¯å¾„
 ConfigIni::ConfigIni(const Text::Utf8String& filename, const Text::Utf8String& defaultSection, size_t buffSize) {
 	this->buffSize = buffSize;
 	this->filename = filename;
@@ -33,13 +33,13 @@ void ConfigIni::SetDefaultSection(const Text::Utf8String section) {
 }
 
 
-//¶ÁÈ¡iniÖĞµÄ×Ö·û
+//è¯»å–iniä¸­çš„å­—ç¬¦
 Text::Utf8String  ConfigIni::ReadString(const Text::Utf8String& key, const Text::Utf8String& defaultValue, const Text::Utf8String& section) const {
 	Text::Utf8String outResult;
 	GetValue(section, key, defaultValue, filename, outResult);
 	return  outResult;
 }
-//¶ÁÈ¡iniÖĞµÄÊı×Ö
+//è¯»å–iniä¸­çš„æ•°å­—
 float  ConfigIni::ReadFloat(const Text::Utf8String& key, float defaultValue, const Text::Utf8String& section) const {
 	try
 	{
@@ -53,7 +53,7 @@ float  ConfigIni::ReadFloat(const Text::Utf8String& key, float defaultValue, con
 		return defaultValue;
 	}
 }
-//¶ÁÈ¡iniÖĞµÄintÊı×Ö
+//è¯»å–iniä¸­çš„intæ•°å­—
 int  ConfigIni::ReadInt(const Text::Utf8String& key, int defaultValue, const Text::Utf8String& section) const {
 	try
 	{
@@ -68,7 +68,7 @@ int  ConfigIni::ReadInt(const Text::Utf8String& key, int defaultValue, const Tex
 	}
 }
 
-//Ğ´Èëini
+//å†™å…¥ini
 bool  ConfigIni::WriteValue(const Text::Utf8String& key, const Text::Utf8String& value, const Text::Utf8String& section)const {
 	return SetValue(section, key, value, filename);
 }

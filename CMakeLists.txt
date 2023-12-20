@@ -1,4 +1,10 @@
 cmake_minimum_required (VERSION 3.2)
+if(UNIX)
+   add_compile_options(-finput-charset=UTF-8)
+   add_compile_options(-fexec-charset=UTF-8)
+elseif(WIN32)
+   add_compile_options(/utf-8)
+endif()
 #让所有项目都使用UNICODE
 add_definitions(-D_UNICODE -DUNICODE)
 #安装&下载程序

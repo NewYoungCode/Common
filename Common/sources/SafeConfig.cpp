@@ -75,7 +75,7 @@ void SafeConfig::WriteValue(const Text::Utf8String& key, const Text::Utf8String&
 			saveValues += "&" + key + "=" + value;
 		}
 	}
-	//¼ÓÃÜ²¢Ð´Èë
+	//åŠ å¯†å¹¶å†™å…¥
 	WinTool::EnCode(&saveValues, &fileStream);
 	File::WriteFile(&fileStream, this->fileName);
 }

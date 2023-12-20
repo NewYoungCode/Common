@@ -379,7 +379,7 @@ namespace MD5 {
 	}
 
 
-	//µÃµ½¶ş½øÖÆÎÄ¼şµÄMD5Âë
+	//å¾—åˆ°äºŒè¿›åˆ¶æ–‡ä»¶çš„MD5ç 
 	inline string FileDigest(const string& file) {
 		ifstream in(file.c_str(), std::ios::binary);
 		if (!in)

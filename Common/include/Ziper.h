@@ -5,7 +5,7 @@
 DECLARE_HANDLE(HZIP_Z);
 
 /// <summary>
-/// 专门负责压缩的库
+/// 涓撻棬璐熻矗鍘嬬缉鐨勫簱
 /// </summary>
 class Ziper {
 	HZIP_Z ptr = NULL;

@@ -4,13 +4,13 @@ namespace Time {
 		std::string ToString(const std::string& format) {
 			SYSTEMTIME time;
 			GetLocalTime(&time);
-			std::string  year = std::to_string(time.wYear);//Äê
-			std::string  Month = std::to_string(time.wMonth);//ÔÂ
-			std::string  Day = std::to_string(time.wDay);//ÈÕ
-			std::string Hour = std::to_string(time.wHour);//Ê±
-			std::string Minute = std::to_string(time.wMinute);//·Ö
-			std::string Second = std::to_string(time.wSecond);//Ãë
-			std::string wMilliseconds = std::to_string(time.wMilliseconds);//ºÁÃë
+			std::string  year = std::to_string(time.wYear);//å¹´
+			std::string  Month = std::to_string(time.wMonth);//æœˆ
+			std::string  Day = std::to_string(time.wDay);//æ—¥
+			std::string Hour = std::to_string(time.wHour);//æ—¶
+			std::string Minute = std::to_string(time.wMinute);//åˆ†
+			std::string Second = std::to_string(time.wSecond);//ç§’
+			std::string wMilliseconds = std::to_string(time.wMilliseconds);//æ¯«ç§’
 			Month = Month.size() == 1U ? "0" + Month : Month;
 			Day = Day.size() == 1U ? "0" + Day : Day;
 			Hour = Hour.size() == 1U ? "0" + Hour : Hour;

@@ -7,25 +7,25 @@
 #include "Md5.h"
 namespace File {
 	typedef std::string FileStream;
-	//´´½¨ÎÄ¼ş
+	//åˆ›å»ºæ–‡ä»¶
 	extern bool Create(const Text::Utf8String& filename);
-	//É¾³ıÎÄ¼ş
+	//åˆ é™¤æ–‡ä»¶
 	extern bool Delete(const Text::Utf8String& filename);
-	//ÅĞ¶ÏÎÄ¼şÊÇ·ñ´æÔÚ
+	//åˆ¤æ–­æ–‡ä»¶æ˜¯å¦å­˜åœ¨
 	extern bool Exists(const Text::Utf8String& filename);
-	//ÎÄ¼şÒÆ¶¯»òÕß¸ÄÃû
+	//æ–‡ä»¶ç§»åŠ¨æˆ–è€…æ”¹å
 	extern bool Move(const Text::Utf8String& oldname, const Text::Utf8String& newname);
-	//¶ÁÈ¡ÎÄ¼ş²¢out·µ»Ø
+	//è¯»å–æ–‡ä»¶å¹¶outè¿”å›
 	extern void ReadFile(const  Text::Utf8String& filename, FileStream* fileStream);
-	//Ğ´ÈëÎÄ¼ş
+	//å†™å…¥æ–‡ä»¶
 	extern void WriteFile(const FileStream* fileStream, const Text::Utf8String& filename);
-	//Ğ´ÈëÎÄ¼ş
+	//å†™å…¥æ–‡ä»¶
 	extern void WriteFile(const char* fileStream, size_t count, const Text::Utf8String& filename);
-	//¿½±´ÎÄ¼ş
+	//æ‹·è´æ–‡ä»¶
 	extern void Copy(const  Text::Utf8String& filename, const  Text::Utf8String& des_filename);
 }
 namespace Path {
-	//×Ô¼ºĞ´µÄÎÄ¼ş¼à¿ØÀà
+	//è‡ªå·±å†™çš„æ–‡ä»¶ç›‘æ§ç±»
 	class FileWatcher {
 	private:
 		Text::Utf8String math = "*.*";
@@ -38,41 +38,41 @@ namespace Path {
 		FileWatcher(const Text::Utf8String& path, const Text::Utf8String& math, const std::function<void(const Text::Utf8String& filename)>& callback, size_t sleep = 500);
 		~FileWatcher();
 	};
-	//´´½¨Â·¾¶
+	//åˆ›å»ºè·¯å¾„
 	extern bool Create(const Text::Utf8String& path);
-	//¿½±´Ä¿Â¼ËùÓĞÎÄ¼şµ½Ä¿±êÄ¿Â¼
+	//æ‹·è´ç›®å½•æ‰€æœ‰æ–‡ä»¶åˆ°ç›®æ ‡ç›®å½•
 	extern bool Copy(const Text::Utf8String& srcPath, const Text::Utf8String& desPath);
-	//É¾³ıÂ·¾¶ Èç¹û´æÔÚ×ÓÎÄ¼ş¼Ğ»òÕßÎÄ¼ş ½«»áµİ¹éÉ¾³ı
+	//åˆ é™¤è·¯å¾„ å¦‚æœå­˜åœ¨å­æ–‡ä»¶å¤¹æˆ–è€…æ–‡ä»¶ å°†ä¼šé€’å½’åˆ é™¤
 	extern bool Delete(const Text::Utf8String& directoryName);
-	//Í¨Åä·ûËÑË÷ÎÄ¼ş
+	//é€šé…ç¬¦æœç´¢æ–‡ä»¶
 	extern std::vector<Text::Utf8String> SearchFiles(const Text::Utf8String& path, const Text::Utf8String& pattern);
-	//¼ì²éÂ·¾¶ÊÇ·ñ´æÔÚ
+	//æ£€æŸ¥è·¯å¾„æ˜¯å¦å­˜åœ¨
 	extern bool Exists(const Text::Utf8String& path);
-	//»ñÈ¡ÎÄ¼şÃû³Æ(ÎÄ¼şÃû³Æ)
+	//è·å–æ–‡ä»¶åç§°(æ–‡ä»¶åç§°)
 	extern Text::Utf8String GetFileNameWithoutExtension(const Text::Utf8String& _filename);
-	//»ñÈ¡ÎÄ¼şÄ¿Â¼Ãû³Æ(ËùÔÚÄ¿Â¼)
+	//è·å–æ–‡ä»¶ç›®å½•åç§°(æ‰€åœ¨ç›®å½•)
 	extern Text::Utf8String GetDirectoryName(const Text::Utf8String& _filename);
-	//»ñÈ¡ÎÄ¼şÃû³Æ+ºó×º
+	//è·å–æ–‡ä»¶åç§°+åç¼€
 	extern Text::Utf8String GetFileName(const Text::Utf8String& _filename);
-	//»ñÈ¡ÎÄ¼şºó×ºÃû(ºó×ºÃû)
+	//è·å–æ–‡ä»¶åç¼€å(åç¼€å)
 	extern Text::Utf8String GetExtension(const Text::Utf8String& _filename);
-	//»ñÈ¡½ø³ÌËùÔÚ¾ø¶ÔÂ·¾¶Ä¿Â¼
+	//è·å–è¿›ç¨‹æ‰€åœ¨ç»å¯¹è·¯å¾„ç›®å½•
 	extern Text::Utf8String StartPath();
-	//»ñÈ¡½ø³ÌËùÔÚ¾ø¶ÔÂ·¾¶°üº¬ÎÄ¼şÃû³Æ
+	//è·å–è¿›ç¨‹æ‰€åœ¨ç»å¯¹è·¯å¾„åŒ…å«æ–‡ä»¶åç§°
 	extern const Text::Utf8String& StartFileName();
 #undef GetTempPath
 	/// <summary>
-	/// »ñÈ¡Ó¦µ±Ç°windowsÓÃ»§µÄÁÙÊ±Ä¿Â¼
+	/// è·å–åº”å½“å‰windowsç”¨æˆ·çš„ä¸´æ—¶ç›®å½•
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetTempPath();
 	/// <summary>
-	/// »ñÈ¡Ó¦ÓÃ³ÌĞòµÄÁÙÊ±Ä¿Â¼
+	/// è·å–åº”ç”¨ç¨‹åºçš„ä¸´æ—¶ç›®å½•
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetAppTempPath();
 	/// <summary>
-	/// »ñÈ¡Ó¦ÓÃ³ÌĞòÊı¾İ´æ´¢Ä¿Â¼ C:/Users/%s/AppData/Local/%s
+	/// è·å–åº”ç”¨ç¨‹åºæ•°æ®å­˜å‚¨ç›®å½• C:/Users/%s/AppData/Local/%s
 	/// </summary>
 	/// <returns></returns>
 	extern Text::Utf8String GetAppDataPath();

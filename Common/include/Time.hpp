@@ -3,7 +3,7 @@
 #include <time.h>
 namespace Time {
 	/// <summary>
-	/// Ê±¼ä´Á×ª×Ö·û´®
+	/// æ—¶é—´æˆ³è½¬å­—ç¬¦ä¸²
 	/// </summary>
 	/// <param name="time_"></param>
 	/// <returns></returns>
@@ -15,7 +15,7 @@ namespace Time {
 		return std::string(timeStr);
 	}
 	/// <summary>
-	/// ×Ö·û´®×ªÊ±¼ä´Á
+	/// å­—ç¬¦ä¸²è½¬æ—¶é—´æˆ³
 	/// </summary>
 	/// <param name="str"></param>
 	/// <returns></returns>
@@ -53,22 +53,22 @@ namespace Time {
 		ULARGE_INTEGER            ui;
 		ui.LowPart = ft.dwLowDateTime;
 		ui.HighPart = ft.dwHighDateTime;
-		ll = (ft.dwHighDateTime << 32) + ft.dwLowDateTime;  //ÕâÒ»²½ÊÇ²»ÊÇ¶àÓàµÄ
+		ll = (ft.dwHighDateTime << 32) + ft.dwLowDateTime;  //è¿™ä¸€æ­¥æ˜¯ä¸æ˜¯å¤šä½™çš„
 		t = ((LONGLONG)(ui.QuadPart - 116444736000000000) / 10000000);
-		//½«ui.QuadPartµÄÊı¾İÀàĞÍULONGLONGÇ¿ÖÆ×ª»»Îªtime_tµÄLONGLONGÊı¾İÀàĞÍ
+		//å°†ui.QuadPartçš„æ•°æ®ç±»å‹ULONGLONGå¼ºåˆ¶è½¬æ¢ä¸ºtime_tçš„LONGLONGæ•°æ®ç±»å‹
 		return t;
 	}
 
 	namespace Now {
 		std::string ToString(const std::string& format = "yyyy-MM-dd hh:mm:ss");
 		template<class T>
-		//Í³¼Æº¯ÊıºÄÊ±Ê±¼ä
+		//ç»Ÿè®¡å‡½æ•°è€—æ—¶æ—¶é—´
 		inline time_t StopWatch(const T& _func) {
-			auto beg_t = std::chrono::system_clock::now();    //ÆğÊ¼Ê±¼ä
+			auto beg_t = std::chrono::system_clock::now();    //èµ·å§‹æ—¶é—´
 			_func();
-			auto end_t = std::chrono::system_clock::now();    //½áÊøÊ±¼ä
-			std::chrono::duration<double> diff = end_t - beg_t;//Ê±¼ä¼ä¸ôs
-			time_t total = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();//Ê±¼ä¼ä¸ôms
+			auto end_t = std::chrono::system_clock::now();    //ç»“æŸæ—¶é—´
+			std::chrono::duration<double> diff = end_t - beg_t;//æ—¶é—´é—´éš”s
+			time_t total = std::chrono::duration_cast<std::chrono::milliseconds>(diff).count();//æ—¶é—´é—´éš”ms
 			printf("Elapsed :%d ms\n", total);
 			return total;
 		}

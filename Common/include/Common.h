@@ -23,12 +23,12 @@
 #pragma warning(disable:4101)
 #pragma warning(disable:4267)
 
-#define USECURL 1 //ÊÇ·ñÊ¹ÓÃcurl Ê¹ÓÃcurl»áµ¼ÖÂ¿â±äµÃºÜ´ó
-#define USEJSONCPP 1 //ÊÇ·ñÊ¹ÓÃJsonCpp¿â 
+#define USECURL 1 //æ˜¯å¦ä½¿ç”¨curl ä½¿ç”¨curlä¼šå¯¼è‡´åº“å˜å¾—å¾ˆå¤§
+#define USEJSONCPP 1 //æ˜¯å¦ä½¿ç”¨JsonCppåº“ 
 
-#define WIN32_LEAN_AND_MEAN //±ÜÃâwinsocket³åÍ»
+#define WIN32_LEAN_AND_MEAN //é¿å…winsocketå†²çª
 
 #include "Text.h"
 #include "FileSystem.h"
-#include "Time.hpp"//·ÀÖ¹ºÍÏµÍ³µÄtime.hÖØÃüÃû
+#include "Time.hpp"//é˜²æ­¢å’Œç³»ç»Ÿçš„time.hé‡å‘½å
 #include "WinTool.h"
