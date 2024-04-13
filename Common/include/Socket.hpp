@@ -4,16 +4,18 @@
 #include <string>
 #include <memory>
 
+#define WIN32_LEAN_AND_MEAN //避免winsocket冲突
+
 #ifdef _WIN32
 #include <winsock.h>
 #pragma comment(lib,"ws2_32.lib")
 #endif
-static WSADATA __wsadata__;
 class Socket
 {
 private:
 	SOCKET socket = NULL;
 	sockaddr_in sockaddr;
+	static WSADATA __wsadata__;
 public:
 	//初始化套接字库
 	static bool Init() {
@@ -111,7 +113,7 @@ inline bool Socket::Listen(int backlog) {
 }
 inline Socket Socket::Accep() const {
 	for (;;) {
-		sockaddr_in  ClientAddr{0};
+		sockaddr_in  ClientAddr{ 0 };
 		int  AddrLen = sizeof(ClientAddr);
 		SOCKET clientSocket = accept(socket, (LPSOCKADDR)&ClientAddr, &AddrLen);
 		if (clientSocket == INVALID_SOCKET)
@@ -121,7 +123,7 @@ inline Socket Socket::Accep() const {
 		}
 		Socket skt(clientSocket);
 		skt.Port = ClientAddr.sin_port;
-		char* c_address = new char[15]{ 0 };
+		char* c_address = new char[15] { 0 };
 		sprintf_s(c_address, 14, "%d.%d.%d.%d", ClientAddr.sin_addr.S_un.S_un_b.s_b1, ClientAddr.sin_addr.S_un.S_un_b.s_b2, ClientAddr.sin_addr.S_un.S_un_b.s_b3, ClientAddr.sin_addr.S_un.S_un_b.s_b4);
 		skt.Address = c_address;
 		delete[] c_address;

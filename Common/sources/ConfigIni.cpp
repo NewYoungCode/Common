@@ -1,6 +1,6 @@
 #include "ConfigIni.h"
-DWORD ConfigIni::GetValue(const Text::Utf8String& section, const Text::Utf8String& key, const Text::Utf8String& defaultValue, const Text::Utf8String& filename, Text::Utf8String& outResult)const {
-	Text::Utf8String _section = section;
+DWORD ConfigIni::GetValue(const Text::String& section, const Text::String& key, const Text::String& defaultValue, const Text::String& filename, Text::String& outResult)const {
+	Text::String _section = section;
 	if (section.empty()) {
 		_section = this->section;
 	}
@@ -10,11 +10,11 @@ DWORD ConfigIni::GetValue(const Text::Utf8String& section, const Text::Utf8Strin
 	delete[] buff;
 	return char_count;
 }
-bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String& key, const Text::Utf8String& Value, const Text::Utf8String& absoluteFilename)const {
+bool ConfigIni::SetValue(const Text::String& section, const Text::String& key, const Text::String& Value, const Text::String& absoluteFilename)const {
 	if (!File::Exists(filename)) {
 		File::Create(filename);
 	}
-	Text::Utf8String _section = section;
+	Text::String _section = section;
 	if (section.empty()) {
 		_section = this->section;
 	}
@@ -22,28 +22,28 @@ bool ConfigIni::SetValue(const Text::Utf8String& section, const Text::Utf8String
 }
 
 //FileName //一定要绝对路径
-ConfigIni::ConfigIni(const Text::Utf8String& filename, const Text::Utf8String& defaultSection, size_t buffSize) {
+ConfigIni::ConfigIni(const Text::String& filename, const Text::String& defaultSection, size_t buffSize) {
 	this->buffSize = buffSize;
 	this->filename = filename;
 	this->section = defaultSection;
 }
 
-void ConfigIni::SetDefaultSection(const Text::Utf8String section) {
+void ConfigIni::SetDefaultSection(const Text::String section) {
 	this->section = section;
 }
 
 
 //读取ini中的字符
-Text::Utf8String  ConfigIni::ReadString(const Text::Utf8String& key, const Text::Utf8String& defaultValue, const Text::Utf8String& section) const {
-	Text::Utf8String outResult;
+Text::String  ConfigIni::ReadString(const Text::String& key, const Text::String& defaultValue, const Text::String& section) const {
+	Text::String outResult;
 	GetValue(section, key, defaultValue, filename, outResult);
 	return  outResult;
 }
 //读取ini中的数字
-float  ConfigIni::ReadFloat(const Text::Utf8String& key, float defaultValue, const Text::Utf8String& section) const {
+float  ConfigIni::ReadFloat(const Text::String& key, float defaultValue, const Text::String& section) const {
 	try
 	{
-		Text::Utf8String outResult;
+		Text::String outResult;
 		GetValue(section, key, std::to_wstring(defaultValue), filename, outResult);
 		return std::stof(outResult);
 	}
@@ -54,10 +54,10 @@ float  ConfigIni::ReadFloat(const Text::Utf8String& key, float defaultValue, con
 	}
 }
 //读取ini中的int数字
-int  ConfigIni::ReadInt(const Text::Utf8String& key, int defaultValue, const Text::Utf8String& section) const {
+int  ConfigIni::ReadInt(const Text::String& key, int defaultValue, const Text::String& section) const {
 	try
 	{
-		Text::Utf8String outResult;
+		Text::String outResult;
 		GetValue(section, key, std::to_wstring(defaultValue), filename, outResult);
 		return std::stoi(outResult);
 	}
@@ -69,12 +69,12 @@ int  ConfigIni::ReadInt(const Text::Utf8String& key, int defaultValue, const Tex
 }
 
 //写入ini
-bool  ConfigIni::WriteValue(const Text::Utf8String& key, const Text::Utf8String& value, const Text::Utf8String& section)const {
+bool  ConfigIni::WriteValue(const Text::String& key, const Text::String& value, const Text::String& section)const {
 	return SetValue(section, key, value, filename);
 }
 
-std::vector<Text::Utf8String>  ConfigIni::GetSections() {
-	std::vector<Text::Utf8String> list;
+std::vector<Text::String>  ConfigIni::GetSections() {
+	std::vector<Text::String> list;
 
 	size_t maxSize = 1024 * 1024 * 20;//20M
 	WCHAR* chSectionNames = new WCHAR[maxSize]{ 0 };
@@ -95,10 +95,10 @@ std::vector<Text::Utf8String>  ConfigIni::GetSections() {
 	return list;
 }
 
-void  ConfigIni::DeleteSection(const Text::Utf8String& section) {
-	Text::Utf8String outData;
+void  ConfigIni::DeleteSection(const Text::String& section) {
+	Text::String outData;
 	File::ReadFile(filename, &outData);
-	Text::Utf8String id = "[" + section + "]";
+	Text::String id = "[" + section + "]";
 	auto pos = outData.find(id);
 	if (pos == -1) {
 		return;
@@ -120,18 +120,3 @@ void  ConfigIni::DeleteSection(const Text::Utf8String& section) {
 	ofs.close();
 	return;
 }
-//
-//SafeConfigIni::SafeConfigIni(const Text::Utf8String & filename, const Text::Utf8String & defaultSection, bool create, size_t buffSize)
-//{
-//	//oldFilename = filename;
-//
-//	//TCHAR buf[256]{ 0 };
-//	//::GetTempPath(255, buf);
-//	//Text::Utf8String tempFile = buf + Path::GetFileNameWithoutExtension(Path::StartFileName()) + std::to_string(time(NULL));
-//	//File::Delete(tempFile);
-//	//DeCode(oldFilename, tempFile);
-//
-//	//this->buffSize = buffSize;
-//	//this->filename = tempFile;
-//	//this->section = defaultSection;
-//}

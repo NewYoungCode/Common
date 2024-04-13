@@ -16,7 +16,7 @@ namespace Time {
 			Hour = Hour.size() == 1U ? "0" + Hour : Hour;
 			Minute = Minute.size() == 1U ? "0" + Minute : Minute;
 			Second = Second.size() == 1U ? "0" + Second : Second;
-			Text::Utf8String formatStr = format;
+			Text::String formatStr = format;
 			formatStr = formatStr.Replace("yyyy", year);
 			formatStr = formatStr.Replace("MM", Month);
 			formatStr = formatStr.Replace("dd", Day);

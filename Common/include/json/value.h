@@ -577,8 +577,9 @@ public:
   /// Include delimiters and embedded newlines.
   String getComment(CommentPlacement placement) const;
 
-  String toStyledString() const;
   String toString() const;
+  String toStyledString() const;
+
   const_iterator begin() const;
   const_iterator end() const;
 

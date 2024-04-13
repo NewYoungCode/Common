@@ -1,6 +1,8 @@
 #pragma once
-#include "Common.h"
+#include <Windows.h>
 #include <time.h>
+#include <string>
+#include "Text.h"
 namespace Time {
 	/// <summary>
 	/// 时间戳转字符串

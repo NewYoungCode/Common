@@ -1,6 +1,5 @@
 #pragma once
-#include "Common.h"
-#include "Md5.h"
+#include <Windows.h>
 #include <TlHelp32.h>
 #include <ShlObj.h>
 #include <ShObjIdl.h>
@@ -8,13 +7,17 @@
 #include <psapi.h>
 #include <process.h>
 
+#include "Text.h"
+#include "FileSystem.h"
+#include "Md5.h"
+
 namespace WinTool {
 	/// <summary>
 	/// 路由信息
 	/// </summary>
 	struct RouterInfo {
-		Text::Utf8String IP;
-		Text::Utf8String MAC;
+		Text::String IP;
+		Text::String MAC;
 	};
 	typedef struct {
 		unsigned long processId;
@@ -32,23 +35,23 @@ namespace WinTool {
 		/// <summary>
 		/// app名称
 		/// </summary>
-		Text::Utf8String DisplayName;
+		Text::String DisplayName;
 		/// <summary>
 		/// 版本号
 		/// </summary>
-		Text::Utf8String DisplayVersion;
+		Text::String DisplayVersion;
 		/// <summary>
 		/// 程序作者
 		/// </summary>
-		Text::Utf8String DisplayAuthor;
+		Text::String DisplayAuthor;
 		/// <summary>
 		/// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
 		/// </summary>
-		Text::Utf8String StartLocation;
+		Text::String StartLocation;
 		/// <summary>
 		/// 卸载执行的命令行
 		/// </summary>
-		Text::Utf8String UninstallString;
+		Text::String UninstallString;
 		/// <summary>
 		/// 是否创建桌面快捷方式
 		/// </summary>
@@ -61,23 +64,26 @@ namespace WinTool {
 	//给进程提权
 	extern BOOL EnablePrivilege(HANDLE process = NULL);
 	//创建桌面快捷方式
-	extern bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName = L"", const Text::Utf8String& cmdline = L"", const Text::Utf8String& iconFilename = L"");
-	extern void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName);
+	extern bool CreateDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName = L"", const Text::String& cmdline = L"", const Text::String& iconFilename = L"");
+	//删除桌面快捷方式
+	extern void DeleteDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName);
+	//注册软件到电脑
 	extern bool RegisterSoftware(const AppInfo& appInfo);
-	extern 	void UnRegisterSoftware(const Text::Utf8String& appName_en);
+	//从电脑上注销软件
+	extern 	void UnRegisterSoftware(const Text::String& appName_en);
 	//设置程序自启动
-	extern bool SetAutoBoot(const Text::Utf8String& filename = L"", bool enable = true);
+	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true);
 	//获取程序自启动状态
-	extern bool GetAutoBootStatus(const Text::Utf8String& filename);
+	extern bool GetAutoBootStatus(const Text::String& filename);
 	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息
-	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname);
+	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::String& _proccname);
 	//根据进程名称打开进程
-	extern HANDLE OpenProcess(const Text::Utf8String& _proccname);
+	extern HANDLE OpenProcess(const Text::String& _proccname);
 	//获取进程ID集合
-	extern std::vector<DWORD> FindProcessId(const Text::Utf8String& proccname);
+	extern std::vector<DWORD> FindProcessId(const Text::String& proccname);
 	//获取进程文件路径
-	extern Text::Utf8String FindProcessFilename(DWORD processId);
+	extern Text::String FindProcessFilename(DWORD processId);
 	//关闭所有进程
 	extern int CloseProcess(const std::vector<DWORD>& processIds);
 	//使用进程ID关闭进程
@@ -98,7 +104,7 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="path"></param>
 	/// <returns></returns>
-	extern double GetDiskFreeSize(const Text::Utf8String& path);
+	extern double GetDiskFreeSize(const Text::String& path);
 	//编码 加密
 	extern void EnCode(const File::FileStream* fileData, File::FileStream* outData);
 	//解码 解密
@@ -108,32 +114,40 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
-	extern Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr);
+	extern Text::String ExecuteCmdLine(const Text::String& cmdStr);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>
 	/// <returns></returns>
-	extern  Text::Utf8String GetBiosUUID();
+	extern  Text::String GetBiosUUID();
 	/// <summary>
 	/// 获取CPU序列号
 	/// </summary>
 	/// <returns></returns>
-	extern Text::Utf8String GetCPUSerialNumber();
+	extern Text::String GetCPUSerialNumber();
 	/// <summary>
 	/// 获取硬盘序列号
 	/// </summary>
 	/// <returns></returns>
-	extern  Text::Utf8String GetDiskSerialNumber();
+	extern  Text::String GetDiskSerialNumber();
 	/// <summary>
 	/// 获取首选网卡的mac地址
 	/// </summary>
 	/// <returns></returns>
-	extern  Text::Utf8String GetMacAddress();
+	extern  Text::String GetMacAddress();
 	/// <summary>
 	/// 获取操作系统的版本号
 	/// </summary>
 	/// <returns></returns>
-	extern Text::Utf8String GetWinVersion();
+	extern Text::String GetWinVersion();
+	/// <summary>
+	/// 选择文件
+	/// </summary>
+	/// <param name="ownerWnd"></param>
+	/// <param name="defaultPath"></param>
+	/// <param name="title"></param>
+	/// <returns></returns>
+	extern Text::String ShowFileDialog(HWND ownerWnd = NULL, Text::String defaultPath = "", Text::String title = "Select a File");
 	/// <summary>
 	/// 选择目录
 	/// </summary>
@@ -141,7 +155,7 @@ namespace WinTool {
 	/// <param name="defaultPath"></param>
 	/// <param name="title"></param>
 	/// <returns></returns>
-	extern Text::Utf8String ShowFolderDialog(HWND ownerWnd = NULL, Text::Utf8String defaultPath = "", Text::Utf8String title = "Select a directory");
+	extern Text::String ShowFolderDialog(HWND ownerWnd = NULL, Text::String defaultPath = "", Text::String title = "Select a directory");
 	/// <summary>
 	/// 获取路由信息
 	/// </summary>

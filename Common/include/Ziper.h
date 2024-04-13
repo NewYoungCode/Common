@@ -16,16 +16,16 @@ public:
 	void Close();
 	virtual ~Ziper();
 public:
-	static void Zip(const Text::Utf8String& _dirName, const Text::Utf8String& outFileName, const Text::Utf8String& pwd = "", std::function<bool(const Text::Utf8String&, int, int)> callback = NULL) {
+	static void Zip(const Text::String& _dirName, const Text::String& outFileName, const Text::String& pwd = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
 		std::vector<FileSystem::FileInfo> result;
 		Ziper zip(outFileName.unicode(), pwd);
-		Text::Utf8String dirName = _dirName + "/";
+		Text::String dirName = _dirName + "/";
 		dirName = dirName.Replace("\\", "/");
 		dirName = dirName.Replace("//", "/");
 		FileSystem::Find(dirName, result, "*.*", true);
 		for (int i = 0; i < result.size(); i++)
 		{
-			Text::Utf8String ItemNmae = result[i].FullName.Replace(dirName, "");
+			Text::String ItemNmae = result[i].FullName.Replace(dirName, "");
 			if (result[i].FileType == FileSystem::Directory) {
 				zip.AddFolder(ItemNmae.unicode());
 			}

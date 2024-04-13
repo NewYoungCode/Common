@@ -7,14 +7,29 @@
 #endif // !CURL_STATICLIB
 #include "curl/curl.h"
 #include "curl/easy.h"
+#pragma comment(lib,"Crypt32.lib")//curl需要的库
+#pragma comment(lib,"wldap32.lib")//curl需要的库
+#pragma comment(lib,"ws2_32.lib") //curl需要的库
+
+#ifdef  _WIN64
+
+#ifdef  _DEBUG
+#pragma comment (lib,"X64/libcurld.lib")
+#else
+#pragma comment (lib,"X64/libcurl.lib")
+#endif
+
+#else
+
 #ifdef _DEBUG
 #pragma comment(lib,"libcurld.lib")
 #else
 #pragma comment(lib,"libcurl.lib")
 #endif // !_DEBUG
-#pragma comment(lib,"Crypt32.lib")//curl需要的库
-#pragma comment(lib,"wldap32.lib")//curl需要的库
-#pragma comment(lib,"ws2_32.lib") //curl需要的库
+
+#endif
+
+
 
 void Curl_Global_Init() {
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -220,7 +235,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 };
 int WebClient::DownloadFile(const std::string& url, const std::wstring& _filename, const ProgressFunc& progressCallback, int nTimeout) {
 	std::string resp;
-	CURL* curl = Init(url,&resp, nTimeout);
+	CURL* curl = Init(url, &resp, nTimeout);
 	if (!curl) {
 		return CURLE_FAILED_INIT;
 	}

@@ -1,5 +1,12 @@
 #pragma once
-#include "Common.h"
+#include <string>
+#include <Windows.h>
+#include <functional>
+#include <map>
+#include "FileSystem.h"
+#include "Text.h"
+
+#define USECURL 1 //是否使用curl 使用curl会导致库变得很大
 
 #if USECURL
 //全局初始化curl
@@ -57,8 +64,8 @@ class WebClient
 {
 public:
 	//g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone)
-	std::function<size_t(char* contents, size_t size, size_t nmemb, void* respone)> CallBack=NULL;
-	std::string *ResponseData=NULL;
+	std::function<size_t(char* contents, size_t size, size_t nmemb, void* respone)> CallBack = NULL;
+	std::string* ResponseData = NULL;
 private:
 	void* Init(const std::string& url, std::string* resp, int timeOut);
 	long CleanUp(void* curl, int code);
@@ -73,8 +80,8 @@ public:
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
 	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
-	int HttpGet(const std::string& strUrl, std::string* response=NULL, int nTimeout = 60);
-	int HttpPost(const std::string& strUrl, const std::string& data="", std::string* response = NULL, int nTimeout = 60);
+	int HttpGet(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
+	int HttpPost(const std::string& strUrl, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);
 	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* response = NULL, int nTimeout = 60);
 	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string* response = NULL, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
 	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout = 60);

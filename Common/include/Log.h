@@ -1,11 +1,12 @@
 #pragma once
+#include <mutex>
+
 #include "FileSystem.h"
 #include "Time.hpp"
-#include <mutex>
 namespace Log {
 	//是否启用日志
 	extern bool Enable;
-	extern void WriteLog(const Text::Utf8String& log);
+	extern void WriteLog(const Text::String& log);
 
 	template<typename ...T>
 	/// <summary>
@@ -14,14 +15,14 @@ namespace Log {
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
-	inline void Info(const Text::Utf8String& formatStr, const T &...args) {
+	inline void Info(const Text::String& formatStr, const T &...args) {
 		if (!Enable)return;
 		int size = 1024 * 1024 * 5;//5M的内存
 		char* buf = new char[size] { 0 };
 		auto count = sprintf_s((buf), size, formatStr.c_str(), std::forward<const T&>(args)...);
 		buf[count] = '\n';
 		buf[count + 1] = 0;
-		Text::Utf8String info(buf);
+		Text::String info(buf);
 		info = Time::Now::ToString("hh:mm:ss ") + info;
 		delete[] buf;
 		auto wstr = info.unicode();

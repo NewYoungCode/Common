@@ -1,25 +1,30 @@
 #pragma once
-#include "Common.h"
+#include <Windows.h>
+#include <iostream>
+#include "Text.h"
+#include "FileSystem.h"
 class ConfigIni {
 protected:
 	size_t buffSize = MAX_PATH;
-	Text::Utf8String filename;
-	Text::Utf8String section;
-	DWORD GetValue(const Text::Utf8String& section, const Text::Utf8String& key, const Text::Utf8String& defaultValue, const Text::Utf8String& filename, Text::Utf8String& outResult)const;
-	bool SetValue(const Text::Utf8String& section, const Text::Utf8String& key, const Text::Utf8String& Value, const Text::Utf8String& absoluteFilename)const;
+	Text::String filename;
+	Text::String section;
+	DWORD GetValue(const Text::String& section, const Text::String& key, const Text::String& defaultValue, const Text::String& filename, Text::String& outResult)const;
+	bool SetValue(const Text::String& section, const Text::String& key, const Text::String& Value, const Text::String& absoluteFilename)const;
 public:
 	ConfigIni() = delete;
 	//FileName //一定要绝对路径
-	ConfigIni(const Text::Utf8String& filename, const Text::Utf8String& defaultSection = "setting", size_t buffSize = MAX_PATH);
-	void SetDefaultSection(const Text::Utf8String section);
+	ConfigIni(const Text::String& filename, const Text::String& defaultSection = "setting", size_t buffSize = MAX_PATH);
+	void SetDefaultSection(const Text::String section);
 	//读取ini中的字符
-	Text::Utf8String ReadString(const Text::Utf8String& key, const Text::Utf8String& defaultValue = "", const Text::Utf8String& section = "") const;
+	Text::String ReadString(const Text::String& key, const Text::String& defaultValue = "", const Text::String& section = "") const;
 	//读取ini中的数字
-	float ReadFloat(const Text::Utf8String& key, float defaultValue = 0, const Text::Utf8String& section = "") const;
+	float ReadFloat(const Text::String& key, float defaultValue = 0, const Text::String& section = "") const;
 	//读取ini中的int数字
-	int ReadInt(const Text::Utf8String& key, int defaultValue = 0, const Text::Utf8String& section = "") const;
+	int ReadInt(const Text::String& key, int defaultValue = 0, const Text::String& section = "") const;
 	//写入ini
-	bool WriteValue(const Text::Utf8String& key, const Text::Utf8String& value, const Text::Utf8String& section = "")const;
-	std::vector<Text::Utf8String> GetSections();
-	void DeleteSection(const Text::Utf8String& section);
+	bool WriteValue(const Text::String& key, const Text::String& value, const Text::String& section = "")const;
+	//获取所有的Section
+	std::vector<Text::String> GetSections();
+	//删除所有的Section
+	void DeleteSection(const Text::String& section);
 };

@@ -1,14 +1,17 @@
 #pragma once
+#include <Windows.h>
+#include <map>
+
 #include "Text.h"
 #include "FileSystem.h"
 #include "WinTool.h"
 class SafeConfig
 {
-	Text::Utf8String fileName;
+	Text::String fileName;
 public:
-	SafeConfig(const Text::Utf8String& fileName);
-	Text::Utf8String ReadValue(const Text::Utf8String& key, const Text::Utf8String& defaultValue = "");
-	Text::Utf8String ReadString(const Text::Utf8String& key, const Text::Utf8String& defaultValue = "");
-	int ReadInt(const Text::Utf8String& key, int defaultValue = 0);
-	void WriteValue(const Text::Utf8String& key, const Text::Utf8String& value);
+	SafeConfig(const Text::String& fileName);
+	Text::String ReadValue(const Text::String& key, const Text::String& defaultValue = "");
+	Text::String ReadString(const Text::String& key, const Text::String& defaultValue = "");
+	int ReadInt(const Text::String& key, int defaultValue = 0);
+	void WriteValue(const Text::String& key, const Text::String& value);
 };

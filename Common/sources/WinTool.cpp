@@ -1,4 +1,6 @@
 #include "WinTool.h"
+#pragma comment(lib,"Iphlpapi.lib")
+#pragma comment(lib,"Ws2_32.lib")
 
 namespace WinTool {
 #ifndef FormatError
@@ -43,7 +45,7 @@ namespace WinTool {
 		auto cpuId = GetCPUSerialNumber();
 		auto biosId = GetBiosUUID();
 		auto mac = GetMacAddress();
-		Text::Utf8String u8Str = biosId + "_" + cpuId + "_" + mac;
+		Text::String u8Str = biosId + "_" + cpuId + "_" + mac;
 		u8Str = MD5::FromString(u8Str);
 		return u8Str;
 	}
@@ -72,7 +74,7 @@ namespace WinTool {
 	}
 
 
-	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::Utf8String& _proccname) {
+	std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::String& _proccname) {
 
 		std::vector<PROCESSENTRY32W> infos;
 		HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -81,7 +83,7 @@ namespace WinTool {
 		pe.dwSize = sizeof(PROCESSENTRY32W);
 		for (auto status = ::Process32FirstW(hSnapshot, &pe); status != FALSE; status = ::Process32NextW(hSnapshot, &pe)) {
 			pe.dwSize = sizeof(PROCESSENTRY32W);
-			Text::Utf8String item = pe.szExeFile;
+			Text::String item = pe.szExeFile;
 			//不传进程名称查询所有
 			if (_proccname.empty()) {
 				infos.push_back(pe);
@@ -96,7 +98,7 @@ namespace WinTool {
 		CloseHandle(hSnapshot);
 		return infos;
 	}
-	std::vector<DWORD> FindProcessId(const Text::Utf8String& _proccname)
+	std::vector<DWORD> FindProcessId(const Text::String& _proccname)
 	{
 		std::vector<DWORD> processIds;
 		auto list = FindProcessInfo(_proccname);
@@ -106,7 +108,7 @@ namespace WinTool {
 		return processIds;
 	}
 
-	HANDLE OpenProcess(const Text::Utf8String& _proccname) {
+	HANDLE OpenProcess(const Text::String& _proccname) {
 		std::vector<DWORD> processIds;
 		auto list = FindProcessInfo(_proccname);
 		if (list.size() > 0) {
@@ -138,7 +140,7 @@ namespace WinTool {
 		return !bIsWow64;
 	}
 
-	Text::Utf8String FindProcessFilename(DWORD processId)
+	Text::String FindProcessFilename(DWORD processId)
 	{
 		WCHAR buf[MAX_PATH]{ 0 };
 		HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
@@ -165,9 +167,9 @@ namespace WinTool {
 		}
 		return false;
 	}
-	bool GetAutoBootStatus(const Text::Utf8String& filename) {
-		Text::Utf8String bootstart = filename.empty() ? Path::StartFileName() : filename;
-		Text::Utf8String appName = Path::GetFileNameWithoutExtension(bootstart);
+	bool GetAutoBootStatus(const Text::String& filename) {
+		Text::String bootstart = filename.empty() ? Path::StartFileName() : filename;
+		Text::String appName = Path::GetFileNameWithoutExtension(bootstart);
 		bool bResult = false;
 		HKEY subKey;
 		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
@@ -179,7 +181,7 @@ namespace WinTool {
 		DWORD nLength = MAX_PATH;
 		LSTATUS status = RegGetValueW(subKey, NULL, appName.unicode().c_str(), REG_SZ, NULL, wBuff, &nLength);
 		if (status != ERROR_SUCCESS) {
-			Text::Utf8String strDir = wBuff;
+			Text::String strDir = wBuff;
 			if (Path::GetFileName(strDir) == Path::GetFileName(bootstart)) {
 				bResult = true;
 			}
@@ -187,10 +189,10 @@ namespace WinTool {
 		::RegCloseKey(subKey);
 		return bResult;
 	}
-	bool SetAutoBoot(const Text::Utf8String& filename, bool bStatus)
+	bool SetAutoBoot(const Text::String& filename, bool bStatus)
 	{
-		Text::Utf8String bootstart = filename.empty() ? Path::StartFileName() : filename;
-		Text::Utf8String appName = Path::GetFileNameWithoutExtension(bootstart);
+		Text::String bootstart = filename.empty() ? Path::StartFileName() : filename;
+		Text::String appName = Path::GetFileNameWithoutExtension(bootstart);
 		HKEY subKey;
 		bool bResult = false;
 		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
@@ -243,7 +245,7 @@ namespace WinTool {
 		CloseHandle(hToken);
 		return bResult;
 	}
-	bool CreateDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName, const Text::Utf8String& cmdline, const Text::Utf8String& iconFilename) {
+	bool CreateDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName, const Text::String& cmdline, const Text::String& iconFilename) {
 		HRESULT hr = CoInitialize(NULL);
 		bool bResult = false;
 		if (SUCCEEDED(hr))
@@ -265,7 +267,7 @@ namespace WinTool {
 				{
 					WCHAR buf[MAX_PATH]{ 0 };
 					SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-					Text::Utf8String userDesktop(buf);
+					Text::String userDesktop(buf);
 					if (!LnkName.empty()) {
 						userDesktop += "\\" + LnkName + ".lnk";
 					}
@@ -287,10 +289,10 @@ namespace WinTool {
 		CoUninitialize();
 		return bResult;
 	}
-	void DeleteDesktopLnk(const Text::Utf8String& pragmaFilename, const Text::Utf8String& LnkName) {
+	void DeleteDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName) {
 		WCHAR buf[MAX_PATH]{ 0 };
 		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-		Text::Utf8String userDesktop(buf);
+		Text::String userDesktop(buf);
 		if (!LnkName.empty()) {
 			userDesktop += "\\" + LnkName + ".lnk";
 		}
@@ -301,7 +303,7 @@ namespace WinTool {
 		File::Delete(userDesktop);//删除旧的
 	}
 
-	LSTATUS RegSetSoftware(HKEY hKey, const Text::Utf8String& regKey, const Text::Utf8String& regValue) {
+	LSTATUS RegSetSoftware(HKEY hKey, const Text::String& regKey, const Text::String& regValue) {
 		if (!regValue.empty()) {
 			auto wStr = regValue.unicode();
 			return RegSetValueExW(hKey, regKey.unicode().c_str(), 0, REG_SZ, reinterpret_cast<const BYTE*>(wStr.c_str()), wStr.size() * 2);
@@ -309,8 +311,8 @@ namespace WinTool {
 		return -1;
 	}
 
-	void UnRegisterSoftware(const Text::Utf8String& appName_en) {
-		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+	void UnRegisterSoftware(const Text::String& appName_en) {
+		Text::String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 		regKeyPath.append("\\" + appName_en);
 		HKEY subKey;
 		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &subKey)) {
@@ -328,7 +330,7 @@ namespace WinTool {
 
 	bool RegisterSoftware(const AppInfo& appInfo)
 	{
-		Text::Utf8String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+		Text::String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.StartLocation));
 		// 创建注册表项
 		HKEY hKey;
@@ -460,7 +462,7 @@ namespace WinTool {
 			return 1;    //    null data return
 		}
 	}
-	double GetDiskFreeSize(const Text::Utf8String& path) {
+	double GetDiskFreeSize(const Text::String& path) {
 		ULARGE_INTEGER freeBytesAvailable, totalNumberOfBytes, totalNumberOfFreeBytes;
 		std::wstring wStr = path.unicode();
 		if (wStr.size() > 0) {
@@ -500,7 +502,7 @@ namespace WinTool {
 		delete[] memBytes;
 	}
 
-	Text::Utf8String ExecuteCmdLine(const Text::Utf8String& cmdStr) {
+	Text::String ExecuteCmdLine(const Text::String& cmdStr) {
 		HANDLE hReadPipe = NULL; //读取管道
 		HANDLE hWritePipe = NULL; //写入管道	
 		PROCESS_INFORMATION pi{ 0 }; //进程信息	
@@ -551,46 +553,46 @@ namespace WinTool {
 		if (pi.hThread) {
 			CloseHandle(pi.hThread);
 		}
-		Text::Utf8String outResult(szBuff);
+		Text::String outResult(szBuff);
 		if (szBuff) {
 			delete[] szBuff;
 		}
 		return outResult;
 	}
-	Text::Utf8String GetBiosUUID() {
-		Text::Utf8String resultStr = ExecuteCmdLine("wmic csproduct get UUID");
+	Text::String GetBiosUUID() {
+		Text::String resultStr = ExecuteCmdLine("wmic csproduct get UUID");
 		resultStr = resultStr.Replace("UUID", "");
 		resultStr = resultStr.Replace(" ", "");
 		resultStr = resultStr.Replace("\r", "");
 		resultStr = resultStr.Replace("\n", "");
 		return resultStr;
 	}
-	Text::Utf8String GetCPUSerialNumber() {
-		Text::Utf8String resultStr = ExecuteCmdLine("wmic cpu get ProcessorId");
+	Text::String GetCPUSerialNumber() {
+		Text::String resultStr = ExecuteCmdLine("wmic cpu get ProcessorId");
 		resultStr = resultStr.Replace("ProcessorId", "");
 		resultStr = resultStr.Replace(" ", "");
 		resultStr = resultStr.Replace("\r", "");
 		resultStr = resultStr.Replace("\n", "");
 		return resultStr;
 	}
-	Text::Utf8String GetDiskSerialNumber() {
-		Text::Utf8String resultStr = ExecuteCmdLine("wmic diskdrive get SerialNumber");
+	Text::String GetDiskSerialNumber() {
+		Text::String resultStr = ExecuteCmdLine("wmic diskdrive get SerialNumber");
 		resultStr = resultStr.Replace("SerialNumber", "");
 		resultStr = resultStr.Replace(" ", "");
 		resultStr = resultStr.Replace("\r", "");
 		resultStr = resultStr.Replace("\n", "");
 		return resultStr;
 	}
-	Text::Utf8String GetMacAddress()
+	Text::String GetMacAddress()
 	{
 		std::vector<MyAdpterInfo> adpterInfo;
 		GetAdptersInfo(adpterInfo);
 		return adpterInfo.size() > 0 ? adpterInfo[0].MacAddress : "";
 	}
 
-	Text::Utf8String GetWinVersion()
+	Text::String GetWinVersion()
 	{
-		Text::Utf8String vname = "UnKnow";
+		Text::String vname = "UnKnow";
 		typedef void(WINAPI* NTPROC)(DWORD*, DWORD*, DWORD*);
 		HINSTANCE hinst = NULL;;
 		DWORD dwMajor, dwMinor, dwBuildNumber;
@@ -623,7 +625,31 @@ namespace WinTool {
 		return vname;
 	}
 
-	Text::Utf8String ShowFolderDialog(HWND ownerWnd, Text::Utf8String defaultPath, Text::Utf8String title) {
+	Text::String ShowFileDialog(HWND ownerWnd, Text::String defaultPath, Text::String title) {
+		OPENFILENAMEW ofn;       // 打开文件对话框结构体
+		WCHAR szFile[512]{ 0 };       // 选择的文件名
+		// 初始化OPENFILENAME结构体
+		ZeroMemory(&ofn, sizeof(ofn));
+		ofn.lStructSize = sizeof(ofn);
+		ofn.lpstrFile = szFile;
+		ofn.lpstrFile[0] = '\0';
+		ofn.hwndOwner = ownerWnd;
+		ofn.nMaxFile = sizeof(szFile);
+		ofn.lpstrFilter = L"All Files\0*.*\0";
+		ofn.nFilterIndex = 1;
+		ofn.lpstrFileTitle = NULL;
+		ofn.nMaxFileTitle = 0;
+		ofn.lpstrInitialDir = NULL;
+
+		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+		// 显示文件对话框
+		if (GetOpenFileNameW(&ofn) == TRUE) {
+			return szFile;
+		}
+		return szFile;
+	}
+
+	Text::String ShowFolderDialog(HWND ownerWnd, Text::String defaultPath, Text::String title) {
 		WCHAR selectedPath[MAX_PATH]{ 0 };
 		BROWSEINFOW browseInfo{ 0 };
 		browseInfo.hwndOwner = ownerWnd;
@@ -697,7 +723,7 @@ namespace WinTool {
 				UCHAR ip4 = ((gatewayIp >> 24) & 0xFF);
 				sprintf(ip, "%d.%d.%d.%d", ip1, ip2, ip3, ip4);
 				info.IP = ip;
-				DWORD ipAddress = inet_addr(ip);  // 替换为你想要查询的IP地址
+				DWORD ipAddress = ::inet_addr(ip);  // 替换为你想要查询的IP地址
 				info.MAC = GetMacAddress(ipAddress);
 				info.MAC = info.MAC.Tolower();
 				break;
@@ -707,5 +733,4 @@ namespace WinTool {
 		free(pForwardTable);
 		return info;
 	}
-
 }

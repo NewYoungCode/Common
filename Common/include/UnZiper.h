@@ -35,14 +35,14 @@ public:
 	int GetCount();
 	virtual ~UnZiper();
 public:
-	static void UnZip(const Text::Utf8String& zipFileName, const Text::Utf8String& outDir, const std::string& password = "", std::function<bool(const Text::Utf8String&, int, int)> callback = NULL) {
+	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
 		Path::Create(outDir);
 		UnZiper zip(zipFileName.unicode(), password);
 		for (int i = 0; i < zip.GetCount(); i++)
 		{
 			ZipItem ze;
 			zip.Find(i, &ze);
-			Text::Utf8String itemName = outDir + "/" + Text::Utf8String(ze.name);
+			Text::String itemName = outDir + "/" + Text::String(ze.name);
 			if (ze.isDir()) {
 				Path::Create(itemName);
 			}
