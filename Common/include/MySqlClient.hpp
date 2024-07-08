@@ -7,6 +7,8 @@
 #pragma comment(lib,"libmysql.lib")
 #include <vector>
 #include <string>
+
+#include "JsonCpp.h"
 /*
 mysql的连接类
 */
@@ -24,11 +26,16 @@ private:
 public:
 	bool OpenConn();
 	void CloseConn();
-	MySqlClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& database, const std::string& charset = "utf8");
+	MySqlClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& database, const std::string& charset = "utf8mb4");
 	/*执行查询*/
 	bool  ExecuteQuery(const std::string& sql, std::string& result);
 	/*执行增删改*/
 	size_t ExecuteNoQuery(const std::string& sql);
+
+	size_t Insert(const std::string& tableName, const Json::Value& jv);
+	size_t Update(const std::string& tableName, const Json::Value& jv, const std::string& whereText);
+	bool ExecuteQuery(const std::string& sql, Json::Value& result);
+
 	virtual ~MySqlClient();
 };
 
@@ -141,6 +148,55 @@ inline size_t MySqlClient::ExecuteNoQuery(const std::string& sql)
 	size_t affected_row = mysql_affected_rows(&mysql);
 	CloseConn();
 	return affected_row;
+}
+
+
+inline size_t MySqlClient::Update(const std::string& tableName, const Json::Value& jv, const std::string& whereText) {
+	std::string sql = "update " + tableName + " set ";
+	for (const auto& key : jv.getMemberNames()) {
+		if (jv[key].isNumeric()) {
+			sql += (key + "=" + jv[key].toString() + "");
+		}
+		else if (jv[key].isString()) {
+			sql += (key + "='" + jv[key].asString() + "'");
+		}
+		else {
+			sql += (key + "='" + jv[key].toString() + "'");
+		}
+		sql += ",";
+	}
+	sql.erase(sql.size() - 1, 1);
+	sql += " " + whereText;
+	return this->ExecuteNoQuery(sql);
+}
+inline size_t MySqlClient::Insert(const std::string& tableName, const Json::Value& jv) {
+	std::string keys = "(";
+	std::string values = "(";
+	for (const auto& key : jv.getMemberNames()) {
+		keys += "" + key + ",";
+		if (jv[key].isNumeric()) {
+			values += jv[key].toString() + ",";
+		}
+		else if (jv[key].isString()) {
+			values += "'" + jv[key].asString() + "',";
+		}
+		else {
+			values += "'" + jv[key].asString() + "',";
+		}
+	}
+	keys.erase(keys.size() - 1, 1);
+	values.erase(values.size() - 1, 1);
+	keys += ")";
+	values += ")";
+	std::string sql = "insert into " + tableName + " " + keys + "values" + values;
+	return this->ExecuteNoQuery(sql);
+}
+inline bool MySqlClient::ExecuteQuery(const std::string& sql, Json::Value& result)
+{
+	std::string str;
+	auto ret = this->ExecuteQuery(sql, str);
+	result = JObject(str);
+	return ret;
 }
 
 inline MySqlClient::~MySqlClient()
