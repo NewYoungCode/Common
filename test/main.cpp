@@ -4,12 +4,14 @@
 #include "FileSystem.h"
 #include "Text.h"
 #include "WinTool.h"
-#include "JsonCpp.h"
+#include "JsonValue.h"
 int main() {
 
 	std::cout << "PCID:" << WinTool::GetComputerID() << std::endl;
 
-	JObject obj("aa");
+	WinTool::GetWinVersion();
+
+	JsonValue obj("aa");
 	Json::Value jv;
 
 	WebClient wc;

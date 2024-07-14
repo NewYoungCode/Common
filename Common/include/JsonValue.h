@@ -26,14 +26,14 @@
 #endif
 
 
-struct JObject :public Json::Value {
+struct JsonValue :public Json::Value {
 private:
 	bool b = false;
 	Json::Reader rd;
 public:
 	bool IsJson();
 	//JObject(const Json::Value& right);
-	JObject& operator = (const Json::Value& other);
-	JObject(const std::string& jsonStr);
+	JsonValue& operator = (const Json::Value& other);
+	JsonValue(const std::string& jsonStr);
 };
 #endif

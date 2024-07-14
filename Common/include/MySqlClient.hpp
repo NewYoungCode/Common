@@ -8,7 +8,7 @@
 #include <vector>
 #include <string>
 
-#include "JsonCpp.h"
+#include "JsonValue.h"
 /*
 mysql的连接类
 */
@@ -195,7 +195,7 @@ inline bool MySqlClient::ExecuteQuery(const std::string& sql, Json::Value& resul
 {
 	std::string str;
 	auto ret = this->ExecuteQuery(sql, str);
-	result = JObject(str);
+	result = JsonValue(str);
 	return ret;
 }
 

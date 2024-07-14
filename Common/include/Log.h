@@ -1,6 +1,4 @@
 #pragma once
-#include <mutex>
-
 #include "FileSystem.h"
 #include "Time.hpp"
 namespace Log {

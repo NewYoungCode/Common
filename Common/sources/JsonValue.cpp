@@ -1,21 +1,21 @@
-#include "JsonCpp.h"
+#include "JsonValue.h"
 #if USEJSONCPP
 //JObject::JObject(const Json::Value&right) {
 //	Json::Value temp(right);
 //	swap(temp);
 //}
-JObject& JObject:: operator = (const Json::Value &other)
+JsonValue& JsonValue:: operator = (const Json::Value &other)
 {
 	Value temp(other);
 	swap(temp);
 	return *this;
 }
 
-bool JObject::IsJson() {
+bool JsonValue::IsJson() {
 	return b;
 }
 
-JObject::JObject(const std::string&jsonStr) {
+JsonValue::JsonValue(const std::string&jsonStr) {
 	if (jsonStr.empty())return;
 	 this->b=rd.parse(jsonStr, *this);
 }

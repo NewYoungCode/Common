@@ -25,8 +25,8 @@ public:
 	OrcaleClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& server_name, const std::string& charset = "UTF8");
 	void CloseConn();
 	bool OpenConn();
-	bool	ExecuteQuery(const std::string& sql, std::string& sqlResult);
-	size_t	ExecuteNoQuery(const std::string& sql);
+	bool ExecuteQuery(const std::string& sql, std::string& sqlResult);
+	size_t ExecuteNoQuery(const std::string& sql);
 };
 
 inline bool OrcaleClient::OpenConn() {
