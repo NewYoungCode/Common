@@ -112,7 +112,7 @@ void  ConfigIni::DeleteSection(const Text::String& section) {
 	else {
 		outData = outData.substr(0, pos);
 	}
-	outData = outData.Replace("\r\n\r\n", "\r\n");
+	outData = outData.replace("\r\n\r\n", "\r\n");
 	std::ofstream ofs(filename, std::ios::binary | std::ios::app);
 	ofs.seekp(0);
 	ofs.write(outData.c_str(), outData.size());

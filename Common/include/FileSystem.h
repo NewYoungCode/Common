@@ -4,7 +4,6 @@
 #include <functional>
 #include <fstream>
 #include "Text.h"
-#include "Md5.h"
 namespace File {
 	typedef std::string FileStream;
 	//创建文件

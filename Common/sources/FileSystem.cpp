@@ -3,11 +3,11 @@
 namespace FileSystem {
 	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir = false) {
 		Text::String filename;
-		filename.Append(directory);
-		filename.Append("/");
-		filename.Append(pNextInfo.cFileName);
-		filename = filename.Replace("\\", "/");
-		filename = filename.Replace("//", "/");
+		filename.append(directory);
+		filename.append("/");
+		filename.append(Text::String(pNextInfo.cFileName));
+		filename = filename.replace("\\", "/");
+		filename = filename.replace("//", "/");
 		struct FileSystem::FileInfo fileInfo;
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //目录
 			fileInfo.FileType = FileType::Directory;
@@ -134,9 +134,9 @@ namespace Path {
 		//创建多级目录
 		if (path.find(":") != size_t(-1)) {
 			Text::String dir = path + "/";
-			dir = dir.Replace("\\", "/");
-			dir = dir.Replace("//", "/");
-			std::vector<Text::String> arr = dir.Split("/");
+			dir = dir.replace("\\", "/");
+			dir = dir.replace("//", "/");
+			auto arr = dir.split("/");
 			Text::String root;
 			if (arr.size() > 0) {
 				root += arr[0] + "/";
@@ -157,13 +157,13 @@ namespace Path {
 	bool Copy(const Text::String& srcPath, const Text::String& desPath)
 	{
 		Text::String basePath = srcPath;
-		basePath = basePath.Replace("\\", "/");
-		basePath = basePath.Replace("//", "/");
+		basePath = basePath.replace("\\", "/");
+		basePath = basePath.replace("//", "/");
 		std::vector<FileSystem::FileInfo>result;
 		FileSystem::Find(srcPath, result);
 		for (auto& it : result) {
 			Text::String fileName = it.FullName;
-			fileName = fileName.Replace(basePath, "");
+			fileName = fileName.replace(basePath, "");
 			if (it.FileType == FileSystem::FileType::File) {
 				File::Copy(it.FullName, desPath + "/" + fileName);
 			}
@@ -220,8 +220,8 @@ namespace Path {
 			filename.append(path);
 			filename.append("\\");
 			filename.append(Text::String(pNextInfo.cFileName));
-			filename = filename.Replace("\\", "/");
-			filename = filename.Replace("//", "/");
+			filename = filename.replace("\\", "/");
+			filename = filename.replace("//", "/");
 			files.push_back(filename);
 		}
 		while (FindNextFileW(hFile, &pNextInfo))
@@ -232,11 +232,11 @@ namespace Path {
 			}
 			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
 				Text::String filename;
-				filename.Append(path);
-				filename.Append("\\");
-				filename.Append(pNextInfo.cFileName);
-				filename = filename.Replace("\\", "/");
-				filename = filename.Replace("//", "/");
+				filename.append(path);
+				filename.append("\\");
+				filename.append(Text::String(pNextInfo.cFileName));
+				filename = filename.replace("\\", "/");
+				filename = filename.replace("//", "/");
 				files.push_back(filename);
 			}
 		}
@@ -258,7 +258,7 @@ namespace Path {
 	Text::String GetFileNameWithoutExtension(const Text::String& _filename) {
 		Text::String str = _filename;
 		Text::String& newStr = str;
-		newStr = newStr.Replace("\\", "/");
+		newStr = newStr.replace("\\", "/");
 		int bPos = newStr.rfind("/");
 		int ePos = newStr.rfind(".");
 		newStr = newStr.substr(bPos + 1, ePos - bPos - 1);
@@ -267,7 +267,7 @@ namespace Path {
 	Text::String GetDirectoryName(const Text::String& _filename) {
 		Text::String str = _filename;
 		Text::String& newStr = str;
-		newStr = newStr.Replace("\\", "/");
+		newStr = newStr.replace("\\", "/");
 		int pos = newStr.rfind("/");
 		return _filename.substr(0, pos);
 	}
@@ -306,9 +306,8 @@ namespace Path {
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
-		//预防命名冲突
-		auto pathMd5 = Text::String(MD5::FromString(Path::StartFileName())).unicode();
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, pathMd5.c_str());
+		auto appName = Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode();
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.c_str());
 		Path::Create(temPath);
 		return Text::String(temPath);
 	}

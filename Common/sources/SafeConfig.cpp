@@ -12,7 +12,7 @@ Text::String SafeConfig::ReadValue(const Text::String& key, const Text::String& 
 	File::ReadFile(fileName, &fileStream);
 	WinTool::DeCode(&fileStream, &fileStream);
 	Text::String u8Str = fileStream;
-	auto list = u8Str.Split("&");
+	auto list = u8Str.split("&");
 	for (auto& it : list) {
 		size_t eq_ = it.find("=");
 		if (eq_ != -1) {
@@ -42,7 +42,7 @@ void SafeConfig::WriteValue(const Text::String& key, const Text::String& value)
 	WinTool::DeCode(&fileStream, &fileStream);
 	Text::String u8Str = fileStream;
 	std::map<Text::String, Text::String> values;
-	auto list = u8Str.Split("&");
+	auto list = u8Str.split("&");
 	for (auto& it : list) {
 		size_t eq_ = it.find("=");
 		if (eq_ != -1) {

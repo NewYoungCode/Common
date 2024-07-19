@@ -9,7 +9,7 @@
 
 #include "Text.h"
 #include "FileSystem.h"
-#include "Md5.h"
+#include "Util.h"
 
 namespace WinTool {
 	/// <summary>

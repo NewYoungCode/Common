@@ -46,7 +46,7 @@ namespace WinTool {
 		auto biosId = GetBiosUUID();
 		auto mac = GetMacAddress();
 		Text::String u8Str = biosId + "_" + cpuId + "_" + mac;
-		u8Str = MD5::FromString(u8Str);
+		u8Str = Util::MD5FromString(u8Str);
 		return u8Str;
 	}
 
@@ -89,7 +89,7 @@ namespace WinTool {
 				infos.push_back(pe);
 			}
 			else {
-				if (item.Tolower() == _proccname.Tolower()) {
+				if (item.toLower() == _proccname.toLower()) {
 					infos.push_back(pe);
 				}
 			}
@@ -561,26 +561,26 @@ namespace WinTool {
 	}
 	Text::String GetBiosUUID() {
 		Text::String resultStr = ExecuteCmdLine("wmic csproduct get UUID");
-		resultStr = resultStr.Replace("UUID", "");
-		resultStr = resultStr.Replace(" ", "");
-		resultStr = resultStr.Replace("\r", "");
-		resultStr = resultStr.Replace("\n", "");
+		resultStr = resultStr.replace("UUID", "");
+		resultStr = resultStr.replace(" ", "");
+		resultStr = resultStr.replace("\r", "");
+		resultStr = resultStr.replace("\n", "");
 		return resultStr;
 	}
 	Text::String GetCPUSerialNumber() {
 		Text::String resultStr = ExecuteCmdLine("wmic cpu get ProcessorId");
-		resultStr = resultStr.Replace("ProcessorId", "");
-		resultStr = resultStr.Replace(" ", "");
-		resultStr = resultStr.Replace("\r", "");
-		resultStr = resultStr.Replace("\n", "");
+		resultStr = resultStr.replace("ProcessorId", "");
+		resultStr = resultStr.replace(" ", "");
+		resultStr = resultStr.replace("\r", "");
+		resultStr = resultStr.replace("\n", "");
 		return resultStr;
 	}
 	Text::String GetDiskSerialNumber() {
 		Text::String resultStr = ExecuteCmdLine("wmic diskdrive get SerialNumber");
-		resultStr = resultStr.Replace("SerialNumber", "");
-		resultStr = resultStr.Replace(" ", "");
-		resultStr = resultStr.Replace("\r", "");
-		resultStr = resultStr.Replace("\n", "");
+		resultStr = resultStr.replace("SerialNumber", "");
+		resultStr = resultStr.replace(" ", "");
+		resultStr = resultStr.replace("\r", "");
+		resultStr = resultStr.replace("\n", "");
 		return resultStr;
 	}
 	Text::String GetMacAddress()
@@ -725,7 +725,7 @@ namespace WinTool {
 				info.IP = ip;
 				DWORD ipAddress = ::inet_addr(ip);  // 替换为你想要查询的IP地址
 				info.MAC = GetMacAddress(ipAddress);
-				info.MAC = info.MAC.Tolower();
+				info.MAC = info.MAC.toLower();
 				break;
 			}
 		}

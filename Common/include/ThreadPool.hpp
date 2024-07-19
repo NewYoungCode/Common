@@ -5,80 +5,133 @@
 #include <condition_variable>
 #include <mutex>
 #include <future>
-class ThreadPool
-{
+#include <list>
+
+class Thread {
+	bool _bStop = false;
+	std::thread* _task = NULL;
+	bool _bJoin = false;
+	std::mutex _mtx;
+	std::condition_variable _codv;
 private:
-	// need to keep track of threads so we can join them
-	std::vector< std::thread > m_workers;
-	// the task queue
-	std::queue< std::function<void()> > m_tasks;
-	// synchronization
-	std::mutex m_queue_mutex;
-	std::condition_variable m_condition;
-	bool stop = false;
-	size_t MaxtTreadCount = 10;
+	Thread(const Thread&) = delete;
 public:
-	// the constructor just launches some amount of workers
-	inline ThreadPool(size_t threads)
-	{
-		size_t pools = m_workers.size();
-		for (; pools < MaxtTreadCount && threads > 0; --threads)
+	template<class Func, class... Args>
+	Thread(Func&& f, Args&& ...args) {
+		std::function<void()>* func = new std::function<void()>(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
+		_task = new std::thread([this, func]() mutable {
+			(*func)();
+			delete func;
+			{
+				std::unique_lock<std::mutex> autoLock(_mtx);
+				_bStop = true;
+			}
+			_codv.notify_all();
+			});
+	}
+	void Wait() {
+		if (!_bJoin)
 		{
-			m_workers.emplace_back([this]() ->void {
+			_bJoin = true;
+			std::unique_lock<std::mutex> autoLock(_mtx);
+			_codv.wait(autoLock, [this]() ->bool {
+				return _bStop;
+				});
+			_task->join();
+		}
+	}
+	bool IsStopped() {
+		std::unique_lock<std::mutex> autoLock(_mtx);
+		return _bStop;
+	}
+	virtual ~Thread() {
+		Wait();
+		delete _task;
+	}
+};
+
+class ThreadPool {
+	bool bStop = false;
+	std::list<Thread*> tasks;
+	std::list<std::function<void()>> funcs;
+	std::mutex mtx;
+	std::condition_variable codv;
+	//用于等待任务清空的锁和条件变量
+	std::mutex mtx2;
+	std::condition_variable codv2;
+private:
+	ThreadPool(const ThreadPool&) = delete;
+public:
+	ThreadPool(int maxTaskCount = 50) {
+		for (size_t i = 0; i < maxTaskCount; ++i)
+		{
+			tasks.push_back(new Thread([this]() {
 				while (true)
 				{
 					std::function<void()> task;
-					std::unique_lock<std::mutex> lock(this->m_queue_mutex);
-					this->m_condition.wait(lock, [this]()->bool {
-						return this->stop || !this->m_tasks.empty();
-						});
-					if (this->stop && this->m_tasks.empty()) {
-						return;
+					{
+						std::unique_lock<std::mutex> autoLock(this->mtx);
+						this->codv.wait(autoLock, [this]()->bool {
+							return this->bStop || !this->funcs.empty();
+							});
+						if (funcs.empty()) {
+							this->codv2.notify_all();
+						}
+						if (this->bStop && funcs.empty()) {
+							break;
+						}
+						task = std::move(*funcs.begin());
+						funcs.pop_front();
 					}
-					task = std::move(this->m_tasks.front());
-					this->m_tasks.pop();
 					task();
 				}
-				});
+				}));
 		}
 	}
-
-	// add new work item to the pool
-	template<class F, class... Args>
-	inline auto enqueue(F&& f, Args&&... args) -> std::future<typename std::result_of<F(Args...)>::type>
-	{
-		using return_type = typename std::result_of<F(Args...)>::type;
-
-		auto task = std::make_shared< std::packaged_task<return_type()>>(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-
-		std::future<return_type> res = task->get_future();
+	void WaitAll() {
+		codv.notify_all();
+		std::unique_lock<std::mutex> lock2(this->mtx2);
+		this->codv2.wait(lock2, [this]()->bool {
+			return funcs.empty();
+			});
+	}
+	virtual ~ThreadPool() {
 		{
-
-			std::unique_lock<std::mutex> lock(m_queue_mutex);
-
-			// don't allow enqueueing after stopping the pool
-			if (stop) {
-				throw std::runtime_error("enqueue on stopped ThreadPool");
+			std::unique_lock<std::mutex> autoLock(mtx);
+			bStop = true;
+		}
+		WaitAll();
+		while (!tasks.empty())
+		{
+			for (auto itor = tasks.begin(); itor != tasks.end(); )
+			{
+				if ((*itor)->IsStopped()) {
+					(*itor)->Wait();
+					delete (*itor);
+					itor = tasks.erase(itor);
+				}
+				else {
+					++itor;
+				}
 			}
-
-			m_tasks.emplace([task]() {
-				(*task)();
-				});
-		}
-		m_condition.notify_one();
-		return res;
-	}
-
-	inline ~ThreadPool()
-	{
-		m_queue_mutex.lock();
-		stop = true;
-		m_queue_mutex.unlock();
-
-		m_condition.notify_all();
-		for (std::thread& worker : m_workers) {
-			worker.join();
 		}
 	}
-
+	//添加到任务队列中的末尾(先后顺序执行)
+	template<class Func, class... Args>
+	void Add(Func&& f, Args&& ...args) {
+		{
+			std::unique_lock<std::mutex> autoLock(mtx);
+			funcs.emplace_back(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
+		}
+		codv.notify_one();
+	}
+	//添加至任务队列的第一位(优先执行)
+	template<class Func, class... Args>
+	void AddToFrist(Func&& f, Args&& ...args) {
+		{
+			std::unique_lock<std::mutex> autoLock(mtx);
+			funcs.emplace_front(std::bind(std::forward<Func>(f), std::forward<Args>(args)...));
+		}
+		codv.notify_one();
+	}
 };

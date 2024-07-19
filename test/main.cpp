@@ -5,9 +5,15 @@
 #include "Text.h"
 #include "WinTool.h"
 #include "JsonValue.h"
+#include "QrenCode.hpp"
 int main() {
 
 	std::cout << "PCID:" << WinTool::GetComputerID() << std::endl;
+
+	//二维码的使用
+	//QrenCode::Generate("https://www.baidu.com", L"d:/aa.bmp");
+	auto bmp = QrenCode::Generate("https://www.baidu.com");
+	::DeleteObject(bmp);
 
 	WinTool::GetWinVersion();
 

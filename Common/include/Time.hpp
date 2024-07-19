@@ -16,12 +16,12 @@ public:
 	}
 	Time(const std::string& timeStr, const std::string& format = "yyyy-MM-dd HH:mm:ss") {
 		std::string formatStr = format;
-		Text::String::Replace(&formatStr, "yyyy", "%Y");
-		Text::String::Replace(&formatStr, "MM", "%m");
-		Text::String::Replace(&formatStr, "dd", "%d");
-		Text::String::Replace(&formatStr, "HH", "%H");
-		Text::String::Replace(&formatStr, "mm", "%M");
-		Text::String::Replace(&formatStr, "ss", "%S");
+		Text::Replace(&formatStr, "yyyy", "%Y");
+		Text::Replace(&formatStr, "MM", "%m");
+		Text::Replace(&formatStr, "dd", "%d");
+		Text::Replace(&formatStr, "HH", "%H");
+		Text::Replace(&formatStr, "mm", "%M");
+		Text::Replace(&formatStr, "ss", "%S");
 
 		std::tm tm{};
 		std::istringstream ss(timeStr);
@@ -36,12 +36,12 @@ public:
 	}
 	std::string ToString(const std::string& format = "yyyy-MM-dd HH:mm:ss") {
 		std::string formatStr = format;
-		Text::String::Replace(&formatStr, "yyyy", "%Y");
-		Text::String::Replace(&formatStr, "MM", "%m");
-		Text::String::Replace(&formatStr, "dd", "%d");
-		Text::String::Replace(&formatStr, "HH", "%H");
-		Text::String::Replace(&formatStr, "mm", "%M");
-		Text::String::Replace(&formatStr, "ss", "%S");
+		Text::Replace(&formatStr, "yyyy", "%Y");
+		Text::Replace(&formatStr, "MM", "%m");
+		Text::Replace(&formatStr, "dd", "%d");
+		Text::Replace(&formatStr, "HH", "%H");
+		Text::Replace(&formatStr, "mm", "%M");
+		Text::Replace(&formatStr, "ss", "%S");
 
 		char timeStr[128]{ 0 };
 		time_t t = _time;
