@@ -3,9 +3,9 @@
 #include <occi/occi.h>
 using namespace oracle::occi;
 #ifdef _DEBUG
-#pragma comment(lib,"occi/oraocci12d.lib")
+#pragma comment(lib,"oraocci12d.lib")
 #else
-#pragma comment(lib,"occi/oraocci12.lib")
+#pragma comment(lib,"oraocci12.lib")
 #endif // _DEBUG
 #include <string>
 class  OrcaleClient
@@ -18,40 +18,34 @@ private:
 	std::string server_name;
 	std::string charset;
 	Environment* outEnv = NULL;
-	Connection* outConn = NULL;
+	std::string dbStr;
 public:
 	virtual ~OrcaleClient() {
+		if (outEnv) {
+			Environment::terminateEnvironment(outEnv);
+		}
 	}
 	OrcaleClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& server_name, const std::string& charset = "UTF8");
-	void CloseConn();
-	bool OpenConn();
+	void CloseConn(Connection* conn);
+	Connection* OpenConn();
 	bool ExecuteQuery(const std::string& sql, std::string& sqlResult);
 	size_t ExecuteNoQuery(const std::string& sql);
 };
 
-inline bool OrcaleClient::OpenConn() {
+inline 	Connection* OrcaleClient::OpenConn() {
 	try
 	{
-		std::string db = host + ":" + std::to_string(port) + "/" + server_name;
-		//outEnv = Environment::createEnvironment(Environment::DEFAULT);
-		outEnv = Environment::createEnvironment("ZHS16GBK", this->charset);//编码问题
-		outConn = outEnv->createConnection(user, pwd, db);
-		return true;
+		auto conn = outEnv->createConnection(user, pwd, dbStr);
+		return conn;
 	}
 	catch (const std::exception& ex)
 	{
 		printf("%s\n", ex.what());
-		if (outEnv) {
-			Environment::terminateEnvironment(outEnv);
-		}
-		return false;
+		return NULL;
 	}
 }
-inline void  OrcaleClient::CloseConn() {
-	outEnv->terminateConnection(outConn);
-	outConn = NULL;
-	Environment::terminateEnvironment(outEnv);
-	outEnv = NULL;
+inline void  OrcaleClient::CloseConn(Connection* conn) {
+	outEnv->terminateConnection(conn);
 }
 inline OrcaleClient::OrcaleClient(const std::string& host, unsigned int port, const std::string& user, const std::string& pwd, const std::string& server_name, const std::string& charset) {
 	this->host = host;
@@ -60,13 +54,16 @@ inline OrcaleClient::OrcaleClient(const std::string& host, unsigned int port, co
 	this->pwd = pwd;
 	this->server_name = server_name;
 	this->charset = charset;
+	this->dbStr = host + ":" + std::to_string(port) + "/" + server_name;
+	this->outEnv = Environment::createEnvironment("ZHS16GBK", this->charset);//编码问题
 }
-inline size_t	OrcaleClient::ExecuteNoQuery(const std::string& sql) {
+inline size_t OrcaleClient::ExecuteNoQuery(const std::string& sql) {
 	size_t affRow = 0;
-	if (OpenConn()) {
+	auto conn = OpenConn();
+	if (conn) {
 		Statement* stmt = NULL;
 		try {
-			stmt = outConn->createStatement();
+			stmt = conn->createStatement();
 			affRow = stmt->executeUpdate(sql);
 		}
 		catch (SQLException& ex)
@@ -74,20 +71,21 @@ inline size_t	OrcaleClient::ExecuteNoQuery(const std::string& sql) {
 			printf("%s\n", ex.what());
 		}
 		if (stmt) {
-			outConn->terminateStatement(stmt);
+			conn->terminateStatement(stmt);
 		}
-		CloseConn();
+		CloseConn(conn);
 	}
 	return 0;
 }
 inline bool	OrcaleClient::ExecuteQuery(const std::string& sql, std::string& sqlResult) {
 	bool ok = false;
-	if (OpenConn()) {
+	auto conn = OpenConn();
+	if (conn) {
 		std::vector<std::string> fields;
 		Statement* stmt = NULL;
 		ResultSet* rset = NULL;
 		try {
-			stmt = outConn->createStatement();
+			stmt = conn->createStatement();
 			rset = stmt->executeQuery(sql);
 			for (auto item : rset->getColumnListMetaData()) {
 				std::string s = item.getString(MetaData::ATTR_NAME);
@@ -126,9 +124,9 @@ inline bool	OrcaleClient::ExecuteQuery(const std::string& sql, std::string& sqlR
 		}
 		if (stmt && rset) {
 			stmt->closeResultSet(rset);
-			outConn->terminateStatement(stmt);
+			conn->terminateStatement(stmt);
 		}
-		CloseConn();
+		CloseConn(conn);
 	}
 	return ok;
 }

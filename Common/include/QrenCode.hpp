@@ -87,29 +87,23 @@ namespace QrenCode {
 		//::DeleteDC(dc);
 		//::DeleteObject(bmp);
 	}
-	//生成二维码到文件
-	inline bool Generate(const std::string& str, const std::wstring& fileName, QRecLevel level = QRecLevel::QR_ECLEVEL_M) {
+	//生成二维码到内存
+	inline bool Generate(const std::string& str, std::string& outFileData, QRecLevel level = QRecLevel::QR_ECLEVEL_M) {
 		const char* szSourceSring = str.c_str();
 		unsigned int unWidth, x, y, l, n, unWidthAdjusted, unDataBytes;
-		byte* pRGBData = NULL, * pSourceData, * pDestData;
+		byte* pSourceData, * pDestData;
 		QRcode* pQRC = NULL;
-		FILE* pFile = NULL;
-		bool ok = false;
 		do
 		{
 			if (pQRC = QRcode_encodeString(szSourceSring, 0, level, QR_MODE_8, 1))
 			{
 				unWidth = pQRC->width;
 				unWidthAdjusted = unWidth * 8 * 3;
-				if (unWidthAdjusted % 4)
+				if (unWidthAdjusted % 4) {
 					unWidthAdjusted = (unWidthAdjusted / 4 + 1) * 4;
-				unDataBytes = unWidthAdjusted * unWidth * 8;
-				if (!(pRGBData = (unsigned char*)malloc(unDataBytes)))
-				{
-					break;
 				}
-				// Preset to white
-				memset(pRGBData, 0xff, unDataBytes);
+				unDataBytes = unWidthAdjusted * unWidth * 8;
+
 				// Prepare bmp headers
 				BITMAPFILEHEADER kFileHeader;
 				kFileHeader.bfType = 0x4d42;
@@ -131,6 +125,18 @@ namespace QrenCode {
 				kInfoHeader.biClrImportant = 0;
 				// Convert QrCode bits to bmp pixels
 				pSourceData = pQRC->data;
+
+				//因为是放在内存 所以简化了一些
+				outFileData.resize(sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER) + unDataBytes);
+				byte* ptr = (byte*)outFileData.c_str();
+				::memcpy(ptr, (char*)&kFileHeader, sizeof(kFileHeader));
+				ptr += sizeof(kFileHeader);
+				::memcpy(ptr, (char*)&kInfoHeader, sizeof(kInfoHeader));
+				ptr += sizeof(kInfoHeader);
+				byte* pRGBData = ptr;
+				// Preset to white
+				::memset(pRGBData, 0xff, unDataBytes);
+
 				for (y = 0; y < unWidth; y++)
 				{
 					pDestData = pRGBData + unWidthAdjusted * y * 8;
@@ -153,33 +159,11 @@ namespace QrenCode {
 						pSourceData++;
 					}
 				}
-
-				// Output the bmp file
-				if (!(_wfopen_s(&pFile, fileName.c_str(), L"wb")))
-				{
-					fwrite(&kFileHeader, sizeof(BITMAPFILEHEADER), 1, pFile);
-					fwrite(&kInfoHeader, sizeof(BITMAPINFOHEADER), 1, pFile);
-					fwrite(pRGBData, sizeof(unsigned char), unDataBytes, pFile);
-					wprintf_s(L"qrcode has generated in %s\n", fileName.c_str());
-				}
-				else
-				{
-					printf("Unable to open file");
-					break;
-				}
-				ok = true;
 			}
 		} while (false);
-		// Free data
-		if (pRGBData) {
-			free(pRGBData);
-		}
 		if (pQRC) {
 			QRcode_free(pQRC);
 		}
-		if (pFile) {
-			fclose(pFile);
-		}
-		return ok;
+		return !outFileData.empty();
 	}
 };
