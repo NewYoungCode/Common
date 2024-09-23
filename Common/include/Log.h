@@ -21,10 +21,10 @@ namespace Log {
 		buf[count] = '\n';
 		buf[count + 1] = 0;
 		Text::String info(buf);
-		info = Time::Now::ToString("hh:mm:ss ") + info;
+		info = Time::Now().ToString("HH:mm:ss ") + info;
 		delete[] buf;
 		auto wstr = info.unicode();
-		std::wcout << wstr;
+		std::cout << info;
 		OutputDebugStringW(wstr.c_str());
 		WriteLog(info);
 	}
