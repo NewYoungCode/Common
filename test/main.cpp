@@ -8,6 +8,8 @@
 #include "QrenCode.hpp"
 int main() {
 
+	//新增openssl,zlib库
+
 	std::cout << "PCID:" << WinTool::GetComputerID() << std::endl;
 
 	//二维码的使用
