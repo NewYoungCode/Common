@@ -553,8 +553,10 @@ namespace WinTool {
 		if (pi.hThread) {
 			CloseHandle(pi.hThread);
 		}
-		Text::String outResult(szBuff);
+
+		Text::String outResult;
 		if (szBuff) {
+			outResult = szBuff;
 			delete[] szBuff;
 		}
 		return outResult;

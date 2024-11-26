@@ -1,4 +1,6 @@
 #include "FileSystem.h"
+#include <Shlwapi.h>
+#pragma comment(lib, "Shlwapi.lib")
 //定义....................................................................................................................
 namespace FileSystem {
 	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir = false) {
@@ -72,11 +74,15 @@ namespace File {
 	}
 	bool Delete(const Text::String& filename) {
 		::DeleteFileW(filename.unicode().c_str());
-		return !File::Exists(filename);
+		if (File::Exists(filename)) {
+			wprintf(L"Delete File ERROR %s\n", filename.unicode().c_str());
+			return false;
+		}
+		return true;
 	}
 	bool Move(const Text::String& oldname, const Text::String& newname) {
 		if (!File::Delete(newname)) {
-			printf("Move Faild !\n");
+			wprintf(L"MoveFile ERROR %s \n", oldname.unicode().c_str());
 			return false;
 		}
 		::MoveFileExW(oldname.unicode().c_str(), newname.unicode().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
@@ -114,15 +120,13 @@ namespace File {
 		ofs->close();
 		delete ofs;
 	}
-	void Copy(const Text::String& src_filename, const Text::String& des_filename)
+	bool Copy(const Text::String& src_filename, const Text::String& des_filename, bool overwrite)
 	{
-		FileStream fileData;
-		File::ReadFile(src_filename, &fileData);//读取源文件
-		File::Delete(des_filename);//直接覆盖
-		std::ofstream ofs(des_filename.unicode(), std::ios::binary | std::ios::app);//写入到新的文件
-		ofs.write(fileData.c_str(), fileData.size());
-		ofs.flush();
-		ofs.close();
+		if (overwrite) {
+			File::Delete(des_filename);
+		}
+		BOOL cancel = FALSE;
+		return CopyFileExW(src_filename.unicode().c_str(), des_filename.unicode().c_str(), NULL, NULL, &cancel, 0);
 	}
 };
 namespace Path {
@@ -147,36 +151,43 @@ namespace Path {
 					}
 					root += arr[i] + "/";
 					if (!Path::Exists(root)) {
-						::CreateDirectoryW(root.unicode().c_str(), NULL);
+						if (::CreateDirectoryW(root.unicode().c_str(), NULL) == FALSE) {
+							return false;
+						}
 					}
 				}
 			}
 		}
 		return Path::Exists(path);
 	}
-	bool Copy(const Text::String& srcPath, const Text::String& desPath)
+	bool Copy(const Text::String& srcPath, const Text::String& desPath, bool overwrite)
 	{
 		Text::String basePath = srcPath;
 		basePath = basePath.replace("\\", "/");
 		basePath = basePath.replace("//", "/");
 		std::vector<FileSystem::FileInfo>result;
 		FileSystem::Find(srcPath, result);
+		size_t errCount = 0;
 		for (auto& it : result) {
 			Text::String fileName = it.FullName;
 			fileName = fileName.replace(basePath, "");
 			if (it.FileType == FileSystem::FileType::File) {
-				File::Copy(it.FullName, desPath + "/" + fileName);
+				if (File::Copy(it.FullName, desPath + "/" + fileName, overwrite) == false) {
+					++errCount;
+				}
 			}
 			if (it.FileType == FileSystem::FileType::Directory) {
-				Path::Create(desPath + "/" + fileName);
+				if (Path::Create(desPath + "/" + fileName) == false) {
+					++errCount;
+				}
 			}
 		}
-		return false;
+		return errCount == 0;
 	}
 	bool Move(const Text::String& oldname, const Text::String& newname)
 	{
 		if (!Path::Exists(newname)) {
-			printf("Move Faild !\n");
+			wprintf(L"Move Faild !\n", oldname.unicode().c_str());
 			return false;
 		}
 		::MoveFileExW(oldname.unicode().c_str(), newname.unicode().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
@@ -190,13 +201,20 @@ namespace Path {
 		FileSystem::Find(directoryName, result);
 		for (auto& it : result) {
 			if (it.FileType == FileSystem::FileType::File) {
-				File::Delete(it.FullName);
+				if (!File::Delete(it.FullName)) {
+					return false;
+				}
 			}
-			if (it.FileType == FileSystem::FileType::Directory) {
-				Path::Delete(it.FullName);
+			else if (it.FileType == FileSystem::FileType::Directory) {
+				if (!Path::Delete(it.FullName)) {
+					return false;
+				}
 			}
 		}
-		::RemoveDirectoryW(directoryName.unicode().c_str());
+		if (::RemoveDirectoryW(directoryName.unicode().c_str()) == FALSE) {
+			wprintf(L"RemoveDirectory ERROR %s\n", directoryName.unicode().c_str());
+			return false;
+		}
 		return !Path::Exists(directoryName);
 	}
 	std::vector<Text::String> SearchFiles(const Text::String& path, const Text::String& pattern)
@@ -320,5 +338,26 @@ namespace Path {
 		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
 		Path::Create(localPath);
 		return Text::String(localPath);
+	}
+
+	bool Equal(const Text::String& path1, const Text::String& path2)
+	{
+		WCHAR canonicalPath1[MAX_PATH], canonicalPath2[MAX_PATH];
+		if (!PathCanonicalizeW(canonicalPath1, path1.unicode().c_str())) {
+			return false; // 规范化第一个路径失败
+		}
+		if (!PathCanonicalizeW(canonicalPath2, path2.unicode().c_str())) {
+			return false; // 规范化第二个路径失败
+		}
+		return std::wcscmp(canonicalPath1, canonicalPath2) == 0;
+
+		//auto a = str1;
+		//a = a.replace("\\", "/");
+		//a = a.replace("//", "/");
+
+		//auto b = str1;
+		//b = b.replace("\\", "/");
+		//b = b.replace("//", "/");
+		//return (a == b);
 	}
 };

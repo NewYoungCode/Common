@@ -21,13 +21,13 @@ namespace File {
 	//写入文件
 	extern void WriteFile(const char* fileStream, size_t count, const Text::String& filename);
 	//拷贝文件
-	extern void Copy(const  Text::String& filename, const  Text::String& des_filename);
+	extern bool Copy(const  Text::String& filename, const  Text::String& des_filename, bool overwrite = true);
 }
 namespace Path {
 	//创建路径
 	extern bool Create(const Text::String& path);
 	//拷贝目录所有文件到目标目录
-	extern bool Copy(const Text::String& srcPath, const Text::String& desPath);
+	extern bool Copy(const Text::String& srcPath, const Text::String& desPath,  bool overwrite = true);
 	//移动目录到新位置
 	extern bool Move(const Text::String& oldname, const Text::String& newname);
 	//删除路径 如果存在子文件夹或者文件 将会递归删除
@@ -36,6 +36,8 @@ namespace Path {
 	extern std::vector<Text::String> SearchFiles(const Text::String& path, const Text::String& pattern);
 	//检查路径是否存在
 	extern bool Exists(const Text::String& path);
+	//判断路径是不是相同
+	extern bool Equal(const Text::String& path1, const Text::String& path2);
 	//获取文件名称(文件名称)
 	extern Text::String GetFileNameWithoutExtension(const Text::String& _filename);
 	//获取文件目录名称(所在目录)
