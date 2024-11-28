@@ -303,6 +303,50 @@ namespace WinTool {
 		File::Delete(userDesktop);//删除旧的
 	}
 
+	void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey) {
+		HKEY hKey;
+		LONG result = ::RegOpenKeyExW(hKeyParent, subKey, 0, KEY_ENUMERATE_SUB_KEYS | KEY_SET_VALUE, &hKey);
+		if (result != ERROR_SUCCESS) {
+			std::wcerr << L"Failed to open registry key for deletion. Error: " << result << std::endl;
+			return;
+		}
+
+		// 获取子项的数量
+		DWORD dwIndex = 0;
+		FILETIME ftLastWriteTime;
+		WCHAR szSubKey[256];
+		DWORD dwSubKeyLen;
+
+		while (true) {
+			dwSubKeyLen = sizeof(szSubKey) / sizeof(szSubKey[0]);
+			result = ::RegEnumKeyExW(hKey, dwIndex, szSubKey, &dwSubKeyLen, nullptr, nullptr, nullptr, &ftLastWriteTime);
+			if (result == ERROR_NO_MORE_ITEMS) {
+				break; // 没有更多子项，退出循环
+			}
+
+			if (result == ERROR_SUCCESS) {
+				// 递归删除子项
+				DeleteKeyRecursively(hKey, szSubKey);
+				++dwIndex; // 移动到下一个子项
+			}
+			else {
+				std::wcerr << L"Failed to enumerate subkey. Error: " << result << std::endl;
+				break;
+			}
+		}
+
+		// 删除当前项
+		result = ::RegDeleteKeyW(hKeyParent, subKey);
+		if (result != ERROR_SUCCESS) {
+			std::wcerr << L"Failed to delete registry key. Error: " << result << std::endl;
+		}
+		else {
+			std::wcout << L"Deleted registry key: " << subKey << std::endl;
+		}
+
+		::RegCloseKey(hKey);
+	}
+
 	LSTATUS RegSetSoftware(HKEY hKey, const Text::String& regKey, const Text::String& regValue) {
 		if (!regValue.empty()) {
 			auto wStr = regValue.unicode();

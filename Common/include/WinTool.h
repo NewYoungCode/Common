@@ -67,6 +67,12 @@ namespace WinTool {
 	extern bool CreateDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName = L"", const Text::String& cmdline = L"", const Text::String& iconFilename = L"");
 	//删除桌面快捷方式
 	extern void DeleteDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName);
+	/// <summary>
+	/// 删除注册表中某个项及其子项和值
+	/// </summary>
+	/// <param name="hKeyParent: ">HKEY_CURRENT_USER</param>
+	/// <param name="subKey: ">"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR"</param>
+	extern void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey);
 	//注册软件到电脑
 	extern bool RegisterSoftware(const AppInfo& appInfo);
 	//从电脑上注销软件

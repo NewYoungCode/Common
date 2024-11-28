@@ -3,6 +3,24 @@
 #pragma comment(lib, "Shlwapi.lib")
 //定义....................................................................................................................
 namespace FileSystem {
+
+	//移除只读属性和系统属性
+	bool __RemoveAttr_OnlyRead_System(const std::wstring& _path) {
+		auto wPath = _path.c_str();
+		// 获取当前文件或目录的属性
+		DWORD currentAttributes = GetFileAttributesW(wPath);
+		if (currentAttributes == INVALID_FILE_ATTRIBUTES) {
+			return false;
+		}
+		// 去除只读属性和系统属性
+		DWORD newAttributes = currentAttributes & ~(FILE_ATTRIBUTE_READONLY | FILE_ATTRIBUTE_SYSTEM);
+		// 设置新的属性
+		if (::SetFileAttributesW(wPath, newAttributes)) {
+			return true;
+		}
+		return false;
+	}
+
 	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir = false) {
 		Text::String filename;
 		filename.append(directory);
@@ -64,7 +82,6 @@ namespace File {
 			return true;
 		}
 		return false;
-
 	}
 	bool Create(const Text::String& filename) {
 		File::Delete(filename);
@@ -75,18 +92,27 @@ namespace File {
 	bool Delete(const Text::String& filename) {
 		::DeleteFileW(filename.unicode().c_str());
 		if (File::Exists(filename)) {
-			wprintf(L"Delete File ERROR %s\n", filename.unicode().c_str());
+			auto code = ::GetLastError();
+			if (code == 5 && FileSystem::__RemoveAttr_OnlyRead_System(filename.unicode())) {
+				return Delete(filename);
+			}
+			wprintf(L"code %d Delete File ERROR %s\n", code, filename.unicode().c_str());
 			return false;
 		}
 		return true;
 	}
 	bool Move(const Text::String& oldname, const Text::String& newname) {
-		if (!File::Delete(newname)) {
-			wprintf(L"MoveFile ERROR %s \n", oldname.unicode().c_str());
+		if (!File::Delete(newname)) {//进行覆盖
+			auto code = ::GetLastError();
+			wprintf(L"code %d MoveFile ERROR %s \n", code, oldname.unicode().c_str());
 			return false;
 		}
 		::MoveFileExW(oldname.unicode().c_str(), newname.unicode().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
 		if (File::Exists(oldname)) {
+			auto code = ::GetLastError();
+			if (code == 5 && FileSystem::__RemoveAttr_OnlyRead_System(oldname.unicode())) {
+				return Move(oldname, newname);
+			}
 			return false;
 		}
 		return true;
@@ -126,7 +152,8 @@ namespace File {
 			File::Delete(des_filename);
 		}
 		BOOL cancel = FALSE;
-		return CopyFileExW(src_filename.unicode().c_str(), des_filename.unicode().c_str(), NULL, NULL, &cancel, 0);
+		auto ret = ::CopyFileExW(src_filename.unicode().c_str(), des_filename.unicode().c_str(), NULL, NULL, &cancel, 0);
+		return ret;
 	}
 };
 namespace Path {
@@ -165,6 +192,11 @@ namespace Path {
 		Text::String basePath = srcPath;
 		basePath = basePath.replace("\\", "/");
 		basePath = basePath.replace("//", "/");
+
+		if (Path::Create(desPath) == false) {
+			return false;
+		}
+
 		std::vector<FileSystem::FileInfo>result;
 		FileSystem::Find(srcPath, result);
 		size_t errCount = 0;
@@ -177,7 +209,7 @@ namespace Path {
 				}
 			}
 			if (it.FileType == FileSystem::FileType::Directory) {
-				if (Path::Create(desPath + "/" + fileName) == false) {
+				if (Path::Copy(srcPath + "/" + fileName, desPath + "/" + fileName, overwrite) == false) {
 					++errCount;
 				}
 			}
@@ -212,7 +244,11 @@ namespace Path {
 			}
 		}
 		if (::RemoveDirectoryW(directoryName.unicode().c_str()) == FALSE) {
-			wprintf(L"RemoveDirectory ERROR %s\n", directoryName.unicode().c_str());
+			auto code = ::GetLastError();
+			if (code == 5 && FileSystem::__RemoveAttr_OnlyRead_System(directoryName.unicode())) {
+				return Delete(directoryName.unicode());
+			}
+			wprintf(L"code:%d RemoveDirectory  ERROR %s \n", code, directoryName.unicode().c_str());
 			return false;
 		}
 		return !Path::Exists(directoryName);
