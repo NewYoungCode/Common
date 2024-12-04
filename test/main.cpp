@@ -243,6 +243,7 @@ int main() {
 
 	redirect(L"C:\\Users\\{user}\\Documents", L"?:\\Users\\{user}\\Documents", disk);//文档目录
 	redirect(L"C:\\Users\\{user}\\Downloads", L"?:\\Users\\{user}\\Downloads", disk);//下载目录
+	redirect(L"C:\\Users\\{user}\\Desktop", L"?:\\Users\\{user}\\Desktop", disk);//桌面目录
 	redirect(L"C:\\Users\\{user}\\Music", L"?:\\Users\\{user}\\Music", disk);//音频目录
 	redirect(L"C:\\Users\\{user}\\Videos", L"?:\\Users\\{user}\\Videos", disk);//视频目录
 	redirect(L"C:\\Users\\{user}\\Pictures", L"?:\\Users\\{user}\\Pictures", disk);//照片目录
