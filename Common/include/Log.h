@@ -23,9 +23,10 @@ namespace Log {
 		Text::String info(buf);
 		info = Time::Now().ToString("HH:mm:ss ") + info;
 		delete[] buf;
-		auto wstr = info.unicode();
-		std::cout << info;
-		OutputDebugStringW(wstr.c_str());
+		//转为本地可识别的编码
+		auto ansi = info.ansi();
+		std::cout << ansi;
+		OutputDebugStringA(ansi.c_str());
 		WriteLog(info);
 	}
 };
