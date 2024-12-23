@@ -16,21 +16,7 @@ void Curl_Global_Init();
 typedef std::function<void(__int64 total, __int64 now, float rate)> ProgressFunc;
 //curl的初始化
 static bool g_curl_bInit = false;
-class Proxy {
-public:
-	std::string host;
-	unsigned int port;
-	int curl_proxytype = 5;//类型值参见curl_proxytype
-	std::string user;
-	std::string password;
-	inline Proxy(const std::string& host, size_t port, const int& curl_proxytype = 5, const std::string& user = "", const std::string& password = "") {
-		this->host = host;
-		this->port = port;
-		this->curl_proxytype = curl_proxytype;
-		this->user = user;
-		this->password = password;
-	}
-};
+
 namespace PostForm {
 	//字段类型
 	enum FieldType :char
@@ -73,10 +59,9 @@ private:
 	void* curl_header = NULL;//类型参见 curl_slist
 public:
 	std::string Cookies;
-	std::string Proxy_Str;
+	std::string Proxy;
 	WebClient();
 	virtual ~WebClient();
-	Proxy* Proxy = NULL;
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
 	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);

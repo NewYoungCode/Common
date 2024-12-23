@@ -50,9 +50,7 @@ WebClient::WebClient() {
 	}
 }
 WebClient::~WebClient() {
-	if (this->Proxy) {
-		delete this->Proxy;
-	}
+
 }
 size_t __g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone) {
 	size_t count = size * nmemb;
@@ -96,16 +94,8 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 		return curl;
 	}
 	this->ResponseData = strResponse;
-	if (Proxy) {
-		curl_easy_setopt(curl, CURLOPT_PROXYTYPE, Proxy->curl_proxytype); //代理模式
-		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy->host.c_str()); //代理服务器地址
-		curl_easy_setopt(curl, CURLOPT_PROXYPORT, Proxy->port); //代理服务器端口
-		if (!Proxy->user.empty() && !Proxy->password.empty()) {
-			curl_easy_setopt(curl, CURLOPT_PROXYUSERPWD, std::string(Proxy->user + ":" + Proxy->password).c_str()); //用户密码
-		}
-	}
-	if (!Proxy_Str.empty()) {
-		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy_Str.c_str()); //代理服务器地址
+	if (!Proxy.empty()) {
+		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy.c_str()); //代理服务器地址
 	}
 
 	//初始化cookie引擎
@@ -201,6 +191,8 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 
 	return CleanUp(curl, code);
 };
+
+//multipart/form-data方式,适用于文件上传，数据被分为多个部分，每个部分都有自己的标头。
 int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* respone, int nTimeout) {
 
 	AddHeader("Content-Type", "multipart/form-data");
@@ -215,7 +207,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 		if (item.FieldType == PostForm::FieldType::File) {
 			curl_formadd(&formpost, &lastptr,
 				CURLFORM_COPYNAME, item.FieldName.c_str(),
-				CURLFORM_FILE, item.FileName.c_str(),
+				CURLFORM_FILE, item.FileName.c_str(),//此处不安全 需要使用unicode才行
 				CURLFORM_CONTENTTYPE, "application/octet-stream",
 				CURLFORM_END);
 		}
