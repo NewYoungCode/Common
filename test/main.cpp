@@ -1,5 +1,4 @@
 //#include <sstream>
-//
 //#include "WebClient.h"
 //#include "FileSystem.h"
 //#include "Text.h"
@@ -48,7 +47,7 @@
 #include "WinTool.h"
 #include "Log.h"
 
-	//ÊäÈë×Ö·û´®
+//ÊäÈë×Ö·û´®
 std::string inputString(const std::string tips) {
 	std::string input;
 	std::cout << tips;
