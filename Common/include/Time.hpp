@@ -34,7 +34,7 @@ public:
 		}
 		this->_time = timeStamp;
 	}
-	std::string ToString(const std::string& format = "yyyy-MM-dd HH:mm:ss") {
+	std::string ToString(const std::string& format = "yyyy-MM-dd HH:mm:ss") const{
 		std::string formatStr = format;
 		Text::Replace(&formatStr, "yyyy", "%Y");
 		Text::Replace(&formatStr, "MM", "%m");

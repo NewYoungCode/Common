@@ -1,4 +1,6 @@
 #pragma once
+#include <iostream>
+
 #include "FileSystem.h"
 #include "Time.hpp"
 namespace Log {
@@ -15,7 +17,7 @@ namespace Log {
 	/// <param name="...args"></param>
 	inline void Info(const Text::String& formatStr, const T &...args) {
 		if (!Enable)return;
-		int size = 1024 * 1024 * 5;//5M的内存
+		int size = 1024 * 1024 * 3;//3M的内存
 		char* buf = new char[size] { 0 };
 		auto count = sprintf_s((buf), size, formatStr.c_str(), std::forward<const T&>(args)...);
 		buf[count] = '\n';
