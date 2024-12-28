@@ -1,6 +1,7 @@
-#pragma once
 #include "Text.h"
-//定义................................................
+
+#ifdef __TEXT__STRING
+//----------------------------------------------------------------
 namespace Text {
 	size_t String::length() const {
 		auto* p = this->c_str();
@@ -14,26 +15,31 @@ namespace Text {
 		return count;
 	}
 	String::String() {}
-	String::~String()
+	String::~String() {}
+	String::String(const String& _right)noexcept :std::string(_right) {}
+	String::String(String&& _right) noexcept :std::string(std::move(_right)) {}
+	String& String::operator=(const String& _right) noexcept
 	{
+		(std::string&)*this = _right;
+		return *this;
+	}
+	String& String::operator=(String&& _right) noexcept
+	{
+		std::string::operator=(std::move(_right));
+		return *this;
 	}
 	String::String(const std::string& str)noexcept :std::string(str) {}
 	String::String(const char* szbuf)noexcept :std::string(szbuf) {}
 	String::String(const wchar_t* szbuf)noexcept {
 		if (szbuf == NULL)return;
-		Text::UnicodeToUTF8(szbuf, this);
+		UnicodeToUTF8(szbuf, this);
 	}
 	String::String(const std::wstring& wstr)noexcept {
-		Text::UnicodeToUTF8(wstr, this);
-	}
-	std::vector<std::string> String::split(const String& ch_)const {
-		std::vector<std::string> arr;
-		Text::Split(*this, ch_, &arr);
-		return arr;
+		UnicodeToUTF8(wstr, this);
 	}
 	void String::erase(char _ch)
 	{
-		Text::Erase(this, _ch);
+		Erase(this, _ch);
 	}
 	void String::erase(size_t pos, size_t count)
 	{
@@ -42,52 +48,49 @@ namespace Text {
 	String String::replace(char oldChar, char newChar)
 	{
 		String newStr = *this;
-		Text::Replace(&newStr, oldChar, newChar);
+		Replace(&newStr, oldChar, newChar);
 		return newStr;
 	}
 	String String::replace(const String& oldText, const String& newText, bool allReplace) const
 	{
 		String newStr = *this;
-		Text::Replace(&newStr, oldText, newText, allReplace);
+		Replace(&newStr, oldText, newText, allReplace);
 		return newStr;
 	}
 	String String::toLower() const
 	{
 		String str(*this);
-		Text::Tolower(&str);
+		Tolower(&str);
 		return str;
 	}
 	String String::toUpper() const
 	{
 		String str(*this);
-		Text::Toupper(&str);
+		Toupper(&str);
 		return str;
 	}
 	bool String::operator==(const wchar_t* szbuf)const
 	{
 		std::string u8str;
-		Text::UnicodeToUTF8(szbuf, &u8str);
+		UnicodeToUTF8(szbuf, &u8str);
 		return (*this == u8str);
 	}
 	bool String::operator==(const std::wstring& wStr)const
 	{
 		std::string u8str;
-		Text::UnicodeToUTF8(wStr, &u8str);
+		UnicodeToUTF8(wStr, &u8str);
 		return (*this == u8str);
 	}
 	std::wstring String::unicode() const {
 		std::wstring wstr;
-		Text::UTF8ToUnicode(*this, &wstr);
+		UTF8ToUnicode(*this, &wstr);
 		return wstr;
 	}
 	std::string String::ansi() const {
 		std::string str;
-		Text::UTF8ToANSI(*this, &str);
+		UTF8ToANSI(*this, &str);
 		return str;
 	}
-
-
-
 
 	void AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr) {
 		std::wstring& wstrCmd = *out_wstr;
@@ -101,6 +104,8 @@ namespace Text {
 		strCmd.resize(bytes);
 		bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.c_str()), strCmd.size(), NULL, NULL);
 	}
+
+	//以下是静态函数
 	void ANSIToUniCode(const std::string& str, std::wstring* outStr)
 	{
 		AnyToUnicode(str, ::GetACP(), outStr);
@@ -109,18 +114,21 @@ namespace Text {
 	{
 		UnicodeToAny(wstr, ::GetACP(), outStr);
 	}
+
 	void GBKToUTF8(const std::string& str, std::string* outStr) {
 		const int gbkCodePage = 936;
 		std::wstring wstr;
 		AnyToUnicode(str, gbkCodePage, &wstr);
 		UnicodeToUTF8(wstr, outStr);
 	}
+
 	void UTF8ToGBK(const std::string& str, std::string* outStr) {
 		const int gbkCodePage = 936;
 		std::wstring wstr;
 		UTF8ToUnicode(str, &wstr);
 		UnicodeToAny(wstr, gbkCodePage, outStr);
 	}
+
 	void ANSIToUTF8(const std::string& str, std::string* outStr)
 	{
 		UINT codePage = ::GetACP();
@@ -149,6 +157,7 @@ namespace Text {
 	void UTF8ToUnicode(const std::string& str, std::wstring* outStr) {
 		AnyToUnicode(str, CP_UTF8, outStr);
 	}
+
 	void Tolower(std::string* str_in_out)
 	{
 		std::string& str = *str_in_out;
@@ -171,7 +180,7 @@ namespace Text {
 			}
 		}
 	}
-	void Erase(std::string* str_in_out, const char& _char) {
+	void Erase(std::string* str_in_out, char _char) {
 		const String& self = *str_in_out;
 		char* bufStr = new char[self.size() + 1] { 0 };
 		size_t pos = 0;
@@ -206,9 +215,10 @@ namespace Text {
 			}
 		}
 	}
-	void Split(const std::string& str_in, const std::string& ch_, std::vector<std::string>* strs_out) {
 
-		std::vector<std::string>& arr = *strs_out;
+	template<typename T>
+	void __Split(const std::string& str_in, const std::string& ch_, std::vector<T>* strs_out) {
+		std::vector<T>& arr = *strs_out;
 		arr.clear();
 		if (str_in.empty()) return;
 
@@ -233,10 +243,23 @@ namespace Text {
 		}
 	}
 
-	String  ToString(double number, int keepBitSize) {
+	std::vector<String> String::split(const String& ch)const
+	{
+		std::vector<String> strs;
+		__Split<String>(*this, ch, &strs);
+		return strs;
+	}
+
+	void Split(const std::string& str_in, const std::string& ch_, std::vector<std::string>* strs_out) {
+
+		__Split<std::string>(str_in, ch_, strs_out);
+	}
+
+	String ToString(double number, int keepBitSize) {
 		std::ostringstream oss;
 		oss << std::fixed << std::setprecision(keepBitSize) << number;
 		return oss.str();
 	}
-
 };
+//----------------------------------------------------------------
+#endif // __TEXT__STRING
