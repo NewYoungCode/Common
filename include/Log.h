@@ -15,11 +15,12 @@ namespace Log {
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
-	inline void Info(const Text::String& formatStr, const T &...args) {
-		if (!Enable)return;
-		int size = 1024 * 1024 * 3;//3M的内存
-		char* buf = new char[size] { 0 };
-		auto count = sprintf_s((buf), size, formatStr.c_str(), std::forward<const T&>(args)...);
+	inline Text::String Info(const Text::String& formatStr, const T &...args) {
+		if (!Enable)return "";
+		// 计算格式化后的字符串所需的内存大小
+		int bufSize = ::snprintf(nullptr, 0, formatStr.c_str(), args...) + 2;  // +1是为了换行符和结束符 \n '\0'
+		char* buf = new char[bufSize];
+		auto count = ::sprintf_s(buf, bufSize, formatStr.c_str(), std::forward<const T&>(args)...);
 		buf[count] = '\n';
 		buf[count + 1] = 0;
 		Text::String info(buf);
@@ -30,5 +31,6 @@ namespace Log {
 		std::cout << ansi;
 		OutputDebugStringA(ansi.c_str());
 		WriteLog(info);
+		return info;
 	}
 };

@@ -17,13 +17,38 @@ bool isRunning(const std::string& pathA) {
 }
 
 int main() {
+
+	HWND hwnd = ::GetConsoleWindow();//获取控制台句柄
+
 	Log::Enable = true;
-	std::vector<Text::String> list{ "binance.exe","TgServer.exe" ,"TGbuy.exe" };
+	std::vector<std::string> list;
+
+	std::string fileData;
+
+	auto startFileName = Path::StartFileName();
+	Text::String listFileName = Path::GetDirectoryName(startFileName) + "\\" + Path::GetFileNameWithoutExtension(startFileName) + ".list";
+	if (!File::Exists(listFileName)) {
+		::MessageBoxW(hwnd, listFileName.unicode().c_str(), L"file doesn't exist", MB_ICONSTOP);
+		return 0;
+	}
+
+	File::ReadFile(listFileName, &fileData);
+
+	//去除utf8-bom头
+	char bom[]{ 0xef,0xbb, 0xbf,0 };
+	auto pos = fileData.find(bom);
+	if (pos != size_t(-1)) {
+		fileData = fileData.substr(3);
+	}
+
+	Text::Replace(&fileData, "\r", "");
+	Text::Split(fileData, "\n", &list);
+
 	for (auto& it : list) {
+		Log::Info(it);
 		it = Path::StartPath() + "\\" + it;
 	}
 	Log::Info(L"守护程序运行中... 请勿关闭!");
-	HWND hwnd = ::GetConsoleWindow();//获取控制台句柄
 	::ShowWindow(hwnd, SW_HIDE);
 	while (true)
 	{
@@ -40,7 +65,7 @@ int main() {
 					Log::Info(L"[%s]启动成功", fileName.c_str());
 				}
 			}
-			Sleep(2000);
+			Sleep(1000);
 		}
 	}
 	return 0;
