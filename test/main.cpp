@@ -15,11 +15,11 @@
 //	auto ret = WinTool::ExecuteCmdLine(cmd);
 //
 //
-//	//ĞÂÔöopenssl,zlib¿â
+//	//æ–°å¢openssl,zlibåº“
 //
 //	std::cout << "PCID:" << WinTool::GetComputerID() << std::endl;
 //
-//	//¶şÎ¬ÂëµÄÊ¹ÓÃ
+//	//äºŒç»´ç çš„ä½¿ç”¨
 //	//QrenCode::Generate("https://www.baidu.com", L"d:/aa.bmp");
 //	auto bmp = QrenCode::Generate("https://www.baidu.com");
 //	::DeleteObject(bmp);
@@ -47,7 +47,7 @@
 #include "WinTool.h"
 #include "Log.h"
 
-//ÊäÈë×Ö·û´®
+//è¾“å…¥å­—ç¬¦ä¸²
 std::string inputString(const std::string tips) {
 	std::string input;
 	std::cout << tips;
@@ -55,7 +55,7 @@ std::string inputString(const std::string tips) {
 	return input;
 }
 
-// »ñÈ¡Õ¼ÓÃÎÄ¼şµÄ½ø³ÌPID
+// è·å–å ç”¨æ–‡ä»¶çš„è¿›ç¨‹PID
 std::vector<DWORD> getPid(const Text::String& filePath) {
 	std::vector<DWORD> pidList;
 	Text::String str = WinTool::ExecuteCmdLine("handle.exe " + filePath);
@@ -78,8 +78,8 @@ bool IsDirectoryRedirected(const std::wstring& directory, Text::String& out) {
 	HANDLE hFile = CreateFileW(directory.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
 		auto code = ::GetLastError();
-		Log::Info("code %d ÎŞ·¨´ò¿ªÂ·¾¶  %s", code, Text::String(directory).c_str());
-		return true; // Èç¹û´ò¿ªÊ§°Ü£¬·µ»Ø false
+		Log::Info("code %d æ— æ³•æ‰“å¼€è·¯å¾„  %s", code, Text::String(directory).c_str());
+		return true; // å¦‚æœæ‰“å¼€å¤±è´¥ï¼Œè¿”å› false
 	}
 	WCHAR finalPath[MAX_PATH];
 	DWORD pathLength = GetFinalPathNameByHandleW(hFile, finalPath, MAX_PATH, FILE_NAME_NORMALIZED);
@@ -93,42 +93,42 @@ bool IsDirectoryRedirected(const std::wstring& directory, Text::String& out) {
 		path = path.substr(4);
 	}
 	out = path;
-	return  Text::String(directory) != out; // Èç¹ûÂ·¾¶²»Í¬£¬ËµÃ÷¸ÃÄ¿Â¼ÒÑÖØ¶¨Ïò
+	return  Text::String(directory) != out; // å¦‚æœè·¯å¾„ä¸åŒï¼Œè¯´æ˜è¯¥ç›®å½•å·²é‡å®šå‘
 }
 bool redirect(const Text::String& linkName, const Text::String& target, char disk) {
 
-	//»ñÈ¡ÓÃ»§Ãû³Æ
+	//è·å–ç”¨æˆ·åç§°
 	WCHAR user[256]{ 0 };
 	DWORD len = 256;
 	::GetUserNameW(user, &len);
 	std::wstring userName = user;
 
-	//Ìæ»»ÓÃ»§ÃûºÍÅÌ·û
+	//æ›¿æ¢ç”¨æˆ·åå’Œç›˜ç¬¦
 	Text::Replace((Text::String*)&linkName, "{user}", Text::String(user));
 	Text::Replace((Text::String*)&target, "{user}", Text::String(user));
 	((Text::String&)target)[0] = disk;
 
-	//²éÕÒÕ¼ÓÃµÄ½ø³Ìid
+	//æŸ¥æ‰¾å ç”¨çš„è¿›ç¨‹id
 	std::vector<DWORD> pids = getPid(linkName);
 	for (auto& pid : pids) {
-		Log::Info("É±ËÀ½ø³Ì %d", pid);
+		Log::Info("æ€æ­»è¿›ç¨‹ %d", pid);
 		WinTool::CloseProcess(pid);
 	}
 
-	//ÅĞ¶ÏÊÇ²»ÊÇÒÑ¾­ÖØ¶¨Ïò¹ıÁË
+	//åˆ¤æ–­æ˜¯ä¸æ˜¯å·²ç»é‡å®šå‘è¿‡äº†
 	Text::String out;
 	if (IsDirectoryRedirected(linkName.unicode(), out)) {
 		if (Path::Equal(target, out)) {
 			return true;
 		}
 		else {
-			Log::Info("[ÒÑÓĞµÄÖØ¶¨Ïò²»ÕıÈ·,Ö´ĞĞÉ¾³ı!]%s->%s", linkName.c_str(), out.c_str());
+			Log::Info("[å·²æœ‰çš„é‡å®šå‘ä¸æ­£ç¡®,æ‰§è¡Œåˆ é™¤!]%s->%s", linkName.c_str(), out.c_str());
 			Path::Delete(linkName);
 		}
 	}
 
-	auto ok = Path::Copy(linkName, target);//ÏÈ¿½±´
-	ok = Path::Delete(linkName);//É¾³ı
+	auto ok = Path::Copy(linkName, target);//å…ˆæ‹·è´
+	ok = Path::Delete(linkName);//åˆ é™¤
 
 	Text::String cmd = "cmd.exe /c mklink /j " + linkName + " " + target;
 	auto ret = WinTool::ExecuteCmdLine(cmd);
@@ -137,20 +137,20 @@ bool redirect(const Text::String& linkName, const Text::String& target, char dis
 	return ret.empty();
 }
 
-//¹Ø±Õ´ò¿ªÓÎÏ·µÄÊ±ºòµ¯³öµÄGameBar
+//å…³é—­æ‰“å¼€æ¸¸æˆçš„æ—¶å€™å¼¹å‡ºçš„GameBar
 void closeGameBar() {
 
 	{
-		//¼ÆËã»ú\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR  (AppCaptureEnabled 32dwordÀàĞÍ ¸ÄÎª0)
+		//è®¡ç®—æœº\HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\GameDVR  (AppCaptureEnabled 32dwordç±»å‹ æ”¹ä¸º0)
 		HKEY subKey = NULL;
 		do
 		{
 			if (ERROR_SUCCESS != ::RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", NULL, KEY_ALL_ACCESS, &subKey)) {
 				break;
 			}
-			//É¾³ıAppCaptureEnabled
+			//åˆ é™¤AppCaptureEnabled
 			::RegDeleteValueW(subKey, L"AppCaptureEnabled");
-			DWORD value = 0; // ÒªÉèÖÃµÄÖµ
+			DWORD value = 0; // è¦è®¾ç½®çš„å€¼
 			if (::RegSetValueExW(subKey, L"AppCaptureEnabled", 0, REG_DWORD, (const BYTE*)&value, sizeof(value))) {
 				break;
 			}
@@ -159,16 +159,16 @@ void closeGameBar() {
 	}
 
 	{
-		//¼ÆËã»ú\HKEY_CURRENT_USER\System\GameConfigStore  (GameDVR_Enabled ¸ÄÎª0)
+		//è®¡ç®—æœº\HKEY_CURRENT_USER\System\GameConfigStore  (GameDVR_Enabled æ”¹ä¸º0)
 		HKEY subKey = NULL;
 		do
 		{
 			if (ERROR_SUCCESS != ::RegOpenKeyExW(HKEY_CURRENT_USER, L"System\\GameConfigStore", NULL, KEY_ALL_ACCESS, &subKey)) {
 				break;
 			}
-			//É¾³ıGameDVR_Enabled
+			//åˆ é™¤GameDVR_Enabled
 			::RegDeleteValueW(subKey, L"GameDVR_Enabled");
-			DWORD value = 0; // ÒªÉèÖÃµÄÖµ
+			DWORD value = 0; // è¦è®¾ç½®çš„å€¼
 			if (::RegSetValueExW(subKey, L"GameDVR_Enabled", 0, REG_DWORD, (const BYTE*)&value, sizeof(value))) {
 				break;
 			}
@@ -177,8 +177,8 @@ void closeGameBar() {
 	}
 
 	{
-		//¹Ø±Õ×ÀÃæµÄ"ÁË½â´ËÍ¼Æ¬"
-		//HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{2cc5ca98-6485-489a-920e-b3e88a6ccce3} DWORD32 1 ¹Ø±Õ
+		//å…³é—­æ¡Œé¢çš„"äº†è§£æ­¤å›¾ç‰‡"
+		//HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{2cc5ca98-6485-489a-920e-b3e88a6ccce3} DWORD32 1 å…³é—­
 		HKEY subKey = NULL;
 		do
 		{
@@ -186,7 +186,7 @@ void closeGameBar() {
 				break;
 			}
 			::RegDeleteValueW(subKey, L"{2cc5ca98-6485-489a-920e-b3e88a6ccce3}");
-			DWORD value = 1; // ÒªÉèÖÃµÄÖµ
+			DWORD value = 1; // è¦è®¾ç½®çš„å€¼
 			if (::RegSetValueExW(subKey, L"{2cc5ca98-6485-489a-920e-b3e88a6ccce3}", 0, REG_DWORD, (const BYTE*)&value, sizeof(value))) {
 				break;
 			}
@@ -194,8 +194,8 @@ void closeGameBar() {
 		::RegCloseKey(subKey);
 	}
 	{
-		//×ÀÃæÏÔÊ¾ÎÒµÄ"ÎÒµÄµçÄÔ"
-		//HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{20D04FE0-3AEA-1069-A2D8-08002B30309D} DWORD32 0ÏÔÊ¾ÎÒµÄµçÄÔ
+		//æ¡Œé¢æ˜¾ç¤ºæˆ‘çš„"æˆ‘çš„ç”µè„‘"
+		//HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel\{20D04FE0-3AEA-1069-A2D8-08002B30309D} DWORD32 0æ˜¾ç¤ºæˆ‘çš„ç”µè„‘
 		HKEY subKey = NULL;
 		do
 		{
@@ -203,7 +203,7 @@ void closeGameBar() {
 				break;
 			}
 			::RegDeleteValueW(subKey, L"{20D04FE0-3AEA-1069-A2D8-08002B30309D}");
-			DWORD value = 0; // ÒªÉèÖÃµÄÖµ
+			DWORD value = 0; // è¦è®¾ç½®çš„å€¼
 			if (::RegSetValueExW(subKey, L"{20D04FE0-3AEA-1069-A2D8-08002B30309D}", 0, REG_DWORD, (const BYTE*)&value, sizeof(value))) {
 				break;
 			}
@@ -216,37 +216,37 @@ int main() {
 
 	Log::Enable = true;
 
-	system("title ÏµÍ³ÓÅ»¯ÊİÉí");
+	system("title ç³»ç»Ÿä¼˜åŒ–ç˜¦èº«");
 
-	auto a = inputString("CÅÌÊı¾İÒÆ¶¯ÖÁÄÄ¸öÅÌ·û?(A-Z):");
+	auto a = inputString("Cç›˜æ•°æ®ç§»åŠ¨è‡³å“ªä¸ªç›˜ç¬¦?(A-Z):");
 
-	char disk = 'D';//×ªÒÆµ½µÄÅÌ·û
+	char disk = 'D';//è½¬ç§»åˆ°çš„ç›˜ç¬¦
 	if (!a.empty()) {
 		disk = a[0];
 	}
 
 	if (disk == 'C' || disk == 'c') {
-		Log::Info("Äã¸éÕâ¶ù¸éÕâ¶ùÄØ?");
+		Log::Info("ä½ æè¿™å„¿æè¿™å„¿å‘¢?");
 		system("pause");
 		return 0;
 	}
 
-	Log::Info("½«»á°ÑCÅÌ²¿·ÖÊı¾İÒÆ¶¯ÖÁ:[%c]ÅÌ(²»»áÓ°ÏìÔ­ÓĞÊı¾İ)", disk);
+	Log::Info("å°†ä¼šæŠŠCç›˜éƒ¨åˆ†æ•°æ®ç§»åŠ¨è‡³:[%c]ç›˜(ä¸ä¼šå½±å“åŸæœ‰æ•°æ®)", disk);
 	system("pause");
 
-	//´ò¿ªÓÎÏ·µÄÊ±ºò¹Ø±ÕgamebarµÄµ¯´°
+	//æ‰“å¼€æ¸¸æˆçš„æ—¶å€™å…³é—­gamebarçš„å¼¹çª—
 	closeGameBar();
 
-	//¹Ø±ÕÏµÍ³ĞİÃß
+	//å…³é—­ç³»ç»Ÿä¼‘çœ 
 	system("cmd.exe /c powercfg -h off");
 
-	redirect(L"C:\\Users\\{user}\\Documents", L"?:\\Users\\{user}\\Documents", disk);//ÎÄµµÄ¿Â¼
-	redirect(L"C:\\Users\\{user}\\Downloads", L"?:\\Users\\{user}\\Downloads", disk);//ÏÂÔØÄ¿Â¼
-	redirect(L"C:\\Users\\{user}\\Desktop", L"?:\\Users\\{user}\\Desktop", disk);//×ÀÃæÄ¿Â¼
-	redirect(L"C:\\Users\\{user}\\Music", L"?:\\Users\\{user}\\Music", disk);//ÒôÆµÄ¿Â¼
-	redirect(L"C:\\Users\\{user}\\Videos", L"?:\\Users\\{user}\\Videos", disk);//ÊÓÆµÄ¿Â¼
-	redirect(L"C:\\Users\\{user}\\Pictures", L"?:\\Users\\{user}\\Pictures", disk);//ÕÕÆ¬Ä¿Â¼
-	redirect(L"C:\\Users\\{user}\\AppData\\Local\\Temp", L"?:\\Users\\{user}\\AppData\\Local\\Temp", disk);//TempÄ¿Â¼
+	redirect(L"C:\\Users\\{user}\\Documents", L"?:\\Users\\{user}\\Documents", disk);//æ–‡æ¡£ç›®å½•
+	redirect(L"C:\\Users\\{user}\\Downloads", L"?:\\Users\\{user}\\Downloads", disk);//ä¸‹è½½ç›®å½•
+	redirect(L"C:\\Users\\{user}\\Desktop", L"?:\\Users\\{user}\\Desktop", disk);//æ¡Œé¢ç›®å½•
+	redirect(L"C:\\Users\\{user}\\Music", L"?:\\Users\\{user}\\Music", disk);//éŸ³é¢‘ç›®å½•
+	redirect(L"C:\\Users\\{user}\\Videos", L"?:\\Users\\{user}\\Videos", disk);//è§†é¢‘ç›®å½•
+	redirect(L"C:\\Users\\{user}\\Pictures", L"?:\\Users\\{user}\\Pictures", disk);//ç…§ç‰‡ç›®å½•
+	redirect(L"C:\\Users\\{user}\\AppData\\Local\\Temp", L"?:\\Users\\{user}\\AppData\\Local\\Temp", disk);//Tempç›®å½•
 	//system("explorer.exe");
 	system("pause");
 	return 0;
