@@ -42,3 +42,11 @@ target_include_directories(test PRIVATE ${commonInclude})
 target_link_directories(test PRIVATE ${commonLib})
 target_link_libraries(test PRIVATE Common)
 #target_compile_definitions(test PRIVATE WIN32_LEAN_AND_MEAN) #添加一个宏,避免socket冲突
+
+#软件许可注册机
+project(RegisterLicenser)
+file(GLOB src ./RegisterLicenser/*.*)
+add_executable(RegisterLicenser ${src})
+target_include_directories(RegisterLicenser PRIVATE ${commonInclude})
+target_link_directories(RegisterLicenser PRIVATE ${commonLib})
+target_link_libraries(RegisterLicenser PRIVATE Common)

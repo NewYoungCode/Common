@@ -27,7 +27,7 @@ namespace Path {
 	//创建路径
 	extern bool Create(const Text::String& path);
 	//拷贝目录所有文件到目标目录
-	extern bool Copy(const Text::String& srcPath, const Text::String& desPath,  bool overwrite = true);
+	extern bool Copy(const Text::String& srcPath, const Text::String& desPath, bool overwrite = true);
 	//移动目录到新位置
 	extern bool Move(const Text::String& oldname, const Text::String& newname);
 	//删除路径 如果存在子文件夹或者文件 将会递归删除
@@ -68,35 +68,59 @@ namespace Path {
 	extern Text::String GetAppDataPath();
 };
 namespace FileSystem {
-	typedef enum : char {
+	typedef enum {
 		None,
 		File,
 		Directory
 	}FileType;
-	struct FileInfo
+	class FileInfo
 	{
+	private:
+		std::ifstream* ifs = NULL;
+		ULONGLONG StreamPos = 0;
 	public:
-		FileType FileType = FileSystem::FileType::None;
-		Text::String Extension;
-		Text::String FullName;
-		Text::String FileName;
-		ULONGLONG FileSize = 0;
-		bool ReadOnly = false;
+		const FileType FileType = FileSystem::FileType::None;
+		const Text::String Extension;
+		const Text::String FullName;
+		const Text::String FileName;
+		const bool ReadOnly = false;
+
+		const ULONGLONG FileSize = 0;
+		FileInfo() {}
 		FileInfo(const Text::String& fileName) {
 			if (File::Exists(fileName)) {
-				Extension = Path::GetExtension(fileName);
-				FileName = Path::GetFileName(fileName);
-				FullName = fileName;
-				FileType = FileType::File;
-				std::ifstream ifs(fileName.unicode(), std::ios::binary);
-				ifs.seekg(0, std::ios::end);
-				FileSize = ifs.tellg();
+				(Text::String)Extension = Path::GetExtension(fileName);
+				(Text::String)FileName = Path::GetFileName(fileName);
+				(Text::String)FullName = fileName;
+				(FileSystem::FileType)FileType = FileType::File;
+				ifs = new std::ifstream(fileName.unicode(), std::ios::binary);
+				ifs->seekg(0, std::ios::end);
+				(ULONGLONG)FileSize = ifs->tellg();
 			}
 		}
-		FileInfo() {}
+		size_t Read(char* _buf_, size_t _rdCount = 256) {
+			size_t rdbufCount = _rdCount;
+			if (StreamPos + _rdCount >= FileSize) {
+				rdbufCount = FileSize - StreamPos;
+			}
+			if (rdbufCount == 0) {
+				return 0;
+			}
+			if (ifs == NULL) {
+				ifs = new std::ifstream(FullName.unicode(), std::ios::binary);
+			}
+			ifs->seekg(StreamPos);
+			ifs->read(_buf_, rdbufCount);
+			StreamPos += rdbufCount;
+			return rdbufCount;
+		}
 		void Close() {
+			ifs->close();
 		}
 		~FileInfo() {
+			if (ifs) {
+				delete ifs;
+			}
 		}
 	};
 	extern size_t Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern = "*.*", bool loopSubDir = false);

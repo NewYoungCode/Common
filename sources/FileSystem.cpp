@@ -28,24 +28,24 @@ namespace FileSystem {
 		filename.append(Text::String(pNextInfo.cFileName));
 		filename = filename.replace("\\", "/");
 		filename = filename.replace("//", "/");
-		struct FileSystem::FileInfo fileInfo;
+		 FileSystem::FileInfo fileInfo;
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //目录
-			fileInfo.FileType = FileType::Directory;
-			fileInfo.FullName = filename;
-			fileInfo.FileName = filename;
+			(FileSystem::FileType)fileInfo.FileType = FileType::Directory;
+			(Text::String)fileInfo.FullName = filename;
+			(Text::String)fileInfo.FileName = filename;
 			if (loopSubDir) {
 				Find(filename, result, pattern, loopSubDir);
 			}
 		}
 		else if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-			fileInfo.FileType = FileType::File;
-			fileInfo.FileName = pNextInfo.cFileName;
-			fileInfo.FullName = filename;
-			fileInfo.Extension = Path::GetExtension(filename);
-			fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
+			(FileSystem::FileType)fileInfo.FileType = FileType::File;
+			(Text::String)fileInfo.FileName = pNextInfo.cFileName;
+			(Text::String)fileInfo.FullName = filename;
+			(Text::String)fileInfo.Extension = Path::GetExtension(filename);
+			(ULONGLONG)fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
 		}
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-			fileInfo.ReadOnly = true;
+			(bool)fileInfo.ReadOnly = true;
 		}
 		if (fileInfo.FileType != FileType::None) {
 			result.push_back(fileInfo);

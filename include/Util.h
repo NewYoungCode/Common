@@ -14,8 +14,12 @@ namespace Util {
 	std::string MD5FromString(const std::string& string);
 	//base64编码
 	std::string Base64Encode(const char* str, int strLen);
+	//base64编码
+	std::string Base64Encode(const std::string& string);
 	//base64解码
 	std::string  Base64Decode(const char* base64Str, int strLen);
+	//base64解码
+	std::string  Base64Decode(const std::string& string);
 	//url编码
 	std::string UrlEncode(const std::string& str);
 	//url解码

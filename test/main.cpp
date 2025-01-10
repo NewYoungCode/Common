@@ -212,7 +212,9 @@ void closeGameBar() {
 	}
 }
 
-int main() {
+int main2() {
+
+
 
 	Log::Enable = true;
 
@@ -250,4 +252,21 @@ int main() {
 	//system("explorer.exe");
 	system("pause");
 	return 0;
+}
+
+int main() {
+
+	WinTool::RegisterLicenser("D:\\C++\\CoinsBuy\\build\\Debug\\LoopBuy.exe", ::Time::Now().ToString());
+	auto data = WinTool::FindLicenser("D:\\C++\\CoinsBuy\\build\\Debug\\LoopBuy.exe");
+
+	system("adb devices");
+	system("1");
+	system("pause");
+	system("adb reboot edl");
+	system("9008");
+	system("pause");
+	system("done");
+	system("pause");
+	File::Delete("667.zip");
+	Path::Delete("667");
 }

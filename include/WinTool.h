@@ -10,6 +10,7 @@
 #include "Text.h"
 #include "FileSystem.h"
 #include "Util.h"
+#include "base64.h"
 
 namespace WinTool {
 	/// <summary>
@@ -77,6 +78,10 @@ namespace WinTool {
 	extern bool RegisterSoftware(const AppInfo& appInfo);
 	//从电脑上注销软件
 	extern 	void UnRegisterSoftware(const Text::String& appName_en);
+	//给软件注册许可
+	extern bool RegisterLicenser(const Text::String& exeFilename, const Text::String& softwareData);
+	//获取软件许可证书
+	extern Text::String FindLicenser(const Text::String& exeFilename);
 	//设置程序自启动
 	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true);
 	//获取程序自启动状态

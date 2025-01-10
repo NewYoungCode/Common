@@ -426,6 +426,44 @@ namespace WinTool {
 		return true;
 	}
 
+	//软件许可必要
+	const char* licenser = "Y3B1aWQreWFuZ3JlZ2VkaXRcclxu000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
+	const char* licenser2 = "K3lhbmdyZWdlZGl0";
+#define LICENSER_SIZE 256
+	bool RegisterLicenser(const Text::String& exeFilename, const Text::String& softwareData) {
+		bool ok = false;
+		do
+		{
+			std::string key = base64_decode("WTNCMWFXUXJlV0Z1WjNKbFoyVmthWFJjY2x4dQ==");
+			std::string data;
+			File::ReadFile(exeFilename, &data);
+			size_t pos = data.find(key);
+			if (pos != size_t(-1)) {
+				char buf[LICENSER_SIZE]{ 0 };
+				Text::String newHead = WinTool::GetComputerID() + licenser2 + base64_encode(softwareData);
+				::memcpy(buf, newHead.c_str(), newHead.size());
+				std::fstream file(exeFilename.unicode(), std::ios::in | std::ios::out | std::ios::binary);
+				file.seekp(pos, std::ios::beg);
+				file.write(buf, sizeof(buf));
+				file.flush();
+				file.close();
+				ok = file.good();
+			}
+		} while (false);
+		return ok;
+	}
+
+	Text::String FindLicenser(const Text::String& exeFilename) {
+		std::string data;
+		File::ReadFile(exeFilename, &data);
+		std::string key = WinTool::GetComputerID() + licenser2;
+		size_t pos = data.find(key);
+		if (pos != size_t(-1)) {
+			data = data.c_str() + pos + key.size();
+			return base64_decode(data);
+		}
+		return "";
+	}
 
 
 	// 头文件包含

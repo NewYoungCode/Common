@@ -457,6 +457,10 @@ namespace Util {
 		}
 		return base64Str;
 	}
+	std::string Base64Encode(const std::string& string)
+	{
+		return Base64Encode(string.c_str(), string.size());
+	}
 	std::string  Base64Decode(const  char* code, int code_len)
 	{
 		//assert();  //如果它的条件返回错误，则终止程序执行。4的倍数。
@@ -495,6 +499,11 @@ namespace Util {
 			}
 		}
 		return str;
+	}
+
+	std::string Base64Decode(const std::string& string)
+	{
+		return Base64Decode(string.c_str(), string.size());
 	}
 
 	namespace detail {
