@@ -2,9 +2,11 @@
 namespace Log {
 	//是否启用日志
 	bool Enable = false;
+	bool WriteFile = true;
 	void WriteLog(const Text::String& log)
 	{
 		if (!Enable)return;
+		if (!WriteFile)return;
 #ifdef _DEBUG
 		Text::String logPath = Path::StartPath() + "\\" + Path::GetFileNameWithoutExtension(Path::StartFileName()) + "_Log";
 #else

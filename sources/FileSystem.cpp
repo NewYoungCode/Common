@@ -22,26 +22,29 @@ namespace FileSystem {
 	}
 
 	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir = false) {
+		if (directory.empty()) {
+			return;
+		}
 		Text::String filename;
 		filename.append(directory);
 		filename.append("/");
 		filename.append(Text::String(pNextInfo.cFileName));
 		filename = filename.replace("\\", "/");
 		filename = filename.replace("//", "/");
-		 FileSystem::FileInfo fileInfo;
+		FileSystem::FileInfo fileInfo;
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //目录
-			(FileSystem::FileType)fileInfo.FileType = FileType::Directory;
-			(Text::String)fileInfo.FullName = filename;
-			(Text::String)fileInfo.FileName = filename;
+			(FileSystem::FileType&)fileInfo.FileType = FileType::Directory;
+			(Text::String&)fileInfo.FullName = filename;
+			(Text::String&)fileInfo.FileName = filename;
 			if (loopSubDir) {
 				Find(filename, result, pattern, loopSubDir);
 			}
 		}
 		else if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-			(FileSystem::FileType)fileInfo.FileType = FileType::File;
-			(Text::String)fileInfo.FileName = pNextInfo.cFileName;
-			(Text::String)fileInfo.FullName = filename;
-			(Text::String)fileInfo.Extension = Path::GetExtension(filename);
+			(FileSystem::FileType&)fileInfo.FileType = FileType::File;
+			(Text::String&)fileInfo.FileName = pNextInfo.cFileName;
+			(Text::String&)fileInfo.FullName = filename;
+			(Text::String&)fileInfo.Extension = Path::GetExtension(filename);
 			(ULONGLONG)fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
 		}
 		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
@@ -74,7 +77,7 @@ namespace FileSystem {
 };
 namespace File {
 	bool Exists(const Text::String& filename) {
-		DWORD dwAttr = GetFileAttributesW(filename.unicode().c_str());
+		DWORD dwAttr = ::GetFileAttributesW(filename.unicode().c_str());
 		if (dwAttr == DWORD(-1)) {
 			return false;
 		}
@@ -94,7 +97,7 @@ namespace File {
 		if (File::Exists(filename)) {
 			auto code = ::GetLastError();
 			if (code == 5 && FileSystem::__RemoveAttr_OnlyRead_System(filename.unicode())) {
-				return Delete(filename);
+				return ::DeleteFileW(filename.unicode().c_str());
 			}
 			wprintf(L"code %d Delete File ERROR %s\n", code, filename.unicode().c_str());
 			return false;
@@ -203,6 +206,9 @@ namespace Path {
 		for (auto& it : result) {
 			Text::String fileName = it.FullName;
 			fileName = fileName.replace(basePath, "");
+			if (fileName.empty()) {
+				continue;
+			}
 			if (it.FileType == FileSystem::FileType::File) {
 				if (File::Copy(it.FullName, desPath + "/" + fileName, overwrite) == false) {
 					++errCount;

@@ -48,9 +48,9 @@
 #include "Log.h"
 
 //输入字符串
-std::string inputString(const std::string tips) {
+std::string inputString(const Text::String& tips) {
 	std::string input;
-	std::cout << tips;
+	std::cout << tips.ansi();
 	std::cin >> input;
 	return input;
 }
@@ -79,7 +79,7 @@ bool IsDirectoryRedirected(const std::wstring& directory, Text::String& out) {
 	if (hFile == INVALID_HANDLE_VALUE) {
 		auto code = ::GetLastError();
 		Log::Info("code %d 无法打开路径  %s", code, Text::String(directory).c_str());
-		return true; // 如果打开失败，返回 false
+		return true;
 	}
 	WCHAR finalPath[MAX_PATH];
 	DWORD pathLength = GetFinalPathNameByHandleW(hFile, finalPath, MAX_PATH, FILE_NAME_NORMALIZED);
@@ -111,28 +111,45 @@ bool redirect(const Text::String& linkName, const Text::String& target, char dis
 	//查找占用的进程id
 	std::vector<DWORD> pids = getPid(linkName);
 	for (auto& pid : pids) {
-		Log::Info("杀死进程 %d", pid);
+		Log::Info(L"杀死进程 %d", pid);
 		WinTool::CloseProcess(pid);
 	}
 
-	//判断是不是已经重定向过了
-	Text::String out;
-	if (IsDirectoryRedirected(linkName.unicode(), out)) {
-		if (Path::Equal(target, out)) {
+	system("taskkill /f /pid  handle.exe");
+	system("taskkill /f /pid  handle64.exe");
+	system("taskkill /f /pid  handle64a.exe");
+
+	do
+	{
+		//判断是不是已经重定向过了
+		Text::String out;
+		bool ok = IsDirectoryRedirected(linkName.unicode(), out);
+		if (Path::Equal(target, out)) {//已经设置了相同的链接
+			Log::Info(L"成功");
+			Log::Info(linkName + " <<===>> " + target);
 			return true;
 		}
-		else {
-			Log::Info("[已有的重定向不正确,执行删除!]%s->%s", linkName.c_str(), out.c_str());
+		else  if (ok && !out.empty()) {//设置了不同的链接 删除
+			Log::Info(L"[已有的重定向不正确,执行删除!]%s->%s", linkName.c_str(), out.c_str());
 			Path::Delete(linkName);
 		}
-	}
+		else if (ok && out.empty()) {//设置了链接 但是打不开文件报错的情况下
+			break;
+		}
+	} while (false);
 
-	auto ok = Path::Copy(linkName, target);//先拷贝
-	ok = Path::Delete(linkName);//删除
-
-	Text::String cmd = "cmd.exe /c mklink /j " + linkName + " " + target;
+	Path::Copy(linkName, target);//先拷贝
+	Path::Delete(linkName);//删除
+	//Text::String cmd = "cmd.exe /c mklink /j " + linkName + " " + target;
+	Text::String cmd = "cmd.exe /c mklink /j \"" + linkName + "\" \"" + target + "\"";
+	Log::Info(cmd);
 	auto ret = WinTool::ExecuteCmdLine(cmd);
-
+	if (ret.find("<<===>>") != std::string::npos) {
+		Log::Info(L"成功!");
+	}
+	else {
+		Log::Info(L"失败!");
+	}
 	Log::Info("%s", ret.c_str());
 	return ret.empty();
 }
@@ -212,15 +229,12 @@ void closeGameBar() {
 	}
 }
 
-int main2() {
-
-
+int main() {
 
 	Log::Enable = true;
+	system("title System optimization");
 
-	system("title 系统优化瘦身");
-
-	auto a = inputString("C盘数据移动至哪个盘符?(A-Z):");
+	auto a = inputString(L"C盘数据移动至哪个盘符?(A-Z):");
 
 	char disk = 'D';//转移到的盘符
 	if (!a.empty()) {
@@ -228,12 +242,12 @@ int main2() {
 	}
 
 	if (disk == 'C' || disk == 'c') {
-		Log::Info("你搁这儿搁这儿呢?");
+		Log::Info(L"你搁这儿搁这儿呢?");
 		system("pause");
 		return 0;
 	}
 
-	Log::Info("将会把C盘部分数据移动至:[%c]盘(不会影响原有数据)", disk);
+	Log::Info(L"将会把C盘部分数据移动至:[%c]盘(不会影响原有数据)", disk);
 	system("pause");
 
 	//打开游戏的时候关闭gamebar的弹窗
@@ -242,31 +256,25 @@ int main2() {
 	//关闭系统休眠
 	system("cmd.exe /c powercfg -h off");
 
+	for (size_t i = 0; i < 5; i++)
+	{
+		system("taskkill /f /pid msedge.exe");
+		system("taskkill /f /pid msedgewebview.exe");
+		system("taskkill /f /pid msedgewebview1.exe");
+		system("taskkill /f /pid msedgewebview2.exe");
+	}
+
 	redirect(L"C:\\Users\\{user}\\Documents", L"?:\\Users\\{user}\\Documents", disk);//文档目录
 	redirect(L"C:\\Users\\{user}\\Downloads", L"?:\\Users\\{user}\\Downloads", disk);//下载目录
 	redirect(L"C:\\Users\\{user}\\Desktop", L"?:\\Users\\{user}\\Desktop", disk);//桌面目录
 	redirect(L"C:\\Users\\{user}\\Music", L"?:\\Users\\{user}\\Music", disk);//音频目录
 	redirect(L"C:\\Users\\{user}\\Videos", L"?:\\Users\\{user}\\Videos", disk);//视频目录
 	redirect(L"C:\\Users\\{user}\\Pictures", L"?:\\Users\\{user}\\Pictures", disk);//照片目录
+	redirect(L"C:\\Users\\{user}\\Saved Games", L"?:\\Users\\{user}\\Saved Games", disk);//游戏存档
+	redirect(L"C:\\Users\\{user}\\source", L"?:\\Users\\{user}\\source", disk);//source目录
+	//redirect(L"C:\\Users\\{user}\\AppData", L"?:\\Users\\{user}\\AppData", disk);//AppData目录
 	redirect(L"C:\\Users\\{user}\\AppData\\Local\\Temp", L"?:\\Users\\{user}\\AppData\\Local\\Temp", disk);//Temp目录
 	//system("explorer.exe");
 	system("pause");
 	return 0;
-}
-
-int main() {
-
-	WinTool::RegisterLicenser("D:\\C++\\CoinsBuy\\build\\Debug\\LoopBuy.exe", ::Time::Now().ToString());
-	auto data = WinTool::FindLicenser("D:\\C++\\CoinsBuy\\build\\Debug\\LoopBuy.exe");
-
-	system("adb devices");
-	system("1");
-	system("pause");
-	system("adb reboot edl");
-	system("9008");
-	system("pause");
-	system("done");
-	system("pause");
-	File::Delete("667.zip");
-	Path::Delete("667");
 }

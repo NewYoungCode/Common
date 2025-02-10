@@ -6,6 +6,7 @@
 namespace Log {
 	//是否启用日志
 	extern bool Enable;
+	extern bool WriteFile;
 	extern void WriteLog(const Text::String& log);
 
 	template<typename ...T>
