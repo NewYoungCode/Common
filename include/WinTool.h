@@ -172,4 +172,9 @@ namespace WinTool {
 	/// </summary>
 	/// <returns></returns>
 	extern RouterInfo GetRouterInfo();
+	/// <summary>
+	/// 获取电脑的com端口名称
+	/// </summary>
+	/// <returns></returns>
+	extern std::vector<std::string> GetComPorts();
 };

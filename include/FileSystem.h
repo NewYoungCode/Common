@@ -92,10 +92,10 @@ namespace FileSystem {
 				(Text::String)Extension = Path::GetExtension(fileName);
 				(Text::String)FileName = Path::GetFileName(fileName);
 				(Text::String)FullName = fileName;
-				(FileSystem::FileType)FileType = FileType::File;
+				(FileSystem::FileType&)FileType = FileType::File;
 				ifs = new std::ifstream(fileName.unicode(), std::ios::binary);
 				ifs->seekg(0, std::ios::end);
-				(ULONGLONG)FileSize = ifs->tellg();
+				(ULONGLONG&)FileSize = ifs->tellg();
 			}
 		}
 		size_t Read(char* _buf_, size_t _rdCount = 256) {

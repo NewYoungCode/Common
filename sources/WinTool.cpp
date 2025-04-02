@@ -817,4 +817,45 @@ namespace WinTool {
 		free(pForwardTable);
 		return info;
 	}
+
+
+#include <setupapi.h>
+#include <devguid.h>
+#pragma comment(lib, "setupapi.lib")  // 需要链接 setupapi.lib
+	std::vector<std::string> GetComPorts() {
+		std::vector<std::string> comPorts;
+		HDEVINFO hDevInfo;
+		SP_DEVINFO_DATA DeviceInfoData;
+		DWORD i;
+
+		// 获取所有的串口设备
+		hDevInfo = SetupDiGetClassDevs(&GUID_DEVCLASS_PORTS, 0, 0, DIGCF_PRESENT);
+		if (hDevInfo == INVALID_HANDLE_VALUE) {
+			return comPorts;
+		}
+
+		DeviceInfoData.cbSize = sizeof(SP_DEVINFO_DATA);
+
+		for (i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, &DeviceInfoData); i++) {
+			char szFriendlyName[256];
+			DWORD DataT;
+			DWORD buffersize = sizeof(szFriendlyName);
+
+			// 获取设备的友好名称（Friendly Name），如 "USB-SERIAL CH340 (COM3)"
+			if (SetupDiGetDeviceRegistryPropertyA(hDevInfo, &DeviceInfoData, SPDRP_FRIENDLYNAME,
+				&DataT, (PBYTE)szFriendlyName, buffersize, NULL)) {
+				std::string name(szFriendlyName);
+				size_t pos = name.find("(COM");
+				if (pos != std::string::npos) {
+					size_t end = name.find(")", pos);
+					if (end != std::string::npos) {
+						comPorts.push_back(name);
+					}
+				}
+			}
+		}
+
+		SetupDiDestroyDeviceInfoList(hDevInfo);
+		return comPorts;
+	}
 }
