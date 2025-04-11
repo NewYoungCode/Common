@@ -614,7 +614,7 @@ namespace WinTool {
 				break;
 			}
 			//4.等待读取返回的数据
-			::WaitForSingleObject(pi.hProcess, 1000 * 60);//等一分钟
+			::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
 			size_t buffSize = ::GetFileSize(hReadPipe, NULL);
 			szBuff = new char[buffSize + 1] { 0 };
 			unsigned long size = 0;
