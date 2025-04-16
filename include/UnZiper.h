@@ -35,13 +35,11 @@ public:
 	int GetCount();
 	virtual ~UnZiper();
 public:
-	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
-		Path::Create(outDir);
-		UnZiper zip(zipFileName.unicode(), password);
-		for (int i = 0; i < zip.GetCount(); i++)
+	static void UnZip(UnZiper* zip, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
+		for (int i = 0; i < zip->GetCount(); i++)
 		{
 			ZipItem ze;
-			zip.Find(i, &ze);
+			zip->Find(i, &ze);
 			Text::String itemName = outDir + "/" + Text::String(ze.name);
 			if (ze.isDir()) {
 				Path::Create(itemName);
@@ -49,7 +47,7 @@ public:
 			else {
 				File::Delete(itemName);
 				void* data = NULL;
-				zip.UnZipItem(ze, &data);
+				zip->UnZipItem(ze, &data);
 				std::ofstream ofs(itemName.unicode(), std::ios::binary);
 				ofs.write((char*)data, ze.unc_size);
 				ofs.flush();
@@ -59,10 +57,16 @@ public:
 				}
 			}
 			if (callback) {
-				if (callback(itemName, i, zip.GetCount())) {
+				if (callback(itemName, i, zip->GetCount())) {
 					break;
 				}
 			}
 		}
+	}
+
+	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
+		Path::Create(outDir);
+		UnZiper zip(zipFileName.unicode(), password);
+		UnZip(&zip, outDir, password, callback);
 	}
 };

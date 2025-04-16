@@ -130,10 +130,11 @@ void find(const std::wstring& exeName) {
 
 int main() {
 
-	std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img_", std::ios::in | std::ios::out | std::ios::binary);
+	std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
 	file.seekp(0xDCC1BFC0);
 	std::vector<char> zeroData(64, 0);
 	file.write(zeroData.data(), 64);
+	auto b=file.good();
 	file.close();
 	return 0;
 

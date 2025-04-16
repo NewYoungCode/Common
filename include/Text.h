@@ -71,6 +71,7 @@ namespace Text {
 	//
 	UI_EXPORT String ToString(double number, int keepBitSize);
 };
+using TString = ::Text::String;
 //----------------------------------------------------------------
 #endif // !__EZUI__STRING
 namespace EzUI {
