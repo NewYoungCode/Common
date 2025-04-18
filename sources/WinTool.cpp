@@ -584,7 +584,7 @@ namespace WinTool {
 		delete[] memBytes;
 	}
 
-	Text::String ExecuteCmdLine(const Text::String& cmdStr) {
+	Text::String ExecuteCMD(const Text::String& cmdStr) {
 		HANDLE hReadPipe = NULL; //读取管道
 		HANDLE hWritePipe = NULL; //写入管道	
 		PROCESS_INFORMATION pi{ 0 }; //进程信息	
@@ -644,7 +644,7 @@ namespace WinTool {
 		return outResult;
 	}
 	Text::String GetBiosUUID() {
-		Text::String resultStr = ExecuteCmdLine("wmic csproduct get UUID");
+		Text::String resultStr = ExecuteCMD("wmic csproduct get UUID");
 		resultStr = resultStr.replace("UUID", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
@@ -652,7 +652,7 @@ namespace WinTool {
 		return resultStr;
 	}
 	Text::String GetCPUSerialNumber() {
-		Text::String resultStr = ExecuteCmdLine("wmic cpu get ProcessorId");
+		Text::String resultStr = ExecuteCMD("wmic cpu get ProcessorId");
 		resultStr = resultStr.replace("ProcessorId", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
@@ -660,7 +660,7 @@ namespace WinTool {
 		return resultStr;
 	}
 	Text::String GetDiskSerialNumber() {
-		Text::String resultStr = ExecuteCmdLine("wmic diskdrive get SerialNumber");
+		Text::String resultStr = ExecuteCMD("wmic diskdrive get SerialNumber");
 		resultStr = resultStr.replace("SerialNumber", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
@@ -822,8 +822,8 @@ namespace WinTool {
 #include <setupapi.h>
 #include <devguid.h>
 #pragma comment(lib, "setupapi.lib")  // 需要链接 setupapi.lib
-	std::vector<std::string> GetComPorts() {
-		std::vector<std::string> comPorts;
+	std::vector<Text::String> GetComPorts() {
+		std::vector<Text::String> comPorts;
 		HDEVINFO hDevInfo;
 		SP_DEVINFO_DATA DeviceInfoData;
 		DWORD i;
@@ -858,4 +858,99 @@ namespace WinTool {
 		SetupDiDestroyDeviceInfoList(hDevInfo);
 		return comPorts;
 	}
+
+#include <newdev.h>
+#pragma comment(lib, "newdev.lib")  // 链接 newdev 库
+	bool InstallDriver(const Text::String& infPath, bool* needReboot) {
+		// 指向你的驱动 INF 文件路径
+		BOOL rebootRequired = FALSE;
+		// 调用安装函数
+		if (DiInstallDriver(NULL, infPath.unicode().c_str(), DIIRFLAG_FORCE_INF, &rebootRequired)) {
+			std::wcout << L"驱动安装成功。" << std::endl;
+			if (rebootRequired) {
+				if (needReboot) {
+					*needReboot = true;
+				}
+				std::wcout << L"需要重启系统以完成安装。" << std::endl;
+			}
+			return true;
+		}
+		else {
+			std::wcout << L"驱动安装失败。错误码：" << GetLastError() << std::endl;
+		}
+		return false;
+	}
+
+	std::map<Text::String, Text::String> GetApps() {
+		std::map<Text::String, Text::String> list;
+		std::map<HKEY, REGSAM> regs = {
+			{HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY},
+			{HKEY_LOCAL_MACHINE, KEY_WOW64_32KEY},
+			{HKEY_CURRENT_USER, KEY_WOW64_64KEY},
+			{HKEY_CURRENT_USER, KEY_WOW64_32KEY}
+		};
+
+		const wchar_t* subkey = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+
+		for (const auto& it : regs) {
+			HKEY hRootKey = it.first;
+			REGSAM viewFlag = it.second;
+
+			HKEY hKey;
+			if (RegOpenKeyExW(hRootKey, subkey, 0, KEY_READ | viewFlag, &hKey) != ERROR_SUCCESS) {
+				continue; // 不返回，跳过该分支
+			}
+
+			DWORD index = 0;
+			wchar_t keyName[256];
+			DWORD keyNameSize;
+			FILETIME ftLastWriteTime;
+
+			while (true) {
+				keyNameSize = sizeof(keyName) / sizeof(wchar_t);
+				LONG result = RegEnumKeyExW(hKey, index, keyName, &keyNameSize, NULL, NULL, NULL, &ftLastWriteTime);
+
+				if (result == ERROR_NO_MORE_ITEMS)
+					break;
+
+				if (result == ERROR_SUCCESS) {
+					HKEY hSubKey;
+					if (RegOpenKeyExW(hKey, keyName, 0, KEY_READ | viewFlag, &hSubKey) == ERROR_SUCCESS) {
+						wchar_t displayName[512] = {};
+						wchar_t installLocation[512] = {};
+						DWORD sizeName = sizeof(displayName);
+						DWORD sizeLoc = sizeof(installLocation);
+						DWORD type = 0;
+
+						if (RegQueryValueExW(hSubKey, L"DisplayName", NULL, &type, (LPBYTE)displayName, &sizeName) == ERROR_SUCCESS && type == REG_SZ) {
+							std::wstring name = displayName;
+							std::wstring location = L"";
+
+							if (!name.empty()) {
+								if (RegQueryValueExW(hSubKey, L"InstallLocation", NULL, &type, (LPBYTE)installLocation, &sizeLoc) == ERROR_SUCCESS && type == REG_SZ) {
+									location = installLocation;
+								}
+								// 如果同名软件已存在，可在名称后面加上 "(2)"、"(3)" 等做区分（可选）
+								std::wstring uniqueName = name;
+								int count = 2;
+								while (list.find(uniqueName) != list.end()) {
+									uniqueName = name + L" (" + std::to_wstring(count++) + L")";
+								}
+
+								list[uniqueName] = location;
+							}
+						}
+						RegCloseKey(hSubKey);
+					}
+				}
+
+				++index;
+			}
+
+			RegCloseKey(hKey);
+		}
+
+		return list;
+	}
+
 }

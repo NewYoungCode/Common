@@ -4,6 +4,21 @@
 #include <functional>
 #include <fstream>
 #include "Text.h"
+
+namespace FileSystem {
+	extern class FileInfo;
+	enum FileType :int
+	{
+		File = 2,
+		Directory = 4
+	};
+	//重载枚举的 | 运算符
+	inline FileType operator|(FileType left, FileType right)
+	{
+		return static_cast<FileType>(static_cast<int>(left) | static_cast<int>(right));
+	}
+};
+
 namespace File {
 	typedef std::string FileStream;
 	//创建文件
@@ -22,9 +37,10 @@ namespace File {
 	extern void WriteFile(const char* fileStream, size_t count, const Text::String& filename);
 	//拷贝文件
 	extern bool Copy(const  Text::String& filename, const  Text::String& des_filename, bool overwrite = true);
-}
-namespace Path {
-	//创建路径
+};
+
+namespace Directory {
+	//创建目录
 	extern bool Create(const Text::String& path);
 	//拷贝目录所有文件到目标目录
 	extern bool Copy(const Text::String& srcPath, const Text::String& desPath, bool overwrite = true);
@@ -32,10 +48,15 @@ namespace Path {
 	extern bool Move(const Text::String& oldname, const Text::String& newname);
 	//删除路径 如果存在子文件夹或者文件 将会递归删除
 	extern bool Delete(const Text::String& directoryName);
-	//通配符搜索文件
-	extern std::vector<Text::String> SearchFiles(const Text::String& path, const Text::String& pattern);
+	//通配符查找文件夹/文件
+	extern size_t Find(const Text::String& path, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern = "*.*", bool loopSubDir = false, FileSystem::FileType fileType = FileSystem::FileType::Directory | FileSystem::FileType::File);
 	//检查路径是否存在
 	extern bool Exists(const Text::String& path);
+};
+
+namespace Path {
+	//格式化路径为统一反斜杠
+	extern Text::String Format(const Text::String& path);
 	//判断路径是不是相同
 	extern bool Equal(const Text::String& path1, const Text::String& path2);
 	//获取文件名称(文件名称)
@@ -68,37 +89,32 @@ namespace Path {
 	extern Text::String GetAppDataPath();
 };
 namespace FileSystem {
-	typedef enum {
-		None,
-		File,
-		Directory
-	}FileType;
 	class FileInfo
 	{
 	private:
 		std::ifstream* ifs = NULL;
 		ULONGLONG StreamPos = 0;
 	public:
-		const FileType FileType = FileSystem::FileType::None;
-		const Text::String Extension;
-		const Text::String FullName;
+		DWORD dwFileAttributes;
 		const Text::String FileName;
-		const bool ReadOnly = false;
-
+		bool IsFile() const {
+			return !(dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+		}
+		bool IsReadOnly() const {
+			return dwFileAttributes & FILE_ATTRIBUTE_READONLY;
+		}
 		const ULONGLONG FileSize = 0;
-		FileInfo() {}
-		FileInfo(const Text::String& fileName) {
+		FileInfo()  {}
+		FileInfo(const Text::String& fileName)  {
 			if (File::Exists(fileName)) {
-				(Text::String)Extension = Path::GetExtension(fileName);
-				(Text::String)FileName = Path::GetFileName(fileName);
-				(Text::String)FullName = fileName;
-				(FileSystem::FileType&)FileType = FileType::File;
+				(Text::String)FileName = fileName;
+				//获取大小
 				ifs = new std::ifstream(fileName.unicode(), std::ios::binary);
 				ifs->seekg(0, std::ios::end);
 				(ULONGLONG&)FileSize = ifs->tellg();
 			}
 		}
-		size_t Read(char* _buf_, size_t _rdCount = 256) {
+		size_t Read(char* _buf_, size_t _rdCount = 255) {
 			size_t rdbufCount = _rdCount;
 			if (StreamPos + _rdCount >= FileSize) {
 				rdbufCount = FileSize - StreamPos;
@@ -107,7 +123,7 @@ namespace FileSystem {
 				return 0;
 			}
 			if (ifs == NULL) {
-				ifs = new std::ifstream(FullName.unicode(), std::ios::binary);
+				ifs = new std::ifstream(FileName.unicode(), std::ios::binary);
 			}
 			ifs->seekg(StreamPos);
 			ifs->read(_buf_, rdbufCount);
@@ -123,5 +139,4 @@ namespace FileSystem {
 			}
 		}
 	};
-	extern size_t Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern = "*.*", bool loopSubDir = false);
 }

@@ -3,7 +3,6 @@
 #pragma comment(lib, "Shlwapi.lib")
 //定义....................................................................................................................
 namespace FileSystem {
-
 	//移除只读属性和系统属性
 	bool __RemoveAttr_OnlyRead_System(const std::wstring& _path) {
 		auto wPath = _path.c_str();
@@ -21,40 +20,34 @@ namespace FileSystem {
 		return false;
 	}
 
-	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir = false) {
+	extern size_t  Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType);
+	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
 		if (directory.empty()) {
 			return;
 		}
-		Text::String filename;
-		filename.append(directory);
-		filename.append("/");
-		filename.append(Text::String(pNextInfo.cFileName));
-		filename = filename.replace("\\", "/");
-		filename = filename.replace("//", "/");
+		Text::String filename = directory + "/" + Text::String(pNextInfo.cFileName);
+		filename = Path::Format(filename);
+
 		FileSystem::FileInfo fileInfo;
-		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) { //目录
-			(FileSystem::FileType&)fileInfo.FileType = FileType::Directory;
-			(Text::String&)fileInfo.FullName = filename;
-			(Text::String&)fileInfo.FileName = filename;
-			if (loopSubDir) {
-				Find(filename, result, pattern, loopSubDir);
+		fileInfo.dwFileAttributes = pNextInfo.dwFileAttributes;
+		(Text::String&)fileInfo.FileName = filename;
+
+		if (fileInfo.IsFile()) {
+			(ULONGLONG&)fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
+			if ((fileType & FileType::File) == FileType::File) {
+				result.push_back(fileInfo);
 			}
 		}
-		else if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) {
-			(FileSystem::FileType&)fileInfo.FileType = FileType::File;
-			(Text::String&)fileInfo.FileName = pNextInfo.cFileName;
-			(Text::String&)fileInfo.FullName = filename;
-			(Text::String&)fileInfo.Extension = Path::GetExtension(filename);
-			(ULONGLONG)fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
-		}
-		if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_READONLY) {
-			(bool)fileInfo.ReadOnly = true;
-		}
-		if (fileInfo.FileType != FileType::None) {
-			result.push_back(fileInfo);
+		else {
+			if ((fileType & FileType::Directory) == FileType::Directory) {
+				result.push_back(fileInfo);
+			}
+			if (loopSubDir) {
+				Find(filename, result, pattern, loopSubDir, fileType);
+			}
 		}
 	}
-	size_t  Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir) {
+	size_t  Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
 		HANDLE hFile = INVALID_HANDLE_VALUE;
 		WIN32_FIND_DATAW pNextInfo;
 		hFile = FindFirstFileW(Text::String(directory + "/" + pattern).unicode().c_str(), &pNextInfo);
@@ -63,12 +56,12 @@ namespace FileSystem {
 			return 0;
 		}
 		if (pNextInfo.cFileName[0] != '.') {
-			ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir);
+			ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir, fileType);
 		}
 		while (FindNextFileW(hFile, &pNextInfo))
 		{
 			if (pNextInfo.cFileName[0] != '.') {
-				ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir);
+				ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir, fileType);
 			}
 		}
 		FindClose(hFile);//避免内存泄漏
@@ -159,10 +152,11 @@ namespace File {
 		return ret;
 	}
 };
-namespace Path {
+
+namespace Directory {
 	bool Create(const Text::String& path) {
 		::CreateDirectoryW(path.unicode().c_str(), NULL);
-		if (Path::Exists(path)) {
+		if (Directory::Exists(path)) {
 			return true;
 		}
 		//创建多级目录
@@ -180,7 +174,7 @@ namespace Path {
 						continue;
 					}
 					root += arr[i] + "/";
-					if (!Path::Exists(root)) {
+					if (!Directory::Exists(root)) {
 						if (::CreateDirectoryW(root.unicode().c_str(), NULL) == FALSE) {
 							return false;
 						}
@@ -188,7 +182,7 @@ namespace Path {
 				}
 			}
 		}
-		return Path::Exists(path);
+		return Directory::Exists(path);
 	}
 	bool Copy(const Text::String& srcPath, const Text::String& desPath, bool overwrite)
 	{
@@ -196,26 +190,26 @@ namespace Path {
 		basePath = basePath.replace("\\", "/");
 		basePath = basePath.replace("//", "/");
 
-		if (Path::Create(desPath) == false) {
+		if (Directory::Create(desPath) == false) {
 			return false;
 		}
 
 		std::vector<FileSystem::FileInfo>result;
-		FileSystem::Find(srcPath, result);
+		Directory::Find(srcPath, result);
 		size_t errCount = 0;
 		for (auto& it : result) {
-			Text::String fileName = it.FullName;
+			Text::String fileName = it.FileName;
 			fileName = fileName.replace(basePath, "");
 			if (fileName.empty()) {
 				continue;
 			}
-			if (it.FileType == FileSystem::FileType::File) {
-				if (File::Copy(it.FullName, desPath + "/" + fileName, overwrite) == false) {
+			if (it.IsFile()) {
+				if (File::Copy(it.FileName, desPath + "/" + fileName, overwrite) == false) {
 					++errCount;
 				}
 			}
-			if (it.FileType == FileSystem::FileType::Directory) {
-				if (Path::Copy(srcPath + "/" + fileName, desPath + "/" + fileName, overwrite) == false) {
+			else {
+				if (Directory::Copy(srcPath + "/" + fileName, desPath + "/" + fileName, overwrite) == false) {
 					++errCount;
 				}
 			}
@@ -224,27 +218,27 @@ namespace Path {
 	}
 	bool Move(const Text::String& oldname, const Text::String& newname)
 	{
-		if (!Path::Exists(newname)) {
+		if (!Directory::Exists(newname)) {
 			wprintf(L"Move Faild !\n", oldname.unicode().c_str());
 			return false;
 		}
 		::MoveFileExW(oldname.unicode().c_str(), newname.unicode().c_str(), MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED);
-		if (Path::Exists(oldname)) {
+		if (Directory::Exists(oldname)) {
 			return false;
 		}
 		return true;
 	}
 	bool Delete(const Text::String& directoryName) {
 		std::vector<FileSystem::FileInfo>result;
-		FileSystem::Find(directoryName, result);
+		Directory::Find(directoryName, result);
 		for (auto& it : result) {
-			if (it.FileType == FileSystem::FileType::File) {
-				if (!File::Delete(it.FullName)) {
+			if (it.IsFile()) {
+				if (!File::Delete(it.FileName)) {
 					return false;
 				}
 			}
-			else if (it.FileType == FileSystem::FileType::Directory) {
-				if (!Path::Delete(it.FullName)) {
+			else {
+				if (!Directory::Delete(it.FileName)) {
 					return false;
 				}
 			}
@@ -257,51 +251,11 @@ namespace Path {
 			wprintf(L"code:%d RemoveDirectory  ERROR %s \n", code, directoryName.unicode().c_str());
 			return false;
 		}
-		return !Path::Exists(directoryName);
+		return !Directory::Exists(directoryName);
 	}
-	std::vector<Text::String> SearchFiles(const Text::String& path, const Text::String& pattern)
+	size_t Find(const Text::String& path, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileSystem::FileType fileType)
 	{
-		std::vector<Text::String> files;
-		HANDLE hFile = INVALID_HANDLE_VALUE;
-		WIN32_FIND_DATAW pNextInfo;
-		Text::String dir;
-		dir.append(path);
-		dir.append("\\");
-		dir.append(pattern);
-		hFile = FindFirstFileW(dir.unicode().c_str(), &pNextInfo);
-		if (INVALID_HANDLE_VALUE == hFile)
-		{
-			return files;
-		}
-		WCHAR infPath[MAX_PATH] = { 0 };
-		if (pNextInfo.cFileName[0] != '.')
-		{
-			Text::String filename;
-			filename.append(path);
-			filename.append("\\");
-			filename.append(Text::String(pNextInfo.cFileName));
-			filename = filename.replace("\\", "/");
-			filename = filename.replace("//", "/");
-			files.push_back(filename);
-		}
-		while (FindNextFileW(hFile, &pNextInfo))
-		{
-			if (pNextInfo.cFileName[0] == '.')
-			{
-				continue;
-			}
-			if (pNextInfo.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE) { //如果是文件才要
-				Text::String filename;
-				filename.append(path);
-				filename.append("\\");
-				filename.append(Text::String(pNextInfo.cFileName));
-				filename = filename.replace("\\", "/");
-				filename = filename.replace("//", "/");
-				files.push_back(filename);
-			}
-		}
-		FindClose(hFile);//避免内存泄漏
-		return files;
+		return FileSystem::Find(path, result, pattern, loopSubDir, fileType);
 	}
 	bool Exists(const Text::String& path) {
 		DWORD dwAttr = GetFileAttributesW(path.unicode().c_str());
@@ -314,7 +268,8 @@ namespace Path {
 		}
 		return false;
 	}
-
+};
+namespace Path {
 	Text::String GetFileNameWithoutExtension(const Text::String& _filename) {
 		Text::String str = _filename;
 		Text::String& newStr = str;
@@ -357,7 +312,7 @@ namespace Path {
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp", user);
-		Path::Create(temPath);
+		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
 	Text::String GetAppTempPath()
@@ -368,7 +323,7 @@ namespace Path {
 		WCHAR temPath[256]{ 0 };
 		auto appName = Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode();
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.c_str());
-		Path::Create(temPath);
+		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
 	Text::String GetAppDataPath()
@@ -378,10 +333,15 @@ namespace Path {
 		::GetUserNameW(user, &len);
 		WCHAR localPath[256]{ 0 };
 		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
-		Path::Create(localPath);
+		Directory::Create(localPath);
 		return Text::String(localPath);
 	}
-
+	Text::String Format(const Text::String& path)
+	{
+		Text::String newPath = path.replace("\\", "/", true);
+		newPath = newPath.replace("//", "/", true);
+		return newPath;
+	}
 	bool Equal(const Text::String& path1, const Text::String& path2)
 	{
 		WCHAR canonicalPath1[MAX_PATH], canonicalPath2[MAX_PATH];

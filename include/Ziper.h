@@ -20,17 +20,16 @@ public:
 		std::vector<FileSystem::FileInfo> result;
 		Ziper zip(outFileName.unicode(), pwd);
 		Text::String dirName = _dirName + "/";
-		dirName = dirName.replace("\\", "/");
-		dirName = dirName.replace("//", "/");
-		FileSystem::Find(dirName, result, "*.*", true);
+		dirName = Path::Format(dirName);
+		Directory::Find(dirName, result, "*.*", true);
 		for (int i = 0; i < result.size(); i++)
 		{
-			Text::String ItemNmae = result[i].FullName.replace(dirName, "");
-			if (result[i].FileType == FileSystem::Directory) {
-				zip.AddFolder(ItemNmae.unicode());
+			Text::String ItemNmae = result[i].FileName.replace(dirName, "");
+			if (result[i].IsFile()) {
+				zip.AddFile(ItemNmae.unicode(), result[i].FileName.unicode());
 			}
 			else {
-				zip.AddFile(ItemNmae.unicode(), result[i].FullName.unicode());
+				zip.AddFolder(ItemNmae.unicode());
 			}
 			if (callback) {
 				if (callback(ItemNmae, i, result.size())) {

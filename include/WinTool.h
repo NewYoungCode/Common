@@ -6,6 +6,7 @@
 #include <ShlGuid.h>
 #include <psapi.h>
 #include <process.h>
+#include <map>
 
 #include "Text.h"
 #include "FileSystem.h"
@@ -125,7 +126,7 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
-	extern Text::String ExecuteCmdLine(const Text::String& cmdStr);
+	extern Text::String ExecuteCMD(const Text::String& cmdStr);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>
@@ -176,5 +177,17 @@ namespace WinTool {
 	/// 获取电脑的com端口名称
 	/// </summary>
 	/// <returns></returns>
-	extern std::vector<std::string> GetComPorts();
+	extern std::vector<Text::String> GetComPorts();
+	/// <summary>
+	/// 安装带有.inf文件的驱动
+	/// </summary>
+	/// <param name="infPath">.inf文件路径</param>
+	/// <param name="needReboot">是否需要重启</param>
+	/// <returns></returns>
+	extern bool InstallDriver(const Text::String& infPath, bool* needReboot = NULL);
+	/// <summary>
+	/// 获取已安装的应用
+	/// </summary>
+	/// <returns>返回软件名称,安装路径</returns>
+	extern std::map<Text::String, Text::String> GetApps();
 };

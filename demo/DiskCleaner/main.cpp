@@ -16,7 +16,7 @@ std::string inputString(const Text::String& tips) {
 // 获取占用文件的进程PID
 std::vector<DWORD> getPid(const Text::String& filePath) {
 	std::vector<DWORD> pidList;
-	Text::String str = WinTool::ExecuteCmdLine("handle.exe " + filePath);
+	Text::String str = WinTool::ExecuteCMD("handle.exe " + filePath);
 	auto lines = str.split("\n");
 	for (auto& it : lines) {
 		auto line = it;
@@ -89,19 +89,19 @@ bool redirect(const Text::String& linkName, const Text::String& target, char dis
 		}
 		else  if (ok && !out.empty()) {//设置了不同的链接 删除
 			Log::Info(L"[已有的重定向不正确,执行删除!]%s->%s", linkName.c_str(), out.c_str());
-			Path::Delete(linkName);
+			Directory::Delete(linkName);
 		}
 		else if (ok && out.empty()) {//设置了链接 但是打不开文件报错的情况下
 			break;
 		}
 	} while (false);
 
-	Path::Copy(linkName, target);//先拷贝
-	Path::Delete(linkName);//删除
+	Directory::Copy(linkName, target);//先拷贝
+	Directory::Delete(linkName);//删除
 	//Text::String cmd = "cmd.exe /c mklink /j " + linkName + " " + target;
 	Text::String cmd = "cmd.exe /c mklink /j \"" + linkName + "\" \"" + target + "\"";
 	Log::Info(cmd);
-	auto ret = WinTool::ExecuteCmdLine(cmd);
+	auto ret = WinTool::ExecuteCMD(cmd);
 	if (ret.find("<<===>>") != std::string::npos) {
 		Log::Info(L"成功!");
 	}

@@ -42,7 +42,7 @@ public:
 			zip->Find(i, &ze);
 			Text::String itemName = outDir + "/" + Text::String(ze.name);
 			if (ze.isDir()) {
-				Path::Create(itemName);
+				Directory::Create(itemName);
 			}
 			else {
 				File::Delete(itemName);
@@ -65,7 +65,7 @@ public:
 	}
 
 	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
-		Path::Create(outDir);
+		Directory::Create(outDir);
 		UnZiper zip(zipFileName.unicode(), password);
 		UnZip(&zip, outDir, password, callback);
 	}
