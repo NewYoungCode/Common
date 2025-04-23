@@ -44,8 +44,8 @@ namespace WinTool {
 	{
 		auto cpuId = GetCPUSerialNumber();
 		auto biosId = GetBiosUUID();
-		auto mac = GetMacAddress();
-		Text::String u8Str = biosId + "_" + cpuId + "_" + mac;
+		//auto mac = GetMacAddress();
+		Text::String u8Str = biosId + "_" + cpuId;
 		u8Str = Util::MD5FromString(u8Str);
 		return u8Str;
 	}
@@ -157,12 +157,12 @@ namespace WinTool {
 	}
 	bool CloseProcess(DWORD processId)
 	{
-		HANDLE bExitCode = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE
+		HANDLE handle = ::OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE
 			| PROCESS_ALL_ACCESS, FALSE, processId);
-		if (bExitCode)
+		if (handle)
 		{
-			BOOL bFlag = ::TerminateProcess(bExitCode, 0);
-			CloseHandle(bExitCode);
+			BOOL bFlag = ::TerminateProcess(handle, 0);
+			CloseHandle(handle);
 			return true;
 		}
 		return false;
@@ -584,7 +584,7 @@ namespace WinTool {
 		delete[] memBytes;
 	}
 
-	Text::String ExecuteCMD(const Text::String& cmdStr) {
+	Text::String ExecuteCMD(const Text::String& cmdStr, DWORD* outPid, const std::function<void(char*, int)>& ioCallback) {
 		HANDLE hReadPipe = NULL; //读取管道
 		HANDLE hWritePipe = NULL; //写入管道	
 		PROCESS_INFORMATION pi{ 0 }; //进程信息	
@@ -613,13 +613,42 @@ namespace WinTool {
 			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.unicode().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				break;
 			}
-			//4.等待读取返回的数据
-			::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
-			size_t buffSize = ::GetFileSize(hReadPipe, NULL);
-			szBuff = new char[buffSize + 1] { 0 };
-			unsigned long size = 0;
-			if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
-				break;
+			if (outPid) {
+				*outPid = pi.dwProcessId;
+			}
+
+			if (ioCallback) {
+				// --- 实时读取方式 ---
+				char buffer[4096];
+				DWORD bytesRead = 0;
+				while (true) {
+					DWORD available = 0;
+					BOOL ok = ::PeekNamedPipe(hReadPipe, NULL, 0, NULL, &available, NULL);
+					if (!ok || available == 0) {
+						DWORD waitCode = ::WaitForSingleObject(pi.hProcess, 30);
+						if (waitCode == WAIT_OBJECT_0) break;
+						Sleep(10);
+						continue;
+					}
+					if (::ReadFile(hReadPipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+						ioCallback(buffer, bytesRead);
+					}
+					else {
+						break;
+					}
+				}
+			}
+			else {
+				//4.等待读取返回的数据
+				::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
+				size_t buffSize = ::GetFileSize(hReadPipe, NULL);//获取输出数据
+				if (buffSize != 0) {
+					szBuff = new char[buffSize + 1] { 0 };
+					unsigned long size = 0;
+					if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
+						break;
+					}
+				}
 			}
 		} while (false);
 		//清理工作

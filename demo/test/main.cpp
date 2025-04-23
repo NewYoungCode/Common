@@ -130,31 +130,27 @@ void find(const std::wstring& exeName) {
 
 int main() {
 
-	std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
+	//auto ret = WinTool::ExecuteCMD("fastboot devices");
+	/*std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
 	file.seekp(0xDCC1BFC0);
 	std::vector<char> zeroData(64, 0);
 	file.write(zeroData.data(), 64);
 	auto b=file.good();
 	file.close();
 	return 0;
-
-
+*/
 
 	if (!initWMI()) {
 		std::cerr << "WMI 初始化失败。" << std::endl;
 		return 1;
 	}
-
 	for (;;) {
 		find(L"fh_loader.exe");
 		Sleep(0); // 稍微调大点避免频繁刷WMI
 	}
-
-	
 	if (pSvc) {
 		pSvc->Release();
 	}
 	CoUninitialize();
-
 	return 0;
 }

@@ -126,7 +126,7 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
-	extern Text::String ExecuteCMD(const Text::String& cmdStr);
+	extern Text::String ExecuteCMD(const Text::String& cmdStr, DWORD* outPid = NULL, const std::function<void(char*, int)>& ioCallback = NULL);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>
