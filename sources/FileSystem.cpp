@@ -19,52 +19,37 @@ namespace FileSystem {
 		}
 		return false;
 	}
+	size_t Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
+		WIN32_FIND_DATAW findData;
+		Text::String searchPath = directory + "\\*";
+		HANDLE hFind = ::FindFirstFileW(searchPath.unicode().c_str(), &findData);
+		if (hFind == INVALID_HANDLE_VALUE) return result.size();
+		do {
+			Text::String name = findData.cFileName;
+			// 忽略当前目录和上级目录
+			if (name == "." || name == "..") continue;
+			Text::String fullPath = directory + "\\" + name;
 
-	extern size_t  Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType);
-	void ReadFileInfoWin32(const Text::String& directory, WIN32_FIND_DATAW& pNextInfo, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
-		if (directory.empty()) {
-			return;
-		}
-		Text::String filename = directory + "/" + Text::String(pNextInfo.cFileName);
-		filename = Path::Format(filename);
+			FileSystem::FileInfo fileInfo;
+			fileInfo.dwFileAttributes = findData.dwFileAttributes;
+			(Text::String&)fileInfo.FileName = fullPath;
 
-		FileSystem::FileInfo fileInfo;
-		fileInfo.dwFileAttributes = pNextInfo.dwFileAttributes;
-		(Text::String&)fileInfo.FileName = filename;
-
-		if (fileInfo.IsFile()) {
-			(ULONGLONG&)fileInfo.FileSize = ((ULONGLONG)pNextInfo.nFileSizeHigh << 32) | pNextInfo.nFileSizeLow;
-			if ((fileType & FileType::File) == FileType::File) {
-				result.push_back(fileInfo);
+			if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+				if (::PathMatchSpecW(name.unicode().c_str(), pattern.unicode().c_str()) && ((fileType & FileType::Directory) == FileType::Directory)) {
+					result.push_back(fileInfo); // 是文件夹
+				}
+				if (loopSubDir) {
+					Find(fullPath, result, pattern, loopSubDir, fileType);// 递归进入
+				}
 			}
-		}
-		else {
-			if ((fileType & FileType::Directory) == FileType::Directory) {
-				result.push_back(fileInfo);
+			else {
+				if (::PathMatchSpecW(name.unicode().c_str(), pattern.unicode().c_str()) && ((fileType & FileType::File) == FileType::File)) {
+					(ULONGLONG&)fileInfo.FileSize = ((ULONGLONG)findData.nFileSizeHigh << 32) | findData.nFileSizeLow;
+					result.push_back(fileInfo); // 是文件
+				}
 			}
-			if (loopSubDir) {
-				Find(filename, result, pattern, loopSubDir, fileType);
-			}
-		}
-	}
-	size_t  Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
-		HANDLE hFile = INVALID_HANDLE_VALUE;
-		WIN32_FIND_DATAW pNextInfo;
-		hFile = FindFirstFileW(Text::String(directory + "/" + pattern).unicode().c_str(), &pNextInfo);
-		if (INVALID_HANDLE_VALUE == hFile)
-		{
-			return 0;
-		}
-		if (pNextInfo.cFileName[0] != '.') {
-			ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir, fileType);
-		}
-		while (FindNextFileW(hFile, &pNextInfo))
-		{
-			if (pNextInfo.cFileName[0] != '.') {
-				ReadFileInfoWin32(directory, pNextInfo, result, pattern, loopSubDir, fileType);
-			}
-		}
-		FindClose(hFile);//避免内存泄漏
+		} while (::FindNextFileW(hFind, &findData));
+		::FindClose(hFind);
 		return result.size();
 	};
 };
