@@ -129,7 +129,7 @@ void find(const std::wstring& exeName) {
 }
 
 int main() {
-	
+
 	//auto ret = WinTool::ExecuteCMD("fastboot devices");
 	/*std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
 	file.seekp(0xDCC1BFC0);
@@ -139,6 +139,17 @@ int main() {
 	file.close();
 	return 0;
 */
+
+	while (true)
+	{
+		auto apps = WinTool::GetApps();
+		for (auto& it : apps) {
+			Log::Info(it.first);
+			if (it.first.find("USB") != size_t(-1)) {
+				break;
+			}
+		}
+	}
 
 	if (!initWMI()) {
 		std::cerr << "WMI 初始化失败。" << std::endl;
@@ -154,3 +165,4 @@ int main() {
 	CoUninitialize();
 	return 0;
 }
+

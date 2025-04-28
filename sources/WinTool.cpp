@@ -910,76 +910,73 @@ namespace WinTool {
 		return false;
 	}
 
-	std::map<Text::String, Text::String> GetApps() {
-		std::map<Text::String, Text::String> list;
-		std::map<HKEY, REGSAM> regs = {
-			{HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY},
-			{HKEY_LOCAL_MACHINE, KEY_WOW64_32KEY},
-			{HKEY_CURRENT_USER, KEY_WOW64_64KEY},
-			{HKEY_CURRENT_USER, KEY_WOW64_32KEY}
-		};
-
+	void inline __EnumerateInstalledSoftware(HKEY hRootKey, REGSAM viewFlag, std::map<Text::String, Text::String>& list) {
+		HKEY hKey;
 		const wchar_t* subkey = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 
-		for (const auto& it : regs) {
-			HKEY hRootKey = it.first;
-			REGSAM viewFlag = it.second;
+		if (RegOpenKeyExW(hRootKey, subkey, 0, KEY_READ | viewFlag, &hKey) != ERROR_SUCCESS) {
+			return;
+		}
 
-			HKEY hKey;
-			if (RegOpenKeyExW(hRootKey, subkey, 0, KEY_READ | viewFlag, &hKey) != ERROR_SUCCESS) {
-				continue; // 不返回，跳过该分支
-			}
+		wchar_t keyName[256];
+		DWORD keyNameSize;
+		DWORD index = 0;
 
-			DWORD index = 0;
-			wchar_t keyName[256];
-			DWORD keyNameSize;
+		while (true) {
+			keyNameSize = sizeof(keyName) / sizeof(wchar_t);
 			FILETIME ftLastWriteTime;
 
-			while (true) {
-				keyNameSize = sizeof(keyName) / sizeof(wchar_t);
-				LONG result = RegEnumKeyExW(hKey, index, keyName, &keyNameSize, NULL, NULL, NULL, &ftLastWriteTime);
+			LONG result = RegEnumKeyExW(
+				hKey,
+				index,
+				keyName,
+				&keyNameSize,
+				NULL,
+				NULL,
+				NULL,
+				&ftLastWriteTime
+			);
 
-				if (result == ERROR_NO_MORE_ITEMS)
-					break;
+			if (result == ERROR_NO_MORE_ITEMS) break;
+			if (result == ERROR_SUCCESS) {
+				HKEY hSubKey;
+				if (RegOpenKeyExW(hKey, keyName, 0, KEY_READ | viewFlag, &hSubKey) == ERROR_SUCCESS) {
+					wchar_t displayName[512];
+					wchar_t installLocation[512];
+					DWORD sizeName = sizeof(displayName);
+					DWORD sizeLoc = sizeof(installLocation);
+					DWORD type = 0;
 
-				if (result == ERROR_SUCCESS) {
-					HKEY hSubKey;
-					if (RegOpenKeyExW(hKey, keyName, 0, KEY_READ | viewFlag, &hSubKey) == ERROR_SUCCESS) {
-						wchar_t displayName[512] = {};
-						wchar_t installLocation[512] = {};
-						DWORD sizeName = sizeof(displayName);
-						DWORD sizeLoc = sizeof(installLocation);
-						DWORD type = 0;
-
-						if (RegQueryValueExW(hSubKey, L"DisplayName", NULL, &type, (LPBYTE)displayName, &sizeName) == ERROR_SUCCESS && type == REG_SZ) {
+					if (RegQueryValueExW(hSubKey, L"DisplayName", NULL, &type, (LPBYTE)displayName, &sizeName) == ERROR_SUCCESS) {
+						if (type == REG_SZ) {
 							std::wstring name = displayName;
 							std::wstring location = L"";
 
-							if (!name.empty()) {
-								if (RegQueryValueExW(hSubKey, L"InstallLocation", NULL, &type, (LPBYTE)installLocation, &sizeLoc) == ERROR_SUCCESS && type == REG_SZ) {
+							if (RegQueryValueExW(hSubKey, L"InstallLocation", NULL, &type, (LPBYTE)installLocation, &sizeLoc) == ERROR_SUCCESS) {
+								if (type == REG_SZ) {
 									location = installLocation;
 								}
-								// 如果同名软件已存在，可在名称后面加上 "(2)"、"(3)" 等做区分（可选）
-								std::wstring uniqueName = name;
-								int count = 2;
-								while (list.find(uniqueName) != list.end()) {
-									uniqueName = name + L" (" + std::to_wstring(count++) + L")";
-								}
-
-								list[uniqueName] = location;
+							}
+							//避免重复
+							if (list.find(name) == list.end()) {
+								list[name] = location;
 							}
 						}
-						RegCloseKey(hSubKey);
 					}
+
+					RegCloseKey(hSubKey);
 				}
-
-				++index;
 			}
-
-			RegCloseKey(hKey);
+			++index;
 		}
-
+		RegCloseKey(hKey);
+	}
+	std::map<Text::String, Text::String> GetApps() {
+		std::map<Text::String, Text::String> list;
+		__EnumerateInstalledSoftware(HKEY_LOCAL_MACHINE, KEY_WOW64_64KEY, list);
+		__EnumerateInstalledSoftware(HKEY_LOCAL_MACHINE, KEY_WOW64_32KEY, list);
+		__EnumerateInstalledSoftware(HKEY_CURRENT_USER, KEY_WOW64_64KEY, list);
+		__EnumerateInstalledSoftware(HKEY_CURRENT_USER, KEY_WOW64_32KEY, list);
 		return list;
 	}
-
 }

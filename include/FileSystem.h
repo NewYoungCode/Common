@@ -81,12 +81,12 @@ namespace Path {
 	/// 获取应用程序的临时目录
 	/// </summary>
 	/// <returns></returns>
-	extern Text::String GetAppTempPath();
+	extern Text::String GetAppTempPath(const Text::String& appName = "");
 	/// <summary>
 	/// 获取应用程序数据存储目录 C:/Users/%s/AppData/Local/%s
 	/// </summary>
 	/// <returns></returns>
-	extern Text::String GetAppDataPath();
+	extern Text::String GetAppDataPath(const Text::String&appName="");
 };
 namespace FileSystem {
 	class FileInfo

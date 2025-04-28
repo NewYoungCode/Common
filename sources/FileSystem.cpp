@@ -300,24 +300,23 @@ namespace Path {
 		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
-	Text::String GetAppTempPath()
+	Text::String GetAppTempPath(const Text::String& appName)
 	{
 		WCHAR user[256]{ 0 };
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR temPath[256]{ 0 };
-		auto appName = Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode();
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.c_str());
+		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
 		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
-	Text::String GetAppDataPath()
+	Text::String GetAppDataPath(const Text::String& appName)
 	{
 		WCHAR user[256]{ 0 };
 		DWORD len = 256;
 		::GetUserNameW(user, &len);
 		WCHAR localPath[256]{ 0 };
-		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str());
+		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
 		Directory::Create(localPath);
 		return Text::String(localPath);
 	}
