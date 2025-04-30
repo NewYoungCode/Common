@@ -167,6 +167,10 @@ namespace WinTool {
 		}
 		return false;
 	}
+	bool CloseProcess(HANDLE hProcess, UINT exitCode)
+	{
+		return TerminateProcess(hProcess, exitCode);
+	}
 	bool GetAutoBootStatus(const Text::String& filename) {
 		Text::String bootstart = filename.empty() ? Path::StartFileName() : filename;
 		Text::String appName = Path::GetFileNameWithoutExtension(bootstart);
@@ -584,7 +588,7 @@ namespace WinTool {
 		delete[] memBytes;
 	}
 
-	Text::String ExecuteCMD(const Text::String& cmdStr, DWORD* outPid, const std::function<void(char*, int)>& ioCallback) {
+	Text::String ExecuteCMD(const Text::String& cmdStr, HANDLE* outHandle) {
 		HANDLE hReadPipe = NULL; //读取管道
 		HANDLE hWritePipe = NULL; //写入管道	
 		PROCESS_INFORMATION pi{ 0 }; //进程信息	
@@ -613,41 +617,17 @@ namespace WinTool {
 			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.unicode().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				break;
 			}
-			if (outPid) {
-				*outPid = pi.dwProcessId;
+			if (outHandle) {
+				*outHandle = pi.hProcess;
 			}
-
-			if (ioCallback) {
-				// --- 实时读取方式 ---
-				char buffer[4096];
-				DWORD bytesRead = 0;
-				while (true) {
-					DWORD available = 0;
-					BOOL ok = ::PeekNamedPipe(hReadPipe, NULL, 0, NULL, &available, NULL);
-					if (!ok || available == 0) {
-						DWORD waitCode = ::WaitForSingleObject(pi.hProcess, 30);
-						if (waitCode == WAIT_OBJECT_0) break;
-						Sleep(10);
-						continue;
-					}
-					if (::ReadFile(hReadPipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
-						ioCallback(buffer, bytesRead);
-					}
-					else {
-						break;
-					}
-				}
-			}
-			else {
-				//4.等待读取返回的数据
-				::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
-				size_t buffSize = ::GetFileSize(hReadPipe, NULL);//获取输出数据
-				if (buffSize != 0) {
-					szBuff = new char[buffSize + 1] { 0 };
-					unsigned long size = 0;
-					if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
-						break;
-					}
+			//4.等待读取返回的数据
+			::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
+			size_t buffSize = ::GetFileSize(hReadPipe, NULL);//获取输出数据
+			if (buffSize != 0) {
+				szBuff = new char[buffSize + 1] { 0 };
+				unsigned long size = 0;
+				if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
+					break;
 				}
 			}
 		} while (false);
@@ -672,6 +652,75 @@ namespace WinTool {
 		}
 		return outResult;
 	}
+
+	bool ExecuteWithOutput(const Text::String& cmdStr, std::function<void(const Text::String&)> callback, HANDLE* outHandle)
+	{
+		SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
+
+		HANDLE hReadPipe = NULL, hWritePipe = NULL;
+		if (!CreatePipe(&hReadPipe, &hWritePipe, &saAttr, 0)) {
+			std::cerr << "Failed to create pipe.\n";
+			return false;
+		}
+		SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0); // 父进程不继承读端
+
+		PROCESS_INFORMATION pi = {};
+		STARTUPINFOW si = {};
+		si.cb = sizeof(STARTUPINFOW);
+		si.dwFlags |= STARTF_USESTDHANDLES;
+		si.hStdOutput = hWritePipe;
+		si.hStdError = hWritePipe;
+		si.hStdInput = NULL;
+
+		// 创建进程
+		WCHAR cmdLineBuffer[MAX_PATH];
+		wcsncpy_s(cmdLineBuffer, cmdStr.unicode().c_str(), _TRUNCATE);
+
+		BOOL result = CreateProcessW(
+			NULL, cmdLineBuffer,
+			NULL, NULL,
+			TRUE, // inherit handles
+			CREATE_NO_WINDOW,
+			NULL, NULL,
+			&si, &pi);
+
+		if (!result) {
+			std::cerr << "CreateProcessW failed.\n";
+			CloseHandle(hReadPipe);
+			CloseHandle(hWritePipe);
+			return false;
+		}
+
+		if (outHandle) {
+			*outHandle = pi.hProcess;
+		}
+
+		CloseHandle(hWritePipe); // 父进程关闭写端
+
+		// 实时读取子进程输出
+		char buffer[512];
+		DWORD bytesRead;
+		while (true) {
+			BOOL success = ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL);
+			if (!success || bytesRead == 0) {
+				break;
+			}
+			buffer[bytesRead] = '\0';
+			//回调 实时显示
+			if (callback) {
+				std::string buf(buffer, bytesRead);
+				callback(buf);
+			}
+		}
+		// 等待进程退出并清理
+		WaitForSingleObject(pi.hProcess, INFINITE);
+		CloseHandle(pi.hProcess);
+		CloseHandle(pi.hThread);
+		CloseHandle(hReadPipe);
+
+		return true;
+	}
+
 	Text::String GetBiosUUID() {
 		Text::String resultStr = ExecuteCMD("wmic csproduct get UUID");
 		resultStr = resultStr.replace("UUID", "");
@@ -846,7 +895,6 @@ namespace WinTool {
 		free(pForwardTable);
 		return info;
 	}
-
 
 #include <setupapi.h>
 #include <devguid.h>

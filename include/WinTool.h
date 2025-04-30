@@ -100,6 +100,8 @@ namespace WinTool {
 	extern int CloseProcess(const std::vector<DWORD>& processIds);
 	//使用进程ID关闭进程
 	extern bool CloseProcess(DWORD processId);
+	//使用句柄关闭进程
+	extern bool CloseProcess(HANDLE hProcess,UINT exitCode=0);
 	//获取进程是不是64位的
 	extern bool Is64BitPorcess(DWORD processId);
 	extern bool Is86BitPorcess(DWORD processId);
@@ -122,11 +124,19 @@ namespace WinTool {
 	//解码 解密
 	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
 	/// <summary>
-	/// 执行cmd并返回打印的字符
+	/// 使用cmd命令为基础执行可执行文件或者cmd自带命令行 并返回输出结果
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
-	extern Text::String ExecuteCMD(const Text::String& cmdStr, DWORD* outPid = NULL, const std::function<void(char*, int)>& ioCallback = NULL);
+	extern Text::String ExecuteCMD(const Text::String& cmdStr, HANDLE *outHandle=NULL);
+	/// <summary>
+	/// 直接执行可执行文件并获取返回内容
+	/// </summary>
+	/// <param name="cmdStr"></param>
+	/// <param name="callback"></param>
+	/// <param name="outHandle"></param>
+	/// <returns></returns>
+	extern bool ExecuteWithOutput(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>
