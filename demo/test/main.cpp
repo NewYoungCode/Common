@@ -130,6 +130,14 @@ void find(const std::wstring& exeName) {
 
 int main() {
 
+
+	WinTool::GetComputerID();
+
+	while (true)
+	{
+		WinTool::ExecuteCMD("adb devices");
+	}
+
 	//auto ret = WinTool::ExecuteCMD("fastboot devices");
 	/*std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
 	file.seekp(0xDCC1BFC0);

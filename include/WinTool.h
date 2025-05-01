@@ -124,19 +124,11 @@ namespace WinTool {
 	//解码 解密
 	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
 	/// <summary>
-	/// 使用cmd命令为基础执行可执行文件或者cmd自带命令行 并返回输出结果
-	/// </summary>
-	/// <param name="cmdStr"></param>
-	/// <returns></returns>
-	extern Text::String ExecuteCMD(const Text::String& cmdStr, HANDLE *outHandle=NULL);
-	/// <summary>
 	/// 直接执行可执行文件并获取返回内容
 	/// </summary>
 	/// <param name="cmdStr"></param>
-	/// <param name="callback"></param>
-	/// <param name="outHandle"></param>
 	/// <returns></returns>
-	extern bool ExecuteWithOutput(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
+	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE *outHandle=NULL);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>

@@ -44,8 +44,8 @@ namespace WinTool {
 	{
 		auto cpuId = GetCPUSerialNumber();
 		auto biosId = GetBiosUUID();
-		//auto mac = GetMacAddress();
-		Text::String u8Str = biosId + "_" + cpuId;
+		auto mac = GetMacAddress();
+		Text::String u8Str = biosId + cpuId + mac;
 		u8Str = Util::MD5FromString(u8Str);
 		return u8Str;
 	}
@@ -587,142 +587,84 @@ namespace WinTool {
 		::memcpy((void*)outData->c_str(), memBytes, stramSize);
 		delete[] memBytes;
 	}
-
-	Text::String ExecuteCMD(const Text::String& cmdStr, HANDLE* outHandle) {
-		HANDLE hReadPipe = NULL; //读取管道
-		HANDLE hWritePipe = NULL; //写入管道	
-		PROCESS_INFORMATION pi{ 0 }; //进程信息	
-		STARTUPINFO	si{ 0 };	//控制命令行窗口信息
-		SECURITY_ATTRIBUTES sa{ 0 }; //安全属性
-		pi.hProcess = NULL;
-		pi.hThread = NULL;
-		si.cb = sizeof(STARTUPINFO);
+	Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback, HANDLE* outHandle) {
+		HANDLE hReadPipe = NULL;
+		HANDLE hWritePipe = NULL;
+		PROCESS_INFORMATION pi = { 0 };
+		STARTUPINFOW si = { 0 };
+		SECURITY_ATTRIBUTES sa = { 0 };
+		si.cb = sizeof(STARTUPINFOW);
 		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 		sa.lpSecurityDescriptor = NULL;
 		sa.bInheritHandle = TRUE;
-		char* szBuff = NULL;
-		do
-		{
-			//1.创建管道
-			if (!::CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
+
+		Text::String result;
+
+		std::wstring cmdLine = cmdStr.unicode(); // 防止指针悬挂
+
+		do {
+			// 创建匿名管道
+			if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
 				break;
 			}
-			//2.设置命令行窗口的信息为指定的读写管道
-			::GetStartupInfoW(&si);
-			si.hStdError = hWritePipe;
+
+			// 设置标准输出和错误输出重定向到写入管道
+			GetStartupInfoW(&si);
 			si.hStdOutput = hWritePipe;
-			si.wShowWindow = SW_HIDE; //隐藏命令行窗口
-			si.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
-			//3.创建获取命令行的进程
-			if (!::CreateProcessW(NULL, (LPWSTR)cmdStr.unicode().c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
+			si.hStdError = hWritePipe;
+			si.dwFlags |= STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_HIDE;
+
+			// 创建子进程
+			if (!CreateProcessW(NULL, (WCHAR*)cmdLine.c_str(), NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi)) {
 				break;
 			}
+			// 可选：返回进程句柄
 			if (outHandle) {
 				*outHandle = pi.hProcess;
 			}
-			//4.等待读取返回的数据
-			::WaitForSingleObject(pi.hProcess, INFINITE);//等待进程结束
-			size_t buffSize = ::GetFileSize(hReadPipe, NULL);//获取输出数据
-			if (buffSize != 0) {
-				szBuff = new char[buffSize + 1] { 0 };
-				unsigned long size = 0;
-				if (!ReadFile(hReadPipe, szBuff, buffSize + 1, &size, 0)) {
-					break;
+
+			CloseHandle(hWritePipe); // 必须关闭写入端，避免 ReadFile 阻塞
+			hWritePipe = NULL;
+
+			// 开始读取管道内容
+			char buffer[512];
+			DWORD bytesRead = 0;
+			while (ReadFile(hReadPipe, buffer, sizeof(buffer), &bytesRead, NULL) && bytesRead > 0) {
+				std::string temp(buffer, bytesRead);
+				result.append(temp);
+				if (callback) {
+					callback(temp);
 				}
 			}
+
+			// 等待子进程结束（如果未通过 outHandle 返回）
+			if (!outHandle) {
+				WaitForSingleObject(pi.hProcess, INFINITE);
+			}
+
 		} while (false);
-		//清理工作
+
+		// 清理资源
 		if (hWritePipe) {
 			CloseHandle(hWritePipe);
 		}
 		if (hReadPipe) {
 			CloseHandle(hReadPipe);
 		}
-		if (pi.hProcess) {
-			CloseHandle(pi.hProcess);
-		}
 		if (pi.hThread) {
 			CloseHandle(pi.hThread);
 		}
-
-		Text::String outResult;
-		if (szBuff) {
-			outResult = szBuff;
-			delete[] szBuff;
+		if (pi.hProcess) {
+			CloseHandle(pi.hProcess);
 		}
-		return outResult;
+
+		return result;
 	}
 
-	bool ExecuteWithOutput(const Text::String& cmdStr, std::function<void(const Text::String&)> callback, HANDLE* outHandle)
-	{
-		SECURITY_ATTRIBUTES saAttr = { sizeof(SECURITY_ATTRIBUTES), NULL, TRUE };
-
-		HANDLE hReadPipe = NULL, hWritePipe = NULL;
-		if (!CreatePipe(&hReadPipe, &hWritePipe, &saAttr, 0)) {
-			std::cerr << "Failed to create pipe.\n";
-			return false;
-		}
-		SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0); // 父进程不继承读端
-
-		PROCESS_INFORMATION pi = {};
-		STARTUPINFOW si = {};
-		si.cb = sizeof(STARTUPINFOW);
-		si.dwFlags |= STARTF_USESTDHANDLES;
-		si.hStdOutput = hWritePipe;
-		si.hStdError = hWritePipe;
-		si.hStdInput = NULL;
-
-		// 创建进程
-		WCHAR cmdLineBuffer[MAX_PATH];
-		wcsncpy_s(cmdLineBuffer, cmdStr.unicode().c_str(), _TRUNCATE);
-
-		BOOL result = CreateProcessW(
-			NULL, cmdLineBuffer,
-			NULL, NULL,
-			TRUE, // inherit handles
-			CREATE_NO_WINDOW,
-			NULL, NULL,
-			&si, &pi);
-
-		if (!result) {
-			std::cerr << "CreateProcessW failed.\n";
-			CloseHandle(hReadPipe);
-			CloseHandle(hWritePipe);
-			return false;
-		}
-
-		if (outHandle) {
-			*outHandle = pi.hProcess;
-		}
-
-		CloseHandle(hWritePipe); // 父进程关闭写端
-
-		// 实时读取子进程输出
-		char buffer[512];
-		DWORD bytesRead;
-		while (true) {
-			BOOL success = ReadFile(hReadPipe, buffer, sizeof(buffer) - 1, &bytesRead, NULL);
-			if (!success || bytesRead == 0) {
-				break;
-			}
-			buffer[bytesRead] = '\0';
-			//回调 实时显示
-			if (callback) {
-				std::string buf(buffer, bytesRead);
-				callback(buf);
-			}
-		}
-		// 等待进程退出并清理
-		WaitForSingleObject(pi.hProcess, INFINITE);
-		CloseHandle(pi.hProcess);
-		CloseHandle(pi.hThread);
-		CloseHandle(hReadPipe);
-
-		return true;
-	}
 
 	Text::String GetBiosUUID() {
-		Text::String resultStr = ExecuteCMD("wmic csproduct get UUID");
+		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic csproduct get UUID");
 		resultStr = resultStr.replace("UUID", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
@@ -730,7 +672,7 @@ namespace WinTool {
 		return resultStr;
 	}
 	Text::String GetCPUSerialNumber() {
-		Text::String resultStr = ExecuteCMD("wmic cpu get ProcessorId");
+		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic cpu get ProcessorId");
 		resultStr = resultStr.replace("ProcessorId", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
@@ -738,7 +680,7 @@ namespace WinTool {
 		return resultStr;
 	}
 	Text::String GetDiskSerialNumber() {
-		Text::String resultStr = ExecuteCMD("wmic diskdrive get SerialNumber");
+		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic diskdrive get SerialNumber");
 		resultStr = resultStr.replace("SerialNumber", "");
 		resultStr = resultStr.replace(" ", "");
 		resultStr = resultStr.replace("\r", "");
