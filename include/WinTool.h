@@ -101,7 +101,7 @@ namespace WinTool {
 	//使用进程ID关闭进程
 	extern bool CloseProcess(DWORD processId);
 	//使用句柄关闭进程
-	extern bool CloseProcess(HANDLE hProcess,UINT exitCode=0);
+	extern bool CloseProcess(HANDLE hProcess, UINT exitCode = 0);
 	//获取进程是不是64位的
 	extern bool Is64BitPorcess(DWORD processId);
 	extern bool Is86BitPorcess(DWORD processId);
@@ -128,7 +128,7 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
-	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE *outHandle=NULL);
+	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
 	/// <summary>
 	/// 获取主板序唯一标识
 	/// </summary>
@@ -161,7 +161,7 @@ namespace WinTool {
 	/// <param name="defaultPath"></param>
 	/// <param name="title"></param>
 	/// <returns></returns>
-	extern Text::String ShowFileDialog(HWND ownerWnd = NULL, Text::String defaultPath = "", Text::String title = "Select a File");
+	extern Text::String ShowFileDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a File", const Text::String& filter = "All Files\0*.*\0");
 	/// <summary>
 	/// 选择目录
 	/// </summary>
@@ -169,7 +169,7 @@ namespace WinTool {
 	/// <param name="defaultPath"></param>
 	/// <param name="title"></param>
 	/// <returns></returns>
-	extern Text::String ShowFolderDialog(HWND ownerWnd = NULL, Text::String defaultPath = "", Text::String title = "Select a directory");
+	extern Text::String ShowFolderDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a directory");
 	/// <summary>
 	/// 获取路由信息
 	/// </summary>

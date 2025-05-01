@@ -594,22 +594,22 @@ namespace WinTool {
 		STARTUPINFOW si = { 0 };
 		SECURITY_ATTRIBUTES sa = { 0 };
 		si.cb = sizeof(STARTUPINFOW);
+		pi.hProcess = NULL;
+		pi.hThread = NULL;
+		sa.bInheritHandle = TRUE;
 		sa.nLength = sizeof(SECURITY_ATTRIBUTES);
 		sa.lpSecurityDescriptor = NULL;
-		sa.bInheritHandle = TRUE;
 
 		Text::String result;
-
 		std::wstring cmdLine = cmdStr.unicode(); // 防止指针悬挂
-
 		do {
 			// 创建匿名管道
 			if (!CreatePipe(&hReadPipe, &hWritePipe, &sa, 0)) {
 				break;
 			}
-
+			//SetHandleInformation(hReadPipe, HANDLE_FLAG_INHERIT, 0); // 父进程不继承读端
 			// 设置标准输出和错误输出重定向到写入管道
-			GetStartupInfoW(&si);
+			//GetStartupInfoW(&si);//这行代码会导致窗口程序无法获得输出
 			si.hStdOutput = hWritePipe;
 			si.hStdError = hWritePipe;
 			si.dwFlags |= STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
@@ -729,7 +729,7 @@ namespace WinTool {
 		return vname;
 	}
 
-	Text::String ShowFileDialog(HWND ownerWnd, Text::String defaultPath, Text::String title) {
+	Text::String ShowFileDialog(HWND ownerWnd, const Text::String& defaultPath, const Text::String& title, const Text::String& filter) {
 		OPENFILENAMEW ofn;       // 打开文件对话框结构体
 		WCHAR szFile[512]{ 0 };       // 选择的文件名
 		// 初始化OPENFILENAME结构体
@@ -744,16 +744,24 @@ namespace WinTool {
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0;
 		ofn.lpstrInitialDir = NULL;
-
 		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-		// 显示文件对话框
-		if (GetOpenFileNameW(&ofn) == TRUE) {
-			return szFile;
-		}
+
+		auto oldWorkDir = Path::StartPath();
+		do
+		{
+			// 显示文件对话框
+			if (GetOpenFileNameW(&ofn) == TRUE) {
+				break;
+			}
+		} while (false);
+		::SetCurrentDirectoryW(oldWorkDir.unicode().c_str());
 		return szFile;
 	}
 
-	Text::String ShowFolderDialog(HWND ownerWnd, Text::String defaultPath, Text::String title) {
+	Text::String ShowFolderDialog(HWND ownerWnd, const Text::String& defaultPath, const Text::String& title) {
+		//记录旧的工作目录
+		auto oldWorkDir = Path::StartPath();
+
 		WCHAR selectedPath[MAX_PATH]{ 0 };
 		BROWSEINFOW browseInfo{ 0 };
 		browseInfo.hwndOwner = ownerWnd;
@@ -766,11 +774,16 @@ namespace WinTool {
 		browseInfo.pidlRoot = pidlRoot;
 		browseInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
 		LPITEMIDLIST itemIdList = SHBrowseForFolderW(&browseInfo);
-		if (itemIdList != nullptr) {
-			SHGetPathFromIDListW(itemIdList, selectedPath);//设置路径
-			CoTaskMemFree(itemIdList);//清理
-			return selectedPath;
-		}
+		do
+		{
+			if (itemIdList != nullptr) {
+				SHGetPathFromIDListW(itemIdList, selectedPath);//设置路径
+				CoTaskMemFree(itemIdList);//清理
+				break;
+			}
+		} while (false);
+		//恢复工作目录
+		::SetCurrentDirectoryW(oldWorkDir.unicode().c_str());
 		return selectedPath;
 	}
 

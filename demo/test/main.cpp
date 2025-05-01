@@ -131,6 +131,16 @@ void find(const std::wstring& exeName) {
 int main() {
 
 
+	auto data = WinTool::ExecuteCMD("fh_loader.exe");
+
+	::MessageBox(0, data.unicode().c_str(), L"结果", MB_OK);
+	return 0;
+
+	auto file = WinTool::ShowFileDialog(0, "", L"选择镜像文件", "IMG Files (*.img)\0*.img\0");
+	if (File::Exists(file)) {
+		//ExecuteCommand("fastboot flash init_boot \"" + file + "\"");
+	}
+
 	WinTool::GetComputerID();
 
 	while (true)
