@@ -54,21 +54,21 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 		cfg.WriteValue("cmd", "", user);
 		cfg.WriteValue("msg", "", user);
 	}
-	else {
-		Time t(date);
-		auto diff = Time::Now() - t;
-		//每个计算机注册账号之后只有两天的使用时间
-		if (diff > (2 * 24 * 60 * 60)) {
-			res.status = 500;
-			return;
-		}
-	}
 	if (count > max) {
 		res.status = 500;
 	}
 	else {
 		res.status = 200;
 	}
+
+	//日期限制
+	//Time t(date);
+	//auto diff = Time::Now() - t;
+	////每个计算机注册账号之后只有两天的使用时间
+	//if (diff > (2 * 24 * 60 * 60)) {
+	//	res.status = 500;
+	//	return;
+	//}
 
 	Json::Value json;
 	json["req_time"] = req.get_param_value("time");
@@ -89,7 +89,6 @@ int main(int count, const char** args)
 	Log::Enable = true;
 	Log::WriteFile = true;
 	Server svr;
-
 
 	svr.Get("/login", [&](const Request& req, httplib::Response& res) {
 		NewFunction(req, res, true);
@@ -124,7 +123,6 @@ int main(int count, const char** args)
 	svr.Get("/reportDownload", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
 		u8String btn = req.get_param_value("btn");
-
 		int count = cfg.ReadInt("count", 0, user);
 		count++;
 		cfg.WriteValue("count", std::to_string(count), user);
@@ -132,6 +130,15 @@ int main(int count, const char** args)
 		Log::Info(L"[%s]已点击下载按钮:[%s]", user.c_str(), btn.c_str());
 		});
 
+	svr.Get("/reportButton", [&](const Request& req, httplib::Response& res) {
+		u8String user = req.get_param_value("user");
+		u8String btn = req.get_param_value("btn");
+		int count = cfg.ReadInt("count", 0, user);
+		count++;
+		cfg.WriteValue("count", std::to_string(count), user);
+		ResponseEnCode(req, res, std::to_string(count), "text/plain");
+		Log::Info(L"[%s]已点击按钮:[%s]", user.c_str(), btn.c_str());
+		});
 
 	//重置刷机次数
 	svr.Get("/reset", [&](const Request& req, httplib::Response& res) {
