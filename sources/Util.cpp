@@ -1,4 +1,5 @@
 #include "Util.h"
+#include <stdexcept>
 typedef unsigned char byte;
 typedef unsigned int uint32;
 typedef unsigned int uint4;
@@ -700,5 +701,39 @@ namespace Util {
 	}
 	std::string UrlDecode(const std::string& str, bool convert_plus_to_space) {
 		return detail::decode_url(str, convert_plus_to_space);
+	}
+
+	namespace XOR {
+		// 用密码生成长度为dataLen的伪密钥流
+		void GenerateKeyStream(const std::string& password, size_t dataLen, std::string& keyStream) {
+			if (password.empty()) {
+				throw std::invalid_argument("password is empty!");
+			}
+			keyStream.resize(dataLen);
+			unsigned char state = 0;
+			for (char c : password) {
+				state ^= static_cast<unsigned char>(c);
+				state = (state << 1) | (state >> 7);  // 左旋1位
+			}
+			for (size_t i = 0; i < dataLen; ++i) {
+				keyStream[i] = state ^ static_cast<unsigned char>(password[i % password.size()]) ^ static_cast<unsigned char>(i);
+				state = (state << 1) | (state >> 7);
+			}
+		}
+		std::string EnCode(const std::string& data, const std::string& password) {
+			if (password.empty()) {
+				return data;
+			}
+			std::string keyStream;
+			GenerateKeyStream(password, data.size(), keyStream);
+			std::string encrypted = data;
+			for (size_t i = 0; i < data.size(); ++i) {
+				encrypted[i] ^= keyStream[i];
+			}
+			return encrypted;
+		}
+		std::string DeCode(const std::string& data, const std::string& password) {
+			return EnCode(data, password);
+		}
 	}
 };

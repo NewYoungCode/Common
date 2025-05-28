@@ -13,6 +13,26 @@
 #include "Util.h"
 #include "base64.h"
 
+#ifdef GetUserName
+#undef GetUserName
+inline void GetUserName(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+	::GetUserNameA(lpBuffer, pcbBuffer);
+}
+inline void GetUserName(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+	::GetUserNameW(lpBuffer, pcbBuffer);
+}
+#endif
+
+#ifdef GetComputerName
+#undef GetComputerName
+inline void GetComputerName(LPSTR lpBuffer, LPDWORD pcbBuffer) {
+	::GetComputerNameA(lpBuffer, pcbBuffer);
+}
+inline void GetComputerName(LPWSTR lpBuffer, LPDWORD pcbBuffer) {
+	::GetComputerNameW(lpBuffer, pcbBuffer);
+}
+#endif
+
 namespace WinTool {
 	/// <summary>
 	/// 路由信息
@@ -87,6 +107,7 @@ namespace WinTool {
 	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true);
 	//获取程序自启动状态
 	extern bool GetAutoBootStatus(const Text::String& filename);
+	//寻找进程中的窗口
 	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息
 	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::String& _proccname);
@@ -104,13 +125,18 @@ namespace WinTool {
 	extern bool CloseProcess(HANDLE hProcess, UINT exitCode = 0);
 	//获取进程是不是64位的
 	extern bool Is64BitPorcess(DWORD processId);
+	//获取进程是不是32位的
 	extern bool Is86BitPorcess(DWORD processId);
 	//获取当前进程ID
 	extern DWORD GetCurrentProcessId();
 	//获取系统位数
 	extern int GetSystemBits();
 	//获取计算机唯一识别码
-	extern std::string GetComputerID();
+	extern Text::String GetComputerID();
+	//用户当前用户名称
+	extern Text::String GetUserName();
+	//获取计算机名称
+	extern Text::String GetComputerName();
 	//获取网卡相关
 	extern int GetAdptersInfo(std::vector<MyAdpterInfo>& adpterInfo);
 	/// <summary>
@@ -129,21 +155,6 @@ namespace WinTool {
 	/// <param name="cmdStr"></param>
 	/// <returns></returns>
 	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
-	/// <summary>
-	/// 获取主板序唯一标识
-	/// </summary>
-	/// <returns></returns>
-	extern  Text::String GetBiosUUID();
-	/// <summary>
-	/// 获取CPU序列号
-	/// </summary>
-	/// <returns></returns>
-	extern Text::String GetCPUSerialNumber();
-	/// <summary>
-	/// 获取硬盘序列号
-	/// </summary>
-	/// <returns></returns>
-	extern  Text::String GetDiskSerialNumber();
 	/// <summary>
 	/// 获取首选网卡的mac地址
 	/// </summary>
@@ -192,4 +203,10 @@ namespace WinTool {
 	/// </summary>
 	/// <returns>返回软件名称,安装路径</returns>
 	extern std::map<Text::String, Text::String> GetApps();
+
+	/// <summary>
+	/// 检测程序是否被调试
+	/// </summary>
+	/// <returns></returns>
+	extern bool CheckDebug();
 };

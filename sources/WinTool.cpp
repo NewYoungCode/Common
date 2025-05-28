@@ -2,6 +2,12 @@
 #pragma comment(lib,"Iphlpapi.lib")
 #pragma comment(lib,"Ws2_32.lib")
 
+#include <Windows.h>
+#include <comdef.h>
+#include <Wbemidl.h>
+#include <iostream>
+#pragma comment(lib, "wbemuuid.lib")
+
 namespace WinTool {
 #ifndef FormatError
 #define FormatError(x)	(x)
@@ -40,14 +46,106 @@ namespace WinTool {
 		return 86;
 	}
 
-	std::string GetComputerID()
+	Text::String GetComputerID() {
+		HRESULT hres;
+
+		// 初始化 COM
+		hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+		if (FAILED(hres)) return "";
+
+		// 设置默认安全性
+		hres = CoInitializeSecurity(
+			NULL, -1, NULL, NULL,
+			RPC_C_AUTHN_LEVEL_DEFAULT,
+			RPC_C_IMP_LEVEL_IMPERSONATE,
+			NULL, EOAC_NONE, NULL);
+		if (FAILED(hres)) {
+			CoUninitialize();
+			return "";
+		}
+
+		IWbemLocator* pLoc = nullptr;
+		hres = CoCreateInstance(
+			CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+			IID_IWbemLocator, (LPVOID*)&pLoc);
+		if (FAILED(hres)) {
+			CoUninitialize();
+			return "";
+		}
+
+		IWbemServices* pSvc = nullptr;
+		hres = pLoc->ConnectServer(
+			_bstr_t(L"ROOT\\CIMV2"),
+			NULL, NULL, 0, NULL, 0, 0, &pSvc);
+		if (FAILED(hres)) {
+			pLoc->Release();
+			CoUninitialize();
+			return "";
+		}
+
+		hres = CoSetProxyBlanket(
+			pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
+			NULL, RPC_C_AUTHN_LEVEL_CALL,
+			RPC_C_IMP_LEVEL_IMPERSONATE,
+			NULL, EOAC_NONE);
+		if (FAILED(hres)) {
+			pSvc->Release();
+			pLoc->Release();
+			CoUninitialize();
+			return "";
+		}
+
+		IEnumWbemClassObject* pEnumerator = nullptr;
+		hres = pSvc->ExecQuery(
+			bstr_t("WQL"),
+			bstr_t("SELECT SerialNumber FROM Win32_BaseBoard"),
+			WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+			NULL, &pEnumerator);
+		if (FAILED(hres)) {
+			pSvc->Release();
+			pLoc->Release();
+			CoUninitialize();
+			return "";
+		}
+
+		IWbemClassObject* pClassObject = nullptr;
+		ULONG uReturn = 0;
+		std::string serialNumber = "";
+
+		if (pEnumerator) {
+			HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pClassObject, &uReturn);
+			if (uReturn > 0 && SUCCEEDED(hr)) {
+				VARIANT vtProp;
+				hr = pClassObject->Get(L"SerialNumber", 0, &vtProp, 0, 0);
+				if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+					serialNumber = _bstr_t(vtProp.bstrVal);
+					VariantClear(&vtProp);
+				}
+				pClassObject->Release();
+			}
+			pEnumerator->Release();
+		}
+
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return Util::MD5FromString(serialNumber);
+	}
+
+	Text::String GetUserName()
 	{
-		auto cpuId = GetCPUSerialNumber();
-		auto biosId = GetBiosUUID();
-		auto mac = GetMacAddress();
-		Text::String u8Str = biosId + cpuId + mac;
-		u8Str = Util::MD5FromString(u8Str);
-		return u8Str;
+		WCHAR user[256]{ 0 };
+		DWORD len = 256;
+		::GetUserNameW(user, &len);
+		return user;
+	}
+
+	Text::String GetComputerName()
+	{
+		WCHAR computerName[256]{ 0 };
+		DWORD size = 256;
+		::GetComputerNameW(computerName, &size);
+		return computerName;
 	}
 
 	DWORD GetCurrentProcessId() {
@@ -149,7 +247,7 @@ namespace WinTool {
 		return buf;
 	}
 	int CloseProcess(const std::vector<DWORD>& processIds) {
-		size_t count = 0;
+		int count = 0;
 		for (auto item : processIds) {
 			count += CloseProcess(item);
 		}
@@ -662,31 +760,6 @@ namespace WinTool {
 		return result;
 	}
 
-
-	Text::String GetBiosUUID() {
-		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic csproduct get UUID");
-		resultStr = resultStr.replace("UUID", "");
-		resultStr = resultStr.replace(" ", "");
-		resultStr = resultStr.replace("\r", "");
-		resultStr = resultStr.replace("\n", "");
-		return resultStr;
-	}
-	Text::String GetCPUSerialNumber() {
-		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic cpu get ProcessorId");
-		resultStr = resultStr.replace("ProcessorId", "");
-		resultStr = resultStr.replace(" ", "");
-		resultStr = resultStr.replace("\r", "");
-		resultStr = resultStr.replace("\n", "");
-		return resultStr;
-	}
-	Text::String GetDiskSerialNumber() {
-		Text::String resultStr = ExecuteCMD("cmd.exe /c wmic diskdrive get SerialNumber");
-		resultStr = resultStr.replace("SerialNumber", "");
-		resultStr = resultStr.replace(" ", "");
-		resultStr = resultStr.replace("\r", "");
-		resultStr = resultStr.replace("\n", "");
-		return resultStr;
-	}
 	Text::String GetMacAddress()
 	{
 		std::vector<MyAdpterInfo> adpterInfo;
@@ -981,5 +1054,143 @@ namespace WinTool {
 		__EnumerateInstalledSoftware(HKEY_CURRENT_USER, KEY_WOW64_64KEY, list);
 		__EnumerateInstalledSoftware(HKEY_CURRENT_USER, KEY_WOW64_32KEY, list);
 		return list;
+	}
+
+#if 1 //反调试相关代码
+	typedef NTSTATUS(NTAPI* _NtQueryInformationProcess)(
+		HANDLE           ProcessHandle,
+		DWORD ProcessInformationClass,
+		PVOID            ProcessInformation,
+		ULONG            ProcessInformationLength,
+		PULONG           ReturnLength
+		);
+	bool testBeginDebugged();
+	bool testNtGlobalFlag();
+	bool testProcessDebugPort();
+	bool testNtQueryInformationProcess();
+	bool testNtPort(_NtQueryInformationProcess NtQueryInformationProcess);
+	bool testNtObjectHandle(_NtQueryInformationProcess NtQueryInformationProcess);
+	bool testFlag(_NtQueryInformationProcess NtQueryInformationProcess);
+
+	bool testBeginDebugged()
+	{
+		if (IsDebuggerPresent())
+		{
+			//std::cout << "BeginDebugged验证失败，程序被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			//std::cout << "BeginDebugged验证正常" << std::endl;
+			return false;
+		}
+	}
+	bool testNtGlobalFlag()
+	{
+		/*DWORD IsDebug = 1;
+		__asm
+		{
+			push eax
+			mov eax, fs: [0x30]
+			mov eax, [eax + 0x68]
+			mov IsDebug, eax
+			pop eax
+		}
+		if (IsDebug == 0x70)
+		{
+			std::cout << "NtGlobalFlag验证失败，程序被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			std::cout << "NtGlobalFlag验证正常" << std::endl;
+			return false;
+
+		}*/
+		return false;
+	}
+	bool testProcessDebugPort()
+	{
+		BOOL IsDebug = FALSE;
+		CheckRemoteDebuggerPresent(GetCurrentProcess(), &IsDebug);
+		if (IsDebug == TRUE)
+		{
+			//	std::cout << "ProcessDebugPort验证失败，程序被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			//	std::cout << "ProcessDebugPort验证正常，程序未被调试" << std::endl;
+			return false;
+		}
+	}
+	bool testNtQueryInformationProcess()
+	{
+		HMODULE  hDll = LoadLibraryW(L"Ntdll.dll");
+		_NtQueryInformationProcess NtQueryInformationProcess = (_NtQueryInformationProcess)GetProcAddress(hDll, "NtQueryInformationProcess");
+		auto b1 = testNtPort(NtQueryInformationProcess);
+		auto b2 = testNtObjectHandle(NtQueryInformationProcess);
+		auto b3 = testFlag(NtQueryInformationProcess);
+		if (hDll) {
+			::FreeLibrary(hDll);
+		}
+		return b1 || b2 || b3;
+	}
+	bool testNtPort(_NtQueryInformationProcess NtQueryInformationProcess)
+	{
+		HANDLE hProcess = GetCurrentProcess();
+		DWORD DebugPort;
+		NtQueryInformationProcess(hProcess, 7, &DebugPort, sizeof(DWORD), NULL);
+		if (DebugPort != 0)
+		{
+			//std::cout << "DebugPort验证失败，程序正在被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			//std::cout << "DebugPort验证成功" << std::endl;
+			return false;
+		}
+	}
+	bool testNtObjectHandle(_NtQueryInformationProcess NtQueryInformationProcess)
+	{
+		HANDLE hProcess = GetCurrentProcess();
+		HANDLE ObjectHandle;
+		NtQueryInformationProcess(hProcess, 30, &ObjectHandle, sizeof(ObjectHandle), NULL);
+		if (ObjectHandle != NULL)
+		{
+			//std::cout << "调试端口验证失败，程序正在被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			//std::cout << "调试端口验证成功" << std::endl;
+			return false;
+		}
+	}
+	bool testFlag(_NtQueryInformationProcess NtQueryInformationProcess)
+	{
+		HANDLE hProcess = GetCurrentProcess();
+		BOOL Flags;
+		NtQueryInformationProcess(hProcess, 31, &Flags, sizeof(Flags), NULL);
+		if (Flags != 1)
+		{
+			//std::cout << "调试端口验证失败，程序正在被调试" << std::endl;
+			return true;
+		}
+		else
+		{
+			//std::cout << "调试端口验证成功" << std::endl;
+			return false;
+		}
+	}
+#endif // 0
+
+	bool CheckDebug() {
+		auto b1 = testBeginDebugged();
+		auto b2 = testProcessDebugPort();
+		auto b3 = testNtQueryInformationProcess();
+		auto b4 = testNtGlobalFlag();
+		return b1 || b2 || b3 || b4;
 	}
 }

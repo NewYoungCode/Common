@@ -40,3 +40,12 @@ set_target_properties(DiskCleaner PROPERTIES
 target_include_directories(DiskCleaner PRIVATE ${commonInclude})
 target_link_directories(DiskCleaner PRIVATE ${commonLib})
 target_link_libraries(DiskCleaner PRIVATE Common)
+
+
+#http服务
+project(HttpServer)
+file(GLOB src ./HttpServer/*.*)
+add_executable(HttpServer ${src})
+target_include_directories(HttpServer PRIVATE ${commonInclude})
+target_link_directories(HttpServer PRIVATE ${commonLib})
+target_link_libraries(HttpServer PRIVATE Common)

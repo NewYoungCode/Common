@@ -128,8 +128,177 @@ void find(const std::wstring& exeName) {
 	pEnumerator->Release();
 }
 
+#pragma comment(lib, "wbemuuid.lib")
+// 获取 WMI 中的 UUID（设备标识符）
+std::string GetDeviceUUID() {
+	std::string result;
+	HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) return "";
+
+	hres = CoInitializeSecurity(
+		NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemLocator* pLoc = nullptr;
+	hres = CoCreateInstance(CLSID_WbemLocator, 0,
+		CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLoc);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemServices* pSvc = nullptr;
+	hres = pLoc->ConnectServer(
+		BSTR(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	if (FAILED(hres)) {
+		pLoc->Release();
+		CoUninitialize();
+		return "";
+	}
+
+	hres = CoSetProxyBlanket(
+		pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE);
+
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	hres = pSvc->ExecQuery(
+		BSTR(L"WQL"),
+		BSTR(L"SELECT UUID FROM Win32_ComputerSystemProduct"),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
+
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemClassObject* pclsObj = nullptr;
+	ULONG uReturn = 0;
+
+	if (pEnumerator) {
+		while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
+			VARIANT vtProp;
+			VariantInit(&vtProp);
+			hres = pclsObj->Get(L"UUID", 0, &vtProp, 0, 0);
+			if (SUCCEEDED(hres) && vtProp.vt == VT_BSTR) {
+				std::wstring wstr(vtProp.bstrVal, SysStringLen(vtProp.bstrVal));
+				result = Text::String(wstr);
+			}
+			VariantClear(&vtProp);
+			pclsObj->Release();
+		}
+		pEnumerator->Release();
+	}
+
+	pSvc->Release();
+	pLoc->Release();
+	CoUninitialize();
+
+	return result;
+}
+std::string GetMotherboardID() {
+	HRESULT hres;
+
+	// 初始化 COM
+	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) return "COM init failed";
+
+	// 设置默认安全性
+	hres = CoInitializeSecurity(
+		NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "Security init failed";
+	}
+
+	IWbemLocator* pLoc = nullptr;
+	hres = CoCreateInstance(
+		CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+		IID_IWbemLocator, (LPVOID*)&pLoc);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "WbemLocator creation failed";
+	}
+
+	IWbemServices* pSvc = nullptr;
+	hres = pLoc->ConnectServer(
+		_bstr_t(L"ROOT\\CIMV2"),
+		NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	if (FAILED(hres)) {
+		pLoc->Release();
+		CoUninitialize();
+		return "WMI connection failed";
+	}
+
+	hres = CoSetProxyBlanket(
+		pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
+		NULL, RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE);
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "SetProxyBlanket failed";
+	}
+
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	hres = pSvc->ExecQuery(
+		bstr_t("WQL"),
+		bstr_t("SELECT SerialNumber FROM Win32_BaseBoard"),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "Query failed";
+	}
+
+	IWbemClassObject* pClassObject = nullptr;
+	ULONG uReturn = 0;
+	std::string serialNumber = "unknown";
+
+	if (pEnumerator) {
+		HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pClassObject, &uReturn);
+		if (uReturn > 0 && SUCCEEDED(hr)) {
+			VARIANT vtProp;
+			hr = pClassObject->Get(L"SerialNumber", 0, &vtProp, 0, 0);
+			if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+				serialNumber = _bstr_t(vtProp.bstrVal);
+				VariantClear(&vtProp);
+			}
+			pClassObject->Release();
+		}
+		pEnumerator->Release();
+	}
+
+	pSvc->Release();
+	pLoc->Release();
+	CoUninitialize();
+
+	return serialNumber;
+}
 int main() {
 
+	while (true)
+	{
+		auto id = GetMotherboardID();
+		auto id2 = GetDeviceUUID();
+	}
 
 	auto data = WinTool::ExecuteCMD("fh_loader.exe");
 

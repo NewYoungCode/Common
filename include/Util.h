@@ -25,4 +25,11 @@ namespace Util {
 	//url解码
 	std::string UrlDecode(const std::string& str, bool convert_plus_to_space = false);
 	//少一个GZIP
+
+	namespace XOR {
+		//XOR加密 必须输入密码才能加密
+		std::string EnCode(const std::string& data, const std::string& password);
+		//XOR解密 
+		std::string DeCode(const std::string& data, const std::string& password);
+	}
 };
