@@ -2,6 +2,7 @@
 #include <string>
 #include <Windows.h>
 #include <functional>
+#include <mutex>
 #include <map>
 #include "FileSystem.h"
 #include "Text.h"
@@ -9,14 +10,6 @@
 #define USECURL 1 //是否使用curl 使用curl会导致库变得很大
 
 #if USECURL
-//全局初始化curl
-void Curl_Global_Init();
-
-//下载进度回调函数模型
-typedef std::function<void(__int64 total, __int64 now, float rate)> ProgressFunc;
-//curl的初始化
-static bool g_curl_bInit = false;
-
 namespace PostForm {
 	//字段类型
 	enum FieldType :char
@@ -64,11 +57,11 @@ public:
 	virtual ~WebClient();
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
-	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
+	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
 	int HttpGet(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
 	int HttpPost(const std::string& strUrl, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);
 	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* response = NULL, int nTimeout = 60);
-	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string* response = NULL, const ProgressFunc& progressCallback = NULL, int nTimeout = 60);
+	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string* response = NULL, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
 	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout = 60);
 };
 #endif

@@ -37,6 +37,8 @@ namespace File {
 	extern void WriteFile(const char* fileStream, size_t count, const Text::String& filename);
 	//拷贝文件
 	extern bool Copy(const  Text::String& filename, const  Text::String& des_filename, bool overwrite = true);
+	//获取文件字节大小
+	extern ULONGLONG GetFileSize(const Text::String& fileName);
 };
 
 namespace Directory {
@@ -65,6 +67,11 @@ namespace Path {
 	extern Text::String GetDirectoryName(const Text::String& _filename);
 	//获取文件名称+后缀
 	extern Text::String GetFileName(const Text::String& _filename);
+
+	//获取用户桌面路径
+	extern Text::String UserDesktop();
+	//获取开始菜单路径
+	extern  Text::String  StartPrograms();
 	//获取文件后缀名(后缀名)
 	extern Text::String GetExtension(const Text::String& _filename);
 	//获取进程所在绝对路径目录
@@ -86,7 +93,7 @@ namespace Path {
 	/// 获取应用程序数据存储目录 C:/Users/%s/AppData/Local/%s
 	/// </summary>
 	/// <returns></returns>
-	extern Text::String GetAppDataPath(const Text::String&appName="");
+	extern Text::String GetAppDataPath(const Text::String& appName = "");
 };
 namespace FileSystem {
 	class FileInfo
@@ -104,8 +111,8 @@ namespace FileSystem {
 			return dwFileAttributes & FILE_ATTRIBUTE_READONLY;
 		}
 		const ULONGLONG FileSize = 0;
-		FileInfo()  {}
-		FileInfo(const Text::String& fileName)  {
+		FileInfo() {}
+		FileInfo(const Text::String& fileName) {
 			if (File::Exists(fileName)) {
 				(Text::String)FileName = fileName;
 				//获取大小

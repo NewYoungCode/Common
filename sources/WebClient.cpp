@@ -29,11 +29,9 @@
 
 #endif
 
-
-
-void Curl_Global_Init() {
-	curl_global_init(CURL_GLOBAL_ALL);
-}
+//curl的初始化
+bool g_curl_bInit = false;
+std::mutex g_curl_mtx;
 
 //接收响应body
 size_t g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone);
@@ -44,9 +42,15 @@ int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 
 
 //定义
 WebClient::WebClient() {
-	if (!g_curl_bInit) {
-		curl_global_init(CURL_GLOBAL_ALL); //初始化curl
-		g_curl_bInit = true;
+	{
+		g_curl_mtx.lock();
+		if (!g_curl_bInit) {
+			CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+			if (code == CURLE_OK) {
+				g_curl_bInit = true;
+			}
+		}
+		g_curl_mtx.unlock();
 	}
 }
 WebClient::~WebClient() {
@@ -81,7 +85,9 @@ size_t g_curl_download_callback(char* contents, size_t size, size_t nmemb, void*
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow)
 {
 	if (dltotal != 0 && ptr) {
-		(*(ProgressFunc*)ptr)(dltotal, dlnow, dlnow / (dltotal * 1.0) * 100);
+		//下载回调函数
+		typedef std::function<void(long long dltotal, long long dlnow)> ProgressFunc;
+		(*(ProgressFunc*)ptr)(dltotal, dlnow);
 	}
 	return 0;
 }
@@ -165,7 +171,7 @@ int WebClient::HttpPost(const std::string& url, const std::string& data, std::st
 	CURLcode code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 };
-int WebClient::UploadFile(const std::string& url, const std::string& filename, const std::string& field, std::string* respone, const ProgressFunc& progressCallback, int _timeout) {
+int WebClient::UploadFile(const std::string& url, const std::string& filename, const std::string& field, std::string* respone, const std::function<void(long long dltotal, long long dlnow)>& progressCallback, int _timeout) {
 
 	CURL* curl = Init(url, respone, _timeout);
 	if (!curl) {
@@ -225,7 +231,7 @@ int WebClient::SubmitForm(const std::string& strUrl, const std::vector<PostForm:
 	return CleanUp(curl, code);
 
 };
-int WebClient::DownloadFile(const std::string& url, const std::wstring& _filename, const ProgressFunc& progressCallback, int nTimeout) {
+int WebClient::DownloadFile(const std::string& url, const std::wstring& _filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback, int nTimeout) {
 	std::string resp;
 	CURL* curl = Init(url, &resp, nTimeout);
 	if (!curl) {

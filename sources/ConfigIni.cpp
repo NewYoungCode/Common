@@ -73,16 +73,17 @@ bool  ConfigIni::WriteValue(const Text::String& key, const Text::String& value, 
 	return SetValue(section, key, value, filename);
 }
 
+
 std::vector<Text::String>  ConfigIni::GetSections() {
 	std::vector<Text::String> list;
 
-	size_t maxSize = 1024 * 1024 * 20;//20M
-	WCHAR* chSectionNames = new WCHAR[maxSize]{ 0 };
-	GetPrivateProfileSectionNamesW(chSectionNames, maxSize, filename.unicode().c_str());
+	ULONGLONG fSize =File::GetFileSize(filename) + 2;
+	WCHAR* chSectionNames = new WCHAR[fSize]{ 0 };
+	GetPrivateProfileSectionNamesW(chSectionNames, fSize, filename.unicode().c_str());
 	size_t pos = 0;
 	do
 	{
-		wchar_t buf[128]{ 0 };
+		wchar_t buf[1024]{ 0 };
 		::lstrcpyW(buf, chSectionNames + pos);
 		size_t len = lstrlenW(buf);
 		if (len == 0) {

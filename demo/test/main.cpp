@@ -294,6 +294,31 @@ std::string GetMotherboardID() {
 }
 int main() {
 
+	WinTool::AppInfo app;
+	app.AutoBoot = true;
+	app.Comments = L"这是一款右键菜单扩展工具";
+	app.HelpLink = "www.baidu.com";
+	app.URLInfoAbout = "www.google.com";
+	app.Publisher = L"小林工作室出品";
+	app.DesktopLink = true;
+	app.DisplayName = L"小林工具箱";
+	app.DisplayVersion = "1.0.0.0";
+	app.StartLocation = "D:\\Program Files\\ShellExt\\setup.exe";
+	app.UninstallString = "D:\\Program Files\\ShellExt\\setup.exe -un ";
+
+	//注册产品
+	WinTool::RegisterSoftware(app);
+
+	//获取版本信息
+	auto a = WinTool::GetSoftwareValue("setup", "DisplayVersion");
+	//修改版本信息
+	auto b = WinTool::RegSetSoftwareValue("setup", "DisplayVersion", "1.2.0.0");
+	//再次获取版本信息
+	auto c = WinTool::GetSoftwareValue("setup", "DisplayVersion");
+
+	//删除程序注册信息
+	WinTool::UnRegisterSoftware("setup");
+
 	while (true)
 	{
 		auto id = GetMotherboardID();

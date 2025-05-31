@@ -35,7 +35,7 @@ public:
 	int GetCount();
 	virtual ~UnZiper();
 public:
-	static void UnZip(UnZiper* zip, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
+	static void UnZip(UnZiper* zip, const Text::String& outDir, const std::string& password = "", std::function<void(const Text::String&, int total, int index, bool& stop)> callback = NULL) {
 		for (int i = 0; i < zip->GetCount(); i++)
 		{
 			ZipItem ze;
@@ -57,14 +57,16 @@ public:
 				}
 			}
 			if (callback) {
-				if (callback(itemName, i, zip->GetCount())) {
+				bool stop = false;
+				callback(itemName, zip->GetCount(), i, stop);
+				if (stop) {
 					break;
 				}
 			}
 		}
 	}
 
-	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
+	static void UnZip(const Text::String& zipFileName, const Text::String& outDir, const std::string& password = "", std::function<void(const Text::String&, int total, int index, bool& stop)> callback = NULL) {
 		Directory::Create(outDir);
 		UnZiper zip(zipFileName.unicode(), password);
 		UnZip(&zip, outDir, password, callback);

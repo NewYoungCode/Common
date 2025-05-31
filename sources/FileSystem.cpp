@@ -1,6 +1,8 @@
 #include "FileSystem.h"
 #include <Shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
+#include <shlobj.h>      // SHGetSpecialFolderPathW
+#pragma comment(lib, "shell32.lib")  // 链接 shell32.lib
 //定义....................................................................................................................
 namespace FileSystem {
 	//移除只读属性和系统属性
@@ -112,7 +114,7 @@ namespace File {
 	void WriteFile(const FileStream* fileStream, const Text::String& filename)
 	{
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary | std::ios::app);
+		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary);
 		ofs->write(fileStream->c_str(), fileStream->size());
 		ofs->flush();
 		ofs->close();
@@ -121,7 +123,7 @@ namespace File {
 	void WriteFile(const char* fileStream, size_t count, const Text::String& filename)
 	{
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary | std::ios::app);
+		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary);
 		ofs->write(fileStream, count);
 		ofs->flush();
 		ofs->close();
@@ -135,6 +137,14 @@ namespace File {
 		BOOL cancel = FALSE;
 		auto ret = ::CopyFileExW(src_filename.unicode().c_str(), des_filename.unicode().c_str(), NULL, NULL, &cancel, 0);
 		return ret;
+	}
+	ULONGLONG GetFileSize(const Text::String& fileName) {
+		WIN32_FILE_ATTRIBUTE_DATA fileInfo;
+		if (GetFileAttributesExW(fileName.unicode().c_str(), GetFileExInfoStandard, &fileInfo)) {
+			ULONGLONG size = ((ULONGLONG)fileInfo.nFileSizeHigh << 32) | fileInfo.nFileSizeLow;
+			return size;
+		}
+		return 0;
 	}
 };
 
@@ -278,6 +288,29 @@ namespace Path {
 	Text::String GetFileName(const Text::String& filename) {
 		return Path::GetFileNameWithoutExtension(filename) + Path::GetExtension(filename);
 	}
+
+	Text::String UserDesktop() {
+		WCHAR buf[MAX_PATH]{ 0 };
+		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
+		Text::String userDesktop(buf);
+		return  userDesktop;
+	}
+
+	Text::String StartPrograms() {
+		PWSTR path = nullptr;
+		std::wstring result;
+		HRESULT hr = SHGetKnownFolderPath(FOLDERID_CommonPrograms, 0, NULL, &path);
+		if (SUCCEEDED(hr)) {
+			result = path;
+			CoTaskMemFree(path); // 释放内存
+		}
+		else {
+			// 如果失败你可以选择记录日志或设置默认路径
+			result = L"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs";
+		}
+		return result;
+	}
+
 	Text::String StartPath() {
 		return Path::GetDirectoryName(StartFileName());
 	}

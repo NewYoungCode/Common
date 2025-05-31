@@ -5,7 +5,7 @@
 #include "FileSystem.h"
 class ConfigIni {
 protected:
-	size_t buffSize = 512;
+	size_t buffSize = 1024;
 	Text::String filename;
 	Text::String section;
 	DWORD GetValue(const Text::String& section, const Text::String& key, const Text::String& defaultValue, const Text::String& filename, Text::String& outResult)const;

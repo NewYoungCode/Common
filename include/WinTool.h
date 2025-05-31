@@ -11,6 +11,7 @@
 #include "Text.h"
 #include "FileSystem.h"
 #include "Util.h"
+#include "Time.hpp"
 #include "base64.h"
 
 #ifdef GetUserName
@@ -54,47 +55,49 @@ namespace WinTool {
 		UINT Type;
 	}MyAdpterInfo;
 	struct AppInfo {
-		/// <summary>
 		/// app名称
-		/// </summary>
 		Text::String DisplayName;
-		/// <summary>
 		/// 版本号
-		/// </summary>
 		Text::String DisplayVersion;
-		/// <summary>
-		/// 程序作者
-		/// </summary>
-		Text::String DisplayAuthor;
-		/// <summary>
-		/// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
-		/// </summary>
+		//显示图标
+		Text::String DisplayIcon;
+		// 发布者
+		Text::String Publisher;
+		// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
 		Text::String StartLocation;
-		/// <summary>
-		/// 卸载执行的命令行
-		/// </summary>
+		// 卸载执行的命令行
 		Text::String UninstallString;
-		/// <summary>
-		/// 是否创建桌面快捷方式
-		/// </summary>
-		bool DesktopLnk = true;
-		/// <summary>
-		/// 是否开机启动
-		/// </summary>
+		// 产品帮助链接
+		Text::String HelpLink;
+		//帮助说明[这是一款桌面工具]
+		Text::String Comments;
+		//产品官网
+		Text::String URLInfoAbout;
+		//是否禁用控制面板修改按钮
+		bool NoModify = false;
+		//是否禁用控制面板修复按钮
+		bool NoRepair = false;
+		// 是否创建桌面快捷方式
+		bool DesktopLink = true;
+		// 是否开机启动
 		bool AutoBoot = false;
 	};
 	//给进程提权
 	extern BOOL EnablePrivilege(HANDLE process = NULL);
-	//创建桌面快捷方式
-	extern bool CreateDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName = L"", const Text::String& cmdline = L"", const Text::String& iconFilename = L"");
-	//删除桌面快捷方式
-	extern void DeleteDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName);
+	//创捷快捷方式
+	extern bool CreateLink(const Text::String& pragmaFilename, const Text::String& outDir, const Text::String& LnkName = L"", const Text::String& cmdline = L"", const Text::String& iconFilename = L"");
+	//删除快捷方式
+	extern void DeleteLink(const Text::String& linkDir, const Text::String& pragmaFilename, const Text::String& LnkName = "");
 	/// <summary>
 	/// 删除注册表中某个项及其子项和值
 	/// </summary>
 	/// <param name="hKeyParent: ">HKEY_CURRENT_USER</param>
 	/// <param name="subKey: ">"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR"</param>
 	extern void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey);
+	//获取软件版本信息
+	extern Text::String GetSoftwareValue(const Text::String& appName_en, const Text::String& key);
+	//根据软件名称修改一些信息
+	extern bool RegSetSoftwareValue(const Text::String& appName_en, const Text::String& key, const Text::String& value);
 	//注册软件到电脑
 	extern bool RegisterSoftware(const AppInfo& appInfo);
 	//从电脑上注销软件
@@ -145,10 +148,6 @@ namespace WinTool {
 	/// <param name="path"></param>
 	/// <returns></returns>
 	extern double GetDiskFreeSize(const Text::String& path);
-	//编码 加密
-	extern void EnCode(const File::FileStream* fileData, File::FileStream* outData);
-	//解码 解密
-	extern void DeCode(const File::FileStream* fileData, File::FileStream* outData);
 	/// <summary>
 	/// 直接执行可执行文件并获取返回内容
 	/// </summary>
@@ -203,10 +202,15 @@ namespace WinTool {
 	/// </summary>
 	/// <returns>返回软件名称,安装路径</returns>
 	extern std::map<Text::String, Text::String> GetApps();
-
 	/// <summary>
 	/// 检测程序是否被调试
 	/// </summary>
 	/// <returns></returns>
 	extern bool CheckDebug();
+	/// <summary>
+	/// 检查程序是否正在运行 使用文件独占方式
+	/// </summary>
+	/// <param name="productName"></param>
+	/// <returns></returns>
+	extern bool IsRunning(const Text::String& productName = "");
 };

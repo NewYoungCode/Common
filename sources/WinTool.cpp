@@ -347,7 +347,12 @@ namespace WinTool {
 		CloseHandle(hToken);
 		return bResult;
 	}
-	bool CreateDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName, const Text::String& cmdline, const Text::String& iconFilename) {
+
+	bool CreateLink(const Text::String& pragmaFilename, const Text::String& linkDir, const Text::String& LnkName, const Text::String& cmdline, const Text::String& iconFilename) {
+		if (linkDir.empty() || pragmaFilename.empty()) {
+			wprintf(L"CreateLink失败!\n");
+			return false;
+		}
 		HRESULT hr = CoInitialize(NULL);
 		bool bResult = false;
 		if (SUCCEEDED(hr))
@@ -367,9 +372,7 @@ namespace WinTool {
 				hr = pShellLink->QueryInterface(IID_IPersistFile, (void**)&pPersistFile);
 				if (SUCCEEDED(hr))
 				{
-					WCHAR buf[MAX_PATH]{ 0 };
-					SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-					Text::String userDesktop(buf);
+					Text::String userDesktop(linkDir);
 					if (!LnkName.empty()) {
 						userDesktop += "\\" + LnkName + ".lnk";
 					}
@@ -391,18 +394,19 @@ namespace WinTool {
 		CoUninitialize();
 		return bResult;
 	}
-	void DeleteDesktopLnk(const Text::String& pragmaFilename, const Text::String& LnkName) {
-		WCHAR buf[MAX_PATH]{ 0 };
-		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-		Text::String userDesktop(buf);
+
+	void DeleteLink(const Text::String& linkDir, const Text::String& pragmaFilename, const Text::String& LnkName) {
+		if (linkDir.empty()) {
+			return;
+		}
+		Text::String lnkFile = linkDir;
 		if (!LnkName.empty()) {
-			userDesktop += "\\" + LnkName + ".lnk";
+			lnkFile += "\\" + LnkName + ".lnk";
 		}
 		else {
-			userDesktop += "\\" + Path::GetFileNameWithoutExtension(pragmaFilename) + ".lnk";
+			lnkFile += "\\" + Path::GetFileNameWithoutExtension(pragmaFilename) + ".lnk";
 		}
-		//设置快捷方式地址
-		File::Delete(userDesktop);//删除旧的
+		File::Delete(lnkFile);//删除快捷方式
 	}
 
 	void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey) {
@@ -449,6 +453,12 @@ namespace WinTool {
 		::RegCloseKey(hKey);
 	}
 
+#if defined(_WIN64)
+	const Text::String g_regKeyPath = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+#else
+	const Text::String g_regKeyPath = L"SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+#endif
+
 	LSTATUS RegSetSoftware(HKEY hKey, const Text::String& regKey, const Text::String& regValue) {
 		if (!regValue.empty()) {
 			auto wStr = regValue.unicode();
@@ -456,27 +466,64 @@ namespace WinTool {
 		}
 		return -1;
 	}
-
-	void UnRegisterSoftware(const Text::String& appName_en) {
-		Text::String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+	bool RegSetSoftwareValue(const Text::String& appName_en, const Text::String& key, const Text::String& value) {
+		Text::String regKeyPath = g_regKeyPath;
 		regKeyPath.append("\\" + appName_en);
-		HKEY subKey;
-		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &subKey)) {
-			return;
+
+		HKEY hKey = nullptr;
+
+		// 如果你是 64 位程序写 HKEY_LOCAL_MACHINE，建议使用 KEY_WOW64_64KEY
+		LSTATUS result = RegOpenKeyExW(
+			HKEY_LOCAL_MACHINE,
+			regKeyPath.unicode().c_str(),
+			0,
+			KEY_SET_VALUE | KEY_WOW64_64KEY,
+			&hKey
+		);
+
+		if (result != ERROR_SUCCESS) {
+			wprintf(L"打开注册表失败，错误码: %ld\n", result);
+			return false;
 		}
-		::RegDeleteValueW(subKey, L"DisplayName");
-		::RegDeleteValueW(subKey, L"DisplayVersion");
-		::RegDeleteValueW(subKey, L"Publisher");
-		::RegDeleteValueW(subKey, L"DisplayIcon");
-		::RegDeleteValueW(subKey, L"UninstallString");
-		::RegDeleteValueW(subKey, L"InstallLocation");
-		// 关闭注册表键
-		RegCloseKey(subKey);
+
+		result = RegSetSoftware(hKey, key, value);
+		RegCloseKey(hKey);
+
+		return (result == ERROR_SUCCESS);
+	}
+
+	Text::String GetSoftwareValue(const Text::String& appName_en, const Text::String& key) {
+
+		Text::String regKeyPath = g_regKeyPath;
+		regKeyPath.append("\\" + appName_en);
+
+		HKEY hKey = nullptr;
+		LSTATUS result = RegOpenKeyExW(HKEY_LOCAL_MACHINE, regKeyPath.unicode().c_str(), 0, KEY_READ, &hKey);
+		if (result != ERROR_SUCCESS) {
+			wprintf(L"打开注册表失败，错误码: %ld\n", result);
+			return L""; // 返回空表示获取失败
+		}
+
+		wchar_t versionBuffer[256] = {};
+		DWORD bufferSize = sizeof(versionBuffer);
+		DWORD type = 0;
+
+		result = RegQueryValueExW(hKey, key.unicode().c_str(), nullptr, &type, reinterpret_cast<LPBYTE>(versionBuffer), &bufferSize);
+		RegCloseKey(hKey);
+
+		if (result == ERROR_SUCCESS && type == REG_SZ) {
+			return Text::String(versionBuffer);
+		}
+		else {
+			wprintf(L"读取失败，错误码: %ld\n", result);
+		}
+		return L"";
 	}
 
 	bool RegisterSoftware(const AppInfo& appInfo)
 	{
-		Text::String regKeyPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
+		Text::String regKeyPath = g_regKeyPath;
+
 		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.StartLocation));
 		// 创建注册表项
 		HKEY hKey;
@@ -499,8 +546,8 @@ namespace WinTool {
 		attr.lpSecurityDescriptor = &securityDesc;
 		attr.bInheritHandle = FALSE;
 
-		if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &hKey) || \
-			ERROR_SUCCESS == RegCreateKeyExW(HKEY_CURRENT_USER, regKeyPath.unicode().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL)) {
+		if (ERROR_SUCCESS == RegOpenKeyExW(HKEY_LOCAL_MACHINE, regKeyPath.unicode().c_str(), NULL, KEY_ALL_ACCESS, &hKey) || \
+			ERROR_SUCCESS == RegCreateKeyExW(HKEY_LOCAL_MACHINE, regKeyPath.unicode().c_str(), 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, &attr, &hKey, NULL)) {
 			std::cout << "SUCCESS" << std::endl;
 		}
 		else {
@@ -509,13 +556,27 @@ namespace WinTool {
 
 		RegSetSoftware(hKey, L"DisplayName", appInfo.DisplayName);
 		RegSetSoftware(hKey, L"DisplayVersion", appInfo.DisplayVersion);
-		RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//安装位置
-		RegSetSoftware(hKey, L"Publisher", appInfo.DisplayAuthor);
+		if (!appInfo.DisplayIcon.empty()) {//如果传入了ICON路径
+			RegSetSoftware(hKey, L"DisplayIcon", appInfo.DisplayIcon);
+		}
+		else {
+			//不传用exe文件的图标
+			RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//安装位置
+		}
+		RegSetSoftware(hKey, L"Publisher", appInfo.Publisher);
 		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
 		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//安装位置
 
-		if (appInfo.DesktopLnk) {
-			WinTool::CreateDesktopLnk(appInfo.StartLocation, appInfo.DisplayName);
+		RegSetSoftware(hKey, L"URLInfoAbout", appInfo.URLInfoAbout);
+		RegSetSoftware(hKey, L"HelpLink", appInfo.HelpLink);
+		RegSetSoftware(hKey, L"InstallDate", Time::Now().ToString("yyyy-MM-dd"));//安装日期
+		RegSetSoftware(hKey, L"Comments", appInfo.Comments);
+
+		//创建开始菜单程序
+		CreateLink(appInfo.StartLocation, Path::StartPrograms(), appInfo.DisplayName);
+		if (appInfo.DesktopLink) {
+			//创建桌面快捷方式
+			CreateLink(appInfo.StartLocation, Path::UserDesktop(), appInfo.DisplayName);
 		}
 		if (appInfo.AutoBoot) {
 			WinTool::SetAutoBoot(appInfo.StartLocation, true);
@@ -526,6 +587,37 @@ namespace WinTool {
 		// 关闭注册表键
 		RegCloseKey(hKey);
 		return true;
+	}
+	void UnRegisterSoftware(const Text::String& appName_en) {
+
+		auto DisplayName = GetSoftwareValue(appName_en, "DisplayName");
+		auto StartLocation = GetSoftwareValue(appName_en, "StartLocation");
+
+		//删除开始菜单快捷方式
+		DeleteLink(Path::StartPrograms(), StartLocation, DisplayName);
+		//删除桌面快捷方式
+		DeleteLink(Path::UserDesktop(), StartLocation, DisplayName);
+
+		Text::String regKeyPath = g_regKeyPath;
+		regKeyPath.append("\\" + appName_en);
+
+#if defined(_WIN64)
+		// 对于 64 位注册表
+		LSTATUS result = RegDeleteKeyExW(
+			HKEY_LOCAL_MACHINE,
+			regKeyPath.unicode().c_str(),
+			KEY_WOW64_64KEY,
+			0);
+#else
+		// 对于 32 位注册表
+		LSTATUS result = RegDeleteTreeW(
+			HKEY_LOCAL_MACHINE,
+			regKeyPath.unicode().c_str());
+#endif
+
+		if (result != ERROR_SUCCESS) {
+			wprintf(L"删除注册表失败，错误码: %d\n", result);
+		}
 	}
 
 	//软件许可必要
@@ -1192,5 +1284,20 @@ namespace WinTool {
 		auto b3 = testNtQueryInformationProcess();
 		auto b4 = testNtGlobalFlag();
 		return b1 || b2 || b3 || b4;
+	}
+
+	bool IsRunning(const Text::String& productName)
+	{
+		Text::String lockFile = Path::GetAppDataPath(productName) + "/__running.lock";
+		auto hFile = ::CreateFileW(
+			lockFile.unicode().c_str(),
+			GENERIC_READ | GENERIC_WRITE,
+			0,                      // 不允许共享，独占锁定
+			NULL,
+			OPEN_ALWAYS,
+			FILE_ATTRIBUTE_NORMAL,
+			NULL
+		);
+		return hFile == INVALID_HANDLE_VALUE;
 	}
 }
