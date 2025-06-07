@@ -4,7 +4,7 @@
 #include "Text.h"
 #include "WinTool.h"
 #include "Log.h"
-
+#include <thread>
 //输入字符串
 std::string inputString(const Text::String& tips) {
 	std::string input;
@@ -16,7 +16,7 @@ std::string inputString(const Text::String& tips) {
 // 获取占用文件的进程PID
 std::vector<DWORD> getPid(const Text::String& filePath) {
 	std::vector<DWORD> pidList;
-	Text::String str = WinTool::ExecuteCMD("handle.exe " + filePath);
+	Text::String str = WinTool::ExecuteCMD("handle64.exe " + filePath);
 	auto lines = str.split("\n");
 	for (auto& it : lines) {
 		auto line = it;
@@ -187,6 +187,17 @@ void closeGameBar() {
 	}
 }
 
+void CloseProcess() {
+	for (size_t i = 0; i < 5; i++)
+	{
+		system("taskkill /f /pid msedge.exe >nul");
+		system("taskkill /f /pid msedgewebview.exe >nul");
+		system("taskkill /f /pid msedgewebview1.exe >nul");
+		system("taskkill /f /pid msedgewebview2.exe >nul");
+	}
+}
+
+
 int main() {
 
 	Log::Enable = true;
@@ -208,19 +219,21 @@ int main() {
 	Log::Info(L"将会把C盘部分数据移动至:[%c]盘(不会影响原有数据)", disk);
 	system("pause");
 
+	CloseProcess();
+
+	//new std::thread([] {
+	//	for (;;)
+	//	{
+	//		CloseProcess();
+	//		Sleep(10);
+	//	}
+	//	});
 	//打开游戏的时候关闭gamebar的弹窗
 	closeGameBar();
 
 	//关闭系统休眠
 	system("cmd.exe /c powercfg -h off");
 
-	for (size_t i = 0; i < 5; i++)
-	{
-		system("taskkill /f /pid msedge.exe");
-		system("taskkill /f /pid msedgewebview.exe");
-		system("taskkill /f /pid msedgewebview1.exe");
-		system("taskkill /f /pid msedgewebview2.exe");
-	}
 
 	redirect(L"C:\\Users\\{user}\\Documents", L"?:\\Users\\{user}\\Documents", disk);//文档目录
 	redirect(L"C:\\Users\\{user}\\Downloads", L"?:\\Users\\{user}\\Downloads", disk);//下载目录

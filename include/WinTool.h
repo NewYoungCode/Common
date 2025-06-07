@@ -212,5 +212,5 @@ namespace WinTool {
 	/// </summary>
 	/// <param name="productName"></param>
 	/// <returns></returns>
-	extern bool IsRunning(const Text::String& productName = "");
+	extern bool IsRunning(const Text::String& productName = "", bool lock = true);
 };

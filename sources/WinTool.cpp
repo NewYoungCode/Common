@@ -1286,7 +1286,7 @@ namespace WinTool {
 		return b1 || b2 || b3 || b4;
 	}
 
-	bool IsRunning(const Text::String& productName)
+	bool IsRunning(const Text::String& productName, bool lock)
 	{
 		Text::String lockFile = Path::GetAppDataPath(productName) + "/__running.lock";
 		auto hFile = ::CreateFileW(
@@ -1298,6 +1298,12 @@ namespace WinTool {
 			FILE_ATTRIBUTE_NORMAL,
 			NULL
 		);
-		return hFile == INVALID_HANDLE_VALUE;
+		bool isRun = (hFile == INVALID_HANDLE_VALUE);
+		// 如果没有锁定并且文件成功打开，关闭文件句柄
+		if (!lock && hFile != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(hFile);
+		}
+		return isRun;
 	}
 }
