@@ -294,6 +294,9 @@ std::string GetMotherboardID() {
 }
 int main() {
 
+	
+	WinTool::AddFirewallRule(Path::StartFileName());
+
 	WinTool::AppInfo app;
 	app.AutoBoot = true;
 	app.Comments = L"这是一款右键菜单扩展工具";

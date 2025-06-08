@@ -565,6 +565,7 @@ namespace WinTool {
 		}
 		RegSetSoftware(hKey, L"Publisher", appInfo.Publisher);
 		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
+		RegSetSoftware(hKey, L"StartLocation", appInfo.StartLocation);//程序启动路径
 		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//安装位置
 
 		RegSetSoftware(hKey, L"URLInfoAbout", appInfo.URLInfoAbout);
@@ -1305,5 +1306,18 @@ namespace WinTool {
 			CloseHandle(hFile);
 		}
 		return isRun;
+	}
+	void AddFirewallRule(const Text::String& programFile)
+	{
+		Text::String rullName = Path::GetFileName(programFile) + Util::MD5FromString(programFile);
+		//查询规则
+		auto ret = WinTool::ExecuteCMD("cmd.exe /c netsh advfirewall firewall show rule name=\"" + rullName + "\"");
+		if (ret.find("--------------------------------------") == size_t(-1)) {
+			//不存在就添加规则
+			Text::String cmd = "cmd.exe /c netsh advfirewall firewall add rule name=\"" + rullName + "\" dir=in action=allow program=\"" + programFile + "\" enable=yes";
+			ret = WinTool::ExecuteCMD(cmd);
+		}
+		//删除规则
+		//ret = WinTool::ExecuteCMD("cmd.exe /c netsh advfirewall firewall delete rule name=\"" + rullName + "\"");
 	}
 }

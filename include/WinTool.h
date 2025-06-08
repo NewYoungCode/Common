@@ -63,6 +63,7 @@ namespace WinTool {
 		Text::String DisplayIcon;
 		// 发布者
 		Text::String Publisher;
+		//Text::String InstallLocation;
 		// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
 		Text::String StartLocation;
 		// 卸载执行的命令行
@@ -88,11 +89,7 @@ namespace WinTool {
 	extern bool CreateLink(const Text::String& pragmaFilename, const Text::String& outDir, const Text::String& LnkName = L"", const Text::String& cmdline = L"", const Text::String& iconFilename = L"");
 	//删除快捷方式
 	extern void DeleteLink(const Text::String& linkDir, const Text::String& pragmaFilename, const Text::String& LnkName = "");
-	/// <summary>
 	/// 删除注册表中某个项及其子项和值
-	/// </summary>
-	/// <param name="hKeyParent: ">HKEY_CURRENT_USER</param>
-	/// <param name="subKey: ">"Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR"</param>
 	extern void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey);
 	//获取软件版本信息
 	extern Text::String GetSoftwareValue(const Text::String& appName_en, const Text::String& key);
@@ -142,75 +139,30 @@ namespace WinTool {
 	extern Text::String GetComputerName();
 	//获取网卡相关
 	extern int GetAdptersInfo(std::vector<MyAdpterInfo>& adpterInfo);
-	/// <summary>
 	/// 获取磁盘可以用空间单位:GB
-	/// </summary>
-	/// <param name="path"></param>
-	/// <returns></returns>
 	extern double GetDiskFreeSize(const Text::String& path);
-	/// <summary>
 	/// 直接执行可执行文件并获取返回内容
-	/// </summary>
-	/// <param name="cmdStr"></param>
-	/// <returns></returns>
 	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
-	/// <summary>
-	/// 获取首选网卡的mac地址
-	/// </summary>
-	/// <returns></returns>
+	///获取首选网卡的mac地址
 	extern  Text::String GetMacAddress();
-	/// <summary>
 	/// 获取操作系统的版本号
-	/// </summary>
-	/// <returns></returns>
 	extern Text::String GetWinVersion();
-	/// <summary>
-	/// 选择文件
-	/// </summary>
-	/// <param name="ownerWnd"></param>
-	/// <param name="defaultPath"></param>
-	/// <param name="title"></param>
-	/// <returns></returns>
+	/// 弹出选择文件对话框
 	extern Text::String ShowFileDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a File", const Text::String& filter = "All Files\0*.*\0");
-	/// <summary>
-	/// 选择目录
-	/// </summary>
-	/// <param name="ownerWnd"></param>
-	/// <param name="defaultPath"></param>
-	/// <param name="title"></param>
-	/// <returns></returns>
+	/// 弹出选择目录对话框
 	extern Text::String ShowFolderDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a directory");
-	/// <summary>
 	/// 获取路由信息
-	/// </summary>
-	/// <returns></returns>
 	extern RouterInfo GetRouterInfo();
-	/// <summary>
 	/// 获取电脑的com端口名称
-	/// </summary>
-	/// <returns></returns>
 	extern std::vector<Text::String> GetComPorts();
-	/// <summary>
 	/// 安装带有.inf文件的驱动
-	/// </summary>
-	/// <param name="infPath">.inf文件路径</param>
-	/// <param name="needReboot">是否需要重启</param>
-	/// <returns></returns>
 	extern bool InstallDriver(const Text::String& infPath, bool* needReboot = NULL);
-	/// <summary>
 	/// 获取已安装的应用
-	/// </summary>
-	/// <returns>返回软件名称,安装路径</returns>
 	extern std::map<Text::String, Text::String> GetApps();
-	/// <summary>
 	/// 检测程序是否被调试
-	/// </summary>
-	/// <returns></returns>
 	extern bool CheckDebug();
-	/// <summary>
 	/// 检查程序是否正在运行 使用文件独占方式
-	/// </summary>
-	/// <param name="productName"></param>
-	/// <returns></returns>
 	extern bool IsRunning(const Text::String& productName = "", bool lock = true);
+	/// 添加一个程序到防火墙规则 ps:需要管理员权限运行
+	extern void AddFirewallRule(const Text::String& programFile);
 };
