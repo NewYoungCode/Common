@@ -67,10 +67,13 @@ namespace File {
 		return false;
 	}
 	bool Create(const Text::String& filename) {
+		if (File::Exists(filename)) {
+			return true;
+		}
 		File::Delete(filename);
 		std::ofstream ofs(filename.unicode(), std::ios::binary | std::ios::app);
 		ofs.close();
-		return true;
+		return ofs.good();
 	}
 	bool Delete(const Text::String& filename) {
 		::DeleteFileW(filename.unicode().c_str());

@@ -1,6 +1,7 @@
 #pragma once
 #include "Text.h"
 #include "FileSystem.h"
+#include <Windows.h>
 
 DECLARE_HANDLE(HZIP_Z);
 

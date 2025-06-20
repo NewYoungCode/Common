@@ -1,18 +1,10 @@
 #pragma once
+#include <map>
+#include <functional>
 #include <Windows.h>
 #include <TlHelp32.h>
-#include <ShlObj.h>
-#include <ShObjIdl.h>
-#include <ShlGuid.h>
-#include <psapi.h>
-#include <process.h>
-#include <map>
 
 #include "Text.h"
-#include "FileSystem.h"
-#include "Util.h"
-#include "Time.hpp"
-#include "base64.h"
 
 #ifdef GetUserName
 #undef GetUserName

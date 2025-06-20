@@ -1,4 +1,8 @@
 #include "Text.h"
+#include <Windows.h>
+#include <list>
+#include <sstream>
+#include <iomanip>
 
 #ifdef __TEXT__STRING
 //----------------------------------------------------------------

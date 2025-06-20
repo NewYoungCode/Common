@@ -23,10 +23,11 @@ void ResponseEnCode(const httplib::Request& req, httplib::Response& res, const s
 	u8String computerName = req.get_header_value("computerName");
 	u8String loginUser = req.get_header_value("loginUser");
 
-	cfg.WriteValue("winver", winver, user);
-	cfg.WriteValue("computerName", computerName, user);
-	cfg.WriteValue("loginUser", loginUser, user);
-	cfg.WriteValue("ip", req.remote_addr, user);
+	cfg.SetSection(user);
+	cfg.WriteString("winver", winver);
+	cfg.WriteString("computerName", computerName);
+	cfg.WriteString("loginUser", loginUser);
+	cfg.WriteString("ip", req.remote_addr);
 
 	if (log) {
 		printf("\n");
@@ -42,17 +43,18 @@ void ResponseEnCode(const httplib::Request& req, httplib::Response& res, const s
 void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 {
 	u8String user = req.get_param_value("user");
+	cfg.SetSection(user);
 
-	int count = cfg.ReadInt("count", 0, user);
-	int max = cfg.ReadInt("max", 5, user);
+	int count = cfg.ReadInt("count", 0);
+	int max = cfg.ReadInt("max", 5);
 	//新用户
-	u8String date = cfg.ReadString("reg_date", "", user);
+	u8String date = cfg.ReadString("reg_date", "");
 	if (date.empty()) {
-		cfg.WriteValue("reg_date", Time::Now().ToString(), user);
-		cfg.WriteValue("max", std::to_string(max), user);
-		cfg.WriteValue("count", std::to_string(count), user);
-		cfg.WriteValue("cmd", "", user);
-		cfg.WriteValue("msg", "", user);
+		cfg.WriteString("reg_date", Time::Now().ToString());
+		cfg.WriteString("max", std::to_string(max));
+		cfg.WriteString("count", std::to_string(count));
+		cfg.WriteString("cmd", "");
+		cfg.WriteString("msg", "");
 	}
 	if (count > max) {
 		res.status = 500;
@@ -76,8 +78,8 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 	json["user"] = user;
 	json["max"] = max;
 	json["count"] = count;
-	json["msg"] = cfg.ReadString("msg", "", user);
-	json["cmd"] = cfg.ReadString("cmd", "", user);
+	json["msg"] = cfg.ReadString("msg", "");
+	json["cmd"] = cfg.ReadString("cmd", "");
 
 	ResponseEnCode(req, res, json.toString(), "text/plain", log);
 	if (log) {
@@ -101,9 +103,10 @@ int main(int count, const char** args)
 	//向服务器报告使用次数
 	svr.Get("/reportFlashROW", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
-		int count = cfg.ReadInt("count", 0, user);
+		cfg.SetSection(user);
+		int count = cfg.ReadInt("count", 0);
 		count++;
-		cfg.WriteValue("count", std::to_string(count), user);
+		cfg.WriteString("count", std::to_string(count));
 		ResponseEnCode(req, res, std::to_string(count), "text/plain");
 		Log::Info(L"[%s]刚刚刷了国际版:%d", user.c_str(), count);
 		});
@@ -113,9 +116,11 @@ int main(int count, const char** args)
 		u8String user = req.get_param_value("user");
 		u8String mode = req.get_param_value("mode");
 
-		int count = cfg.ReadInt("count", 0, user);
+		cfg.SetSection(user);
+
+		int count = cfg.ReadInt("count", 0);
 		count++;
-		cfg.WriteValue("count", std::to_string(count), user);
+		cfg.WriteString("count", std::to_string(count));
 		ResponseEnCode(req, res, std::to_string(count), "text/plain");
 		Log::Info(L"[%s][%s]已请求解锁:%d", user.c_str(), mode.c_str(), count);
 		});
@@ -123,9 +128,11 @@ int main(int count, const char** args)
 	svr.Get("/reportDownload", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
 		u8String btn = req.get_param_value("btn");
-		int count = cfg.ReadInt("count", 0, user);
+		cfg.SetSection(user);
+
+		int count = cfg.ReadInt("count", 0);
 		count++;
-		cfg.WriteValue("count", std::to_string(count), user);
+		cfg.WriteString("count", std::to_string(count));
 		ResponseEnCode(req, res, std::to_string(count), "text/plain");
 		Log::Info(L"[%s]已点击下载按钮:[%s]", user.c_str(), btn.c_str());
 		});
@@ -133,9 +140,11 @@ int main(int count, const char** args)
 	svr.Get("/reportButton", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
 		u8String btn = req.get_param_value("btn");
-		int count = cfg.ReadInt("count", 0, user);
+		cfg.SetSection(user);
+
+		int count = cfg.ReadInt("count", 0);
 		count++;
-		cfg.WriteValue("count", std::to_string(count), user);
+		cfg.WriteString("count", std::to_string(count));
 		ResponseEnCode(req, res, std::to_string(count), "text/plain");
 		Log::Info(L"[%s]已点击按钮:[%s]", user.c_str(), btn.c_str());
 		});
@@ -143,8 +152,10 @@ int main(int count, const char** args)
 	//重置刷机次数
 	svr.Get("/reset", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
+		cfg.SetSection(user);
+
 		int count = 0;
-		cfg.WriteValue("count", std::to_string(count), user);
+		cfg.WriteString("count", std::to_string(count));
 		ResponseEnCode(req, res, std::to_string(count), "text/plain");
 		Log::Info(L"[%s]刷机次数已重置:%d", user.c_str(), count);
 		});
@@ -158,7 +169,9 @@ int main(int count, const char** args)
 	svr.Get("/admin/setcount", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
 		u8String count = req.get_param_value("count");
-		cfg.WriteValue("count", count, user);
+		cfg.SetSection(user);
+
+		cfg.WriteString("count", count);
 		res.set_content(u8String(L"当前使用次数修改完毕") + count, "text/plain;charset=utf-8");
 		Log::Info(L"[%s]修改用户使用次数:%s", user.c_str(), count.c_str());
 		});
@@ -166,7 +179,9 @@ int main(int count, const char** args)
 	svr.Get("/admin/setmax", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
 		u8String max = req.get_param_value("max");
-		cfg.WriteValue("max", max, user);
+		cfg.SetSection(user);
+
+		cfg.WriteString("max", max);
 		res.set_content(u8String(L"最大使用次数修改完毕") + max, "text/plain;charset=utf-8");
 		Log::Info(L"[%s]修改用户最大使用次数:%s", user.c_str(), max.c_str());
 		});

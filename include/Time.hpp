@@ -3,6 +3,8 @@
 #include <time.h>
 #include <string>
 #include "Text.h"
+#include <sstream>
+#include <iomanip>
 
 class Time {
 	time_t _time;

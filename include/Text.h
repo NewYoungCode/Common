@@ -1,10 +1,7 @@
 #pragma once
-#include <Windows.h>
-#include <list>
 #include <vector>
 #include <string>
-#include <sstream>
-#include <iomanip>
+#include <Windows.h>
 
 #ifndef __EZUI__STRING
 #define __TEXT__STRING

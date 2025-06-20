@@ -1,8 +1,7 @@
 #pragma once
-#include <sys/stat.h>
-#include <direct.h>
 #include <functional>
 #include <fstream>
+#include <Windows.h>
 #include "Text.h"
 
 namespace FileSystem {

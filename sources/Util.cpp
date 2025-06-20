@@ -1,5 +1,12 @@
 #include "Util.h"
 #include <stdexcept>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <assert.h>
+#include <iomanip>
+#include <corecrt_io.h>
+
 typedef unsigned char byte;
 typedef unsigned int uint32;
 typedef unsigned int uint4;

@@ -1,12 +1,21 @@
 #include "WinTool.h"
-#pragma comment(lib,"Iphlpapi.lib")
-#pragma comment(lib,"Ws2_32.lib")
 
-#include <Windows.h>
+#include <ShlObj.h>
+#include <ShObjIdl.h>
+#include <ShlGuid.h>
+#include <psapi.h>
+#include <process.h>
 #include <comdef.h>
 #include <Wbemidl.h>
 #include <iostream>
 #pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib,"Iphlpapi.lib")
+#pragma comment(lib,"Ws2_32.lib")
+
+#include "FileSystem.h"
+#include "Util.h"
+#include "Time.hpp"
+#include "base64.h"
 
 namespace WinTool {
 #ifndef FormatError

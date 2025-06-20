@@ -1,12 +1,7 @@
 #pragma once
 #include <Windows.h>
 #include <string>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <assert.h>
-#include <iomanip>
-#include <corecrt_io.h>
+
 namespace Util {
 	//文件的md5
 	std::string MD5FromFile(const std::wstring& filename);
