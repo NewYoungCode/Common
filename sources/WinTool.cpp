@@ -475,7 +475,7 @@ namespace WinTool {
 		}
 		return -1;
 	}
-	bool RegSetSoftwareValue(const Text::String& appName_en, const Text::String& key, const Text::String& value) {
+	bool SetAppValue(const Text::String& appName_en, const Text::String& key, const Text::String& value) {
 		Text::String regKeyPath = g_regKeyPath;
 		regKeyPath.append("\\" + appName_en);
 
@@ -501,7 +501,7 @@ namespace WinTool {
 		return (result == ERROR_SUCCESS);
 	}
 
-	Text::String GetSoftwareValue(const Text::String& appName_en, const Text::String& key) {
+	Text::String GetAppValue(const Text::String& appName_en, const Text::String& key) {
 
 		Text::String regKeyPath = g_regKeyPath;
 		regKeyPath.append("\\" + appName_en);
@@ -529,11 +529,11 @@ namespace WinTool {
 		return L"";
 	}
 
-	bool RegisterSoftware(const AppInfo& appInfo)
+	bool RegisterApp(const AppInfo& appInfo)
 	{
 		Text::String regKeyPath = g_regKeyPath;
 
-		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.StartLocation));
+		regKeyPath.append("\\" + Path::GetFileNameWithoutExtension(appInfo.PragmaFile));
 		// 创建注册表项
 		HKEY hKey;
 
@@ -570,12 +570,18 @@ namespace WinTool {
 		}
 		else {
 			//不传用exe文件的图标
-			RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.StartLocation + "\"");//安装位置
+			RegSetSoftware(hKey, L"DisplayIcon", "\"" + appInfo.PragmaFile + "\"");//安装位置
 		}
 		RegSetSoftware(hKey, L"Publisher", appInfo.Publisher);
 		RegSetSoftware(hKey, L"UninstallString", appInfo.UninstallString);
-		RegSetSoftware(hKey, L"StartLocation", appInfo.StartLocation);//程序启动路径
-		RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.StartLocation));//安装位置
+		RegSetSoftware(hKey, L"PragmaFile", appInfo.PragmaFile);//程序启动路径
+
+		if (!appInfo.InstallLocation.empty()) {
+			RegSetSoftware(hKey, L"InstallLocation", appInfo.InstallLocation);//安装位置
+		}
+		else {
+			RegSetSoftware(hKey, L"InstallLocation", Path::GetDirectoryName(appInfo.PragmaFile));//安装位置
+		}
 
 		RegSetSoftware(hKey, L"URLInfoAbout", appInfo.URLInfoAbout);
 		RegSetSoftware(hKey, L"HelpLink", appInfo.HelpLink);
@@ -583,25 +589,25 @@ namespace WinTool {
 		RegSetSoftware(hKey, L"Comments", appInfo.Comments);
 
 		//创建开始菜单程序
-		CreateLink(appInfo.StartLocation, Path::StartPrograms(), appInfo.DisplayName);
+		CreateLink(appInfo.PragmaFile, Path::StartPrograms(), appInfo.DisplayName);
 		if (appInfo.DesktopLink) {
 			//创建桌面快捷方式
-			CreateLink(appInfo.StartLocation, Path::UserDesktop(), appInfo.DisplayName);
+			CreateLink(appInfo.PragmaFile, Path::UserDesktop(), appInfo.DisplayName);
 		}
 		if (appInfo.AutoBoot) {
-			WinTool::SetAutoBoot(appInfo.StartLocation, true);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, true);
 		}
 		else {
-			WinTool::SetAutoBoot(appInfo.StartLocation, false);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, false);
 		}
 		// 关闭注册表键
 		RegCloseKey(hKey);
 		return true;
 	}
-	void UnRegisterSoftware(const Text::String& appName_en) {
+	void UnRegisterApp(const Text::String& appName_en) {
 
-		auto DisplayName = GetSoftwareValue(appName_en, "DisplayName");
-		auto StartLocation = GetSoftwareValue(appName_en, "StartLocation");
+		auto DisplayName = GetAppValue(appName_en, "DisplayName");
+		auto StartLocation = GetAppValue(appName_en, "StartLocation");
 
 		//删除开始菜单快捷方式
 		DeleteLink(Path::StartPrograms(), StartLocation, DisplayName);

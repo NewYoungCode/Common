@@ -55,9 +55,10 @@ namespace WinTool {
 		Text::String DisplayIcon;
 		// 发布者
 		Text::String Publisher;
-		//Text::String InstallLocation;
-		// 程序启动完整路径 C:\\Program Files\\xxx\xxx.exe //这是必须要传的
-		Text::String StartLocation;
+		//软件安装路径
+		Text::String InstallLocation;
+		// 主程序启动完整路径 C:\\Program Files\\xxx\xxx.exe
+		Text::String PragmaFile;
 		// 卸载执行的命令行
 		Text::String UninstallString;
 		// 产品帮助链接
@@ -83,14 +84,14 @@ namespace WinTool {
 	extern void DeleteLink(const Text::String& linkDir, const Text::String& pragmaFilename, const Text::String& LnkName = "");
 	/// 删除注册表中某个项及其子项和值
 	extern void DeleteKeyRecursively(HKEY hKeyParent, const wchar_t* subKey);
-	//获取软件版本信息
-	extern Text::String GetSoftwareValue(const Text::String& appName_en, const Text::String& key);
+	//获取软件相关信息
+	extern Text::String GetAppValue(const Text::String& appName_en, const Text::String& key);
 	//根据软件名称修改一些信息
-	extern bool RegSetSoftwareValue(const Text::String& appName_en, const Text::String& key, const Text::String& value);
+	extern bool SetAppValue(const Text::String& appName_en, const Text::String& key, const Text::String& value);
 	//注册软件到电脑
-	extern bool RegisterSoftware(const AppInfo& appInfo);
+	extern bool RegisterApp(const AppInfo& appInfo);
 	//从电脑上注销软件
-	extern 	void UnRegisterSoftware(const Text::String& appName_en);
+	extern 	void UnRegisterApp(const Text::String& appName_en);
 	//给软件注册许可
 	extern bool RegisterLicenser(const Text::String& exeFilename, const Text::String& softwareData);
 	//获取软件许可证书

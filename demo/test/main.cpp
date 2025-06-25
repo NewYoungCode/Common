@@ -294,7 +294,7 @@ std::string GetMotherboardID() {
 }
 int main() {
 
-	
+
 	WinTool::AddFirewallRule(Path::StartFileName());
 
 	WinTool::AppInfo app;
@@ -306,21 +306,21 @@ int main() {
 	app.DesktopLink = true;
 	app.DisplayName = L"小林工具箱";
 	app.DisplayVersion = "1.0.0.0";
-	app.StartLocation = "D:\\Program Files\\ShellExt\\setup.exe";
+	app.PragmaFile = "D:\\Program Files\\ShellExt\\setup.exe";
 	app.UninstallString = "D:\\Program Files\\ShellExt\\setup.exe -un ";
 
 	//注册产品
-	WinTool::RegisterSoftware(app);
+	WinTool::RegisterApp(app);
 
 	//获取版本信息
-	auto a = WinTool::GetSoftwareValue("setup", "DisplayVersion");
+	auto a = WinTool::GetAppValue("setup", "DisplayVersion");
 	//修改版本信息
-	auto b = WinTool::RegSetSoftwareValue("setup", "DisplayVersion", "1.2.0.0");
+	auto b = WinTool::SetAppValue("setup", "DisplayVersion", "1.2.0.0");
 	//再次获取版本信息
-	auto c = WinTool::GetSoftwareValue("setup", "DisplayVersion");
+	auto c = WinTool::GetAppValue("setup", "DisplayVersion");
 
 	//删除程序注册信息
-	WinTool::UnRegisterSoftware("setup");
+	WinTool::UnRegisterApp("setup");
 
 	while (true)
 	{

@@ -46,7 +46,7 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 	cfg.SetSection(user);
 
 	int count = cfg.ReadInt("count", 0);
-	int max = cfg.ReadInt("max", 5);
+	int max = cfg.ReadInt("max", 2);
 	//新用户
 	u8String date = cfg.ReadString("reg_date", "");
 	if (date.empty()) {
@@ -118,11 +118,11 @@ int main(int count, const char** args)
 
 		cfg.SetSection(user);
 
-		int count = cfg.ReadInt("count", 0);
-		count++;
-		cfg.WriteString("count", std::to_string(count));
-		ResponseEnCode(req, res, std::to_string(count), "text/plain");
-		Log::Info(L"[%s][%s]已请求解锁:%d", user.c_str(), mode.c_str(), count);
+		int unlock = cfg.ReadInt("unlock", 0);
+		unlock++;
+		cfg.WriteString("unlock", std::to_string(unlock));
+		ResponseEnCode(req, res, std::to_string(unlock), "text/plain");
+		Log::Info(L"[%s][%s]已请求解锁:%d", user.c_str(), mode.c_str(), unlock);
 		});
 
 	svr.Get("/reportDownload", [&](const Request& req, httplib::Response& res) {
