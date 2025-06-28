@@ -862,6 +862,9 @@ using Logger = std::function<void(const Request &, const Response &)>;
 
 using SocketOptions = std::function<void(socket_t sock)>;
 
+using callback = std::function<void(const std::string&, const std::string&)>;
+callback cb = [&](const std::string&, const std::string&) {};
+
 namespace detail {
 
 bool set_socket_opt_impl(socket_t sock, int level, int optname,
@@ -4283,6 +4286,7 @@ inline const char *get_header_value(const Headers &headers,
   return def;
 }
 
+
 template <typename T>
 inline bool parse_header(const char *beg, const char *end, T fn) {
   // Skip trailing spaces and tabs.
@@ -5020,8 +5024,10 @@ public:
 
           const auto header = buf_head(pos);
 
-          if (!parse_header(header.data(), header.data() + header.size(),
-                            [&](const std::string &, const std::string &) {})) {
+         
+
+          if (!parse_header<callback>(header.data(), header.data() + header.size(),
+              cb)) {
             is_valid_ = false;
             return false;
           }

@@ -100,6 +100,10 @@ int main(int count, const char** args)
 		NewFunction(req, res, false);
 		});
 
+	svr.Get("/", [&](const Request& req, httplib::Response& res) {
+		res.set_content("hello", "text/plain");
+		});
+
 	//向服务器报告使用次数
 	svr.Get("/reportFlashROW", [&](const Request& req, httplib::Response& res) {
 		u8String user = req.get_param_value("user");
