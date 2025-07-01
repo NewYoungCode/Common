@@ -227,30 +227,38 @@ namespace Directory {
 		return true;
 	}
 	bool Delete(const Text::String& directoryName) {
-		std::vector<FileSystem::FileInfo>result;
+		if (!Directory::Exists(directoryName)) {
+			return true; // 不存在，视为已删除
+		}
+		std::vector<FileSystem::FileInfo> result;
 		Directory::Find(directoryName, result);
+
+		bool allDeleted = true;
 		for (auto& it : result) {
 			if (it.IsFile()) {
 				if (!File::Delete(it.FileName)) {
-					return false;
+					wprintf(L"无法删除文件: %s\n", it.FileName.c_str());
+					allDeleted = false;
 				}
 			}
 			else {
 				if (!Directory::Delete(it.FileName)) {
-					return false;
+					wprintf(L"无法删除子目录: %s\n", it.FileName.c_str());
+					allDeleted = false;
 				}
 			}
 		}
 		if (::RemoveDirectoryW(directoryName.unicode().c_str()) == FALSE) {
 			auto code = ::GetLastError();
 			if (code == 5 && FileSystem::__RemoveAttr_OnlyRead_System(directoryName.unicode())) {
-				return Delete(directoryName.unicode());
+				return Directory::Delete(directoryName.unicode());
 			}
-			wprintf(L"code:%d RemoveDirectory  ERROR %s \n", code, directoryName.unicode().c_str());
+			wprintf(L"RemoveDirectory 错误 %d: %s\n", code, directoryName.unicode().c_str());
 			return false;
 		}
-		return !Directory::Exists(directoryName);
+		return true;
 	}
+
 	size_t Find(const Text::String& path, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileSystem::FileType fileType)
 	{
 		return FileSystem::Find(path, result, pattern, loopSubDir, fileType);

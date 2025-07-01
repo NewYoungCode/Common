@@ -607,12 +607,12 @@ namespace WinTool {
 	void UnRegisterApp(const Text::String& appName_en) {
 
 		auto DisplayName = GetAppValue(appName_en, "DisplayName");
-		auto StartLocation = GetAppValue(appName_en, "StartLocation");
+		auto PragmaFile = GetAppValue(appName_en, "PragmaFile");
 
 		//删除开始菜单快捷方式
-		DeleteLink(Path::StartPrograms(), StartLocation, DisplayName);
+		DeleteLink(Path::StartPrograms(), PragmaFile, DisplayName);
 		//删除桌面快捷方式
-		DeleteLink(Path::UserDesktop(), StartLocation, DisplayName);
+		DeleteLink(Path::UserDesktop(), PragmaFile, DisplayName);
 
 		Text::String regKeyPath = g_regKeyPath;
 		regKeyPath.append("\\" + appName_en);
