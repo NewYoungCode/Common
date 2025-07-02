@@ -3,9 +3,6 @@
 #include <string>
 #include <Windows.h>
 
-#ifndef __EZUI__STRING
-#define __TEXT__STRING
-
 #ifdef _WINDLL
 #define  UI_EXPORT  __declspec(dllexport) 
 #define	 UI_VAR_EXPORT UI_EXPORT
@@ -14,8 +11,9 @@
 #define UI_VAR_EXPORT __declspec(dllimport)
 #endif // _WINDLL
 
-//----------------------------------------------------------------
 namespace Text {
+
+	//-----------------------------------------------Copy Start-----------------------------------------------
 	/// <summary>
 	/// utf8字符串
 	/// </summary>
@@ -37,7 +35,7 @@ namespace Text {
 		std::string ansi() const;
 		void erase(char _ch);
 		void erase(size_t pos, size_t count);
-		String replace(char oldChar, char newChar);
+		String replace(char oldChar, char newChar)const;
 		String replace(const String& oldText, const String& newText, bool allReplace = true)const;
 		String toLower()const;
 		String toUpper()const;
@@ -78,11 +76,7 @@ namespace Text {
 	UI_EXPORT size_t Replace(std::string* str_in_out, const std::string& oldText, const std::string& newText, bool replaceAll = true);
 	UI_EXPORT void Split(const std::string& str_in, const std::string& ch, std::vector<std::string>* strs_out);
 	//
-	UI_EXPORT String ToString(double number, int keepBitSize);
+	UI_EXPORT String ToString(double number, size_t keepBitSize);
+	//-----------------------------------------------Copy End-----------------------------------------------
 };
-using u8String = ::Text::String;
-//----------------------------------------------------------------
-#endif // !__EZUI__STRING
-namespace EzUI {
-	using EString = ::Text::String;
-};
+using u8String = Text::String;
