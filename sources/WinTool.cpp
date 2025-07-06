@@ -143,16 +143,16 @@ namespace WinTool {
 
 	Text::String GetUserName()
 	{
-		WCHAR user[256]{ 0 };
-		DWORD len = 256;
+		WCHAR user[MAX_PATH]{ 0 };
+		DWORD len = MAX_PATH;
 		::GetUserNameW(user, &len);
 		return user;
 	}
 
 	Text::String GetComputerName()
 	{
-		WCHAR computerName[256]{ 0 };
-		DWORD size = 256;
+		WCHAR computerName[MAX_PATH]{ 0 };
+		DWORD size = MAX_PATH;
 		::GetComputerNameW(computerName, &size);
 		return computerName;
 	}
@@ -429,7 +429,7 @@ namespace WinTool {
 		// 获取子项的数量
 		DWORD dwIndex = 0;
 		FILETIME ftLastWriteTime;
-		WCHAR szSubKey[256];
+		WCHAR szSubKey[MAX_PATH];
 		DWORD dwSubKeyLen;
 
 		while (true) {
@@ -513,7 +513,7 @@ namespace WinTool {
 			return L""; // 返回空表示获取失败
 		}
 
-		wchar_t versionBuffer[256] = {};
+		wchar_t versionBuffer[MAX_PATH]{};
 		DWORD bufferSize = sizeof(versionBuffer);
 		DWORD type = 0;
 
@@ -1102,7 +1102,7 @@ namespace WinTool {
 			return;
 		}
 
-		wchar_t keyName[256];
+		wchar_t keyName[MAX_PATH];
 		DWORD keyNameSize;
 		DWORD index = 0;
 

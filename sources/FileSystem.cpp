@@ -328,38 +328,38 @@ namespace Path {
 	Text::String __FileSytem_StartFileName;
 	const Text::String& StartFileName() {
 		if (__FileSytem_StartFileName.empty()) {
-			WCHAR exeFullPath[MAX_PATH]{ 0 };
-			::GetModuleFileNameW(NULL, exeFullPath, MAX_PATH);
-			__FileSytem_StartFileName = exeFullPath;
+			std::vector<wchar_t> wPath(32768);
+			DWORD count = ::GetModuleFileNameW(NULL, wPath.data(), (DWORD)wPath.size());
+			__FileSytem_StartFileName = wPath.data();
 		}
 		return __FileSytem_StartFileName;
 	}
 	Text::String GetTempPath()
 	{
-		WCHAR user[256]{ 0 };
-		DWORD len = 256;
+		WCHAR user[MAX_PATH]{ 0 };
+		DWORD len = MAX_PATH;
 		::GetUserNameW(user, &len);
-		WCHAR temPath[256]{ 0 };
+		WCHAR temPath[MAX_PATH]{ 0 };
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp", user);
 		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
 	Text::String GetAppTempPath(const Text::String& appName)
 	{
-		WCHAR user[256]{ 0 };
-		DWORD len = 256;
+		WCHAR user[MAX_PATH]{ 0 };
+		DWORD len = MAX_PATH;
 		::GetUserNameW(user, &len);
-		WCHAR temPath[256]{ 0 };
+		WCHAR temPath[MAX_PATH]{ 0 };
 		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
 		Directory::Create(temPath);
 		return Text::String(temPath);
 	}
 	Text::String GetAppDataPath(const Text::String& appName)
 	{
-		WCHAR user[256]{ 0 };
-		DWORD len = 256;
+		WCHAR user[MAX_PATH]{ 0 };
+		DWORD len = MAX_PATH;
 		::GetUserNameW(user, &len);
-		WCHAR localPath[256]{ 0 };
+		WCHAR localPath[MAX_PATH]{ 0 };
 		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
 		Directory::Create(localPath);
 		return Text::String(localPath);
