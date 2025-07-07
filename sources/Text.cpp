@@ -72,6 +72,22 @@ namespace Text {
 		Toupper(&str);
 		return str;
 	}
+	String String::trim()const {
+		String data = *this;
+		const char* raw = data.c_str();
+		size_t totalLen = data.size();
+		// 找起始位置
+		size_t start = 0;
+		while (start < totalLen && raw[start] == ' ') {
+			++start;
+		}
+		// 找结束位置（最后一个非空格字符之后的位置）
+		size_t end = totalLen;
+		while (end > start && raw[end - 1] == ' ') {
+			--end;
+		}
+		return std::string(raw + start, end - start);
+	}
 	size_t String::count(const String& value)
 	{
 		size_t count = 0;
