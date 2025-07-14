@@ -42,9 +42,16 @@ namespace PostForm {
 class WebClient
 {
 public:
-	//g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone)
+	struct Content
+	{
+		void* tag = NULL;
+		bool cancel = false;
+		int type = 0;//0:正常请求 1:下载文件
+	};
+private:
+	Content content;
+public:
 	std::function<size_t(char* contents, size_t size, size_t nmemb, void* respone)> CallBack = NULL;
-	std::string* ResponseData = NULL;
 private:
 	void* Init(const std::string& url, std::string* resp, int timeOut);
 	long CleanUp(void* curl, int code);
@@ -55,13 +62,15 @@ public:
 	std::string Proxy;
 	WebClient();
 	virtual ~WebClient();
+	//取消请求/下载
+	void Cancel();
 	void AddHeader(const std::string& key, const std::string& value);
 	void RemoveHeader(const std::string& key);
-	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
 	int HttpGet(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
 	int HttpPost(const std::string& strUrl, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);
-	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* response = NULL, int nTimeout = 60);
+	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
+	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::wstring& outFileName, int nTimeout = 99999);
 	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string* response = NULL, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
-	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout = 60);
+	int SubmitForm(const std::string& strUrl, const std::vector<PostForm::Field>& fieldValues, std::string* response = NULL, int nTimeout = 99999);
 };
 #endif

@@ -12,6 +12,13 @@
 #pragma comment(lib,"Iphlpapi.lib")
 #pragma comment(lib,"Ws2_32.lib")
 
+#include <windows.h>
+#include <taskschd.h>
+
+#pragma comment(lib, "taskschd.lib")
+#pragma comment(lib, "comsuppw.lib")
+#pragma comment(lib, "ole32.lib")
+
 #include "FileSystem.h"
 #include "Util.h"
 #include "Time.hpp"
@@ -278,61 +285,187 @@ namespace WinTool {
 	{
 		return TerminateProcess(hProcess, exitCode);
 	}
-	bool GetAutoBootStatus(const Text::String& filename) {
-		Text::String bootstart = filename.empty() ? Path::StartFileName() : filename;
-		Text::String appName = Path::GetFileNameWithoutExtension(bootstart);
-		bool bResult = false;
-		HKEY subKey;
-		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
-		{
-			return bResult;
-		}
-		//3、判断注册表项是否已经存在
-		WCHAR wBuff[MAX_PATH]{ 0 };
-		DWORD nLength = MAX_PATH;
-		LSTATUS status = RegGetValueW(subKey, NULL, appName.unicode().c_str(), REG_SZ, NULL, wBuff, &nLength);
-		if (status != ERROR_SUCCESS) {
-			Text::String strDir = wBuff;
-			if (Path::GetFileName(strDir) == Path::GetFileName(bootstart)) {
-				bResult = true;
+	bool GetAutoBootStatus(const Text::String& filename, HKEY rootKey) {
+		std::wstring bootstart = filename.empty() ? Path::StartFileName().unicode() : filename.unicode();
+		std::wstring appName = Path::GetFileNameWithoutExtension(bootstart).unicode();
+		const wchar_t* regPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+		HKEY hSubKey = nullptr;
+		if (RegOpenKeyExW(rootKey, regPath, 0, KEY_READ, &hSubKey) == ERROR_SUCCESS) {
+			WCHAR wBuff[MAX_PATH]{ 0 };
+			DWORD size = sizeof(wBuff);
+			if (RegGetValueW(hSubKey, nullptr, appName.c_str(), RRF_RT_REG_SZ, nullptr, wBuff, &size) == ERROR_SUCCESS) {
+				Text::String value = wBuff;
+				if (Path::Equal(bootstart, value)) {
+					RegCloseKey(hSubKey);
+					return true;  // 找到了匹配的启动项
+				}
 			}
+			RegCloseKey(hSubKey);
 		}
-		::RegCloseKey(subKey);
-		return bResult;
+		return false;
 	}
-	bool SetAutoBoot(const Text::String& filename, bool bStatus)
-	{
-		Text::String bootstart = filename.empty() ? Path::StartFileName() : filename;
-		Text::String appName = Path::GetFileNameWithoutExtension(bootstart);
-		HKEY subKey;
-		bool bResult = false;
-		if (ERROR_SUCCESS != RegOpenKeyExW(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Run\\", NULL, KEY_ALL_ACCESS, &subKey))
-		{
-			return false;
-		}
-		do
-		{
-			if (bStatus == true)
-			{
-				auto wStr = bootstart.unicode();
-				if (ERROR_SUCCESS == ::RegSetValueExW(subKey, appName.unicode().c_str(), NULL, REG_SZ, (PBYTE)wStr.c_str(), wStr.size() * 2))
-				{
-					bResult = true;
-					break;
+
+	bool SetAutoBoot(const Text::String& filename, bool bStatus, HKEY rootKey) {
+		Text::String fileName_ = filename.empty() ? Path::StartFileName().unicode() : filename.unicode();
+		fileName_ = fileName_.replace("/", "\\", true);//windows仅支持\\这种斜杠
+
+		std::wstring fileName = fileName_.unicode();
+		std::wstring keyName = Path::GetFileNameWithoutExtension(fileName).unicode();
+		const wchar_t* regPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
+
+		bool success = false;
+		HKEY hSubKey = nullptr;
+		if (RegOpenKeyExW(rootKey, regPath, 0, KEY_SET_VALUE, &hSubKey) == ERROR_SUCCESS) {
+			if (bStatus) {
+				//设置自启动
+				if (RegSetValueExW(hSubKey, keyName.c_str(), 0, REG_SZ,
+					(const BYTE*)fileName.c_str(), (fileName.size() + 1) * sizeof(wchar_t)) == ERROR_SUCCESS) {
+					success = true;
 				}
 			}
-			else
-			{
-				if (ERROR_SUCCESS == ::RegDeleteValueW(subKey, appName.unicode().c_str()))
-				{
-					bResult = true;
-					break;
+			else {
+				//取消自启动
+				if (RegDeleteValueW(hSubKey, keyName.c_str()) == ERROR_SUCCESS) {
+					success = true;
 				}
+			}
+			RegCloseKey(hSubKey);
+		}
+		return success;
+	}
+
+	bool GetTaskBootStatus(const std::wstring& taskName) {
+		bool success = false;
+		HRESULT hr = S_OK;
+		ITaskService* pService = nullptr;
+		ITaskFolder* pRootFolder = nullptr;
+		IRegisteredTask* pTask = nullptr;
+
+		do {
+			hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+			if (FAILED(hr)) break;
+
+			hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+				RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
+				NULL, EOAC_NONE, NULL);
+			if (FAILED(hr)) break;
+
+			hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+				IID_ITaskService, (void**)&pService);
+			if (FAILED(hr) || !pService) break;
+
+			hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+			if (FAILED(hr)) break;
+
+			hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+			if (FAILED(hr)) break;
+
+			hr = pRootFolder->GetTask(_bstr_t(taskName.c_str()), &pTask);
+			if (SUCCEEDED(hr) && pTask) {
+				success = true;
 			}
 		} while (false);
-		::RegCloseKey(subKey);
-		return bResult;
+
+		if (pTask) pTask->Release();
+		if (pRootFolder) pRootFolder->Release();
+		if (pService) pService->Release();
+		CoUninitialize();
+		return success;
 	}
+	bool AddTaskBoot(const std::wstring& taskName, const std::wstring& exeFile) {
+		bool success = false;
+		HRESULT hr = S_OK;
+
+		ITaskService* pService = nullptr;
+		ITaskFolder* pRootFolder = nullptr;
+		ITaskDefinition* pTask = nullptr;
+		IPrincipal* pPrincipal = nullptr;
+		ITriggerCollection* pTriggerCollection = nullptr;
+		ITrigger* pTrigger = nullptr;
+		IActionCollection* pActionCollection = nullptr;
+		IAction* pAction = nullptr;
+		IExecAction* pExecAction = nullptr;
+		IRegisteredTask* pRegisteredTask = nullptr;
+
+		do {
+			hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
+			if (FAILED(hr)) break;
+
+			hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+				RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
+				NULL, EOAC_NONE, NULL);
+			if (FAILED(hr)) break;
+
+			hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+				IID_ITaskService, (void**)&pService);
+			if (FAILED(hr) || !pService) break;
+
+			hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
+			if (FAILED(hr)) break;
+
+			hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
+			if (FAILED(hr)) break;
+
+			// 删除旧任务（忽略错误）
+			pRootFolder->DeleteTask(_bstr_t(taskName.c_str()), 0);
+
+			hr = pService->NewTask(0, &pTask);
+			if (FAILED(hr)) break;
+
+			hr = pTask->get_Principal(&pPrincipal);
+			if (FAILED(hr)) break;
+			pPrincipal->put_RunLevel(TASK_RUNLEVEL_HIGHEST);
+			pPrincipal->put_LogonType(TASK_LOGON_SERVICE_ACCOUNT);
+			pPrincipal->put_UserId(_bstr_t(L"SYSTEM"));
+
+			hr = pTask->get_Triggers(&pTriggerCollection);
+			if (FAILED(hr)) break;
+
+			hr = pTriggerCollection->Create(TASK_TRIGGER_BOOT, &pTrigger);
+			if (FAILED(hr)) break;
+
+			hr = pTask->get_Actions(&pActionCollection);
+			if (FAILED(hr)) break;
+
+			hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
+			if (FAILED(hr)) break;
+
+			hr = pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction);
+			if (FAILED(hr)) break;
+
+			hr = pExecAction->put_Path(_bstr_t(exeFile.c_str()));
+			if (FAILED(hr)) break;
+
+			hr = pRootFolder->RegisterTaskDefinition(
+				_bstr_t(taskName.c_str()),
+				pTask,
+				TASK_CREATE_OR_UPDATE,
+				_variant_t(L"SYSTEM"),
+				_variant_t(),
+				TASK_LOGON_SERVICE_ACCOUNT,
+				_variant_t(L""),
+				&pRegisteredTask);
+			if (FAILED(hr)) break;
+
+			success = true;
+		} while (false);
+
+		if (pRegisteredTask) pRegisteredTask->Release();
+		if (pExecAction) pExecAction->Release();
+		if (pAction) pAction->Release();
+		if (pActionCollection) pActionCollection->Release();
+		if (pTrigger) pTrigger->Release();
+		if (pTriggerCollection) pTriggerCollection->Release();
+		if (pPrincipal) pPrincipal->Release();
+		if (pTask) pTask->Release();
+		if (pRootFolder) pRootFolder->Release();
+		if (pService) pService->Release();
+		CoUninitialize();
+		return success;
+	}
+
+
 	BOOL EnablePrivilege(HANDLE process)
 	{
 		// 得到令牌句柄
@@ -595,10 +728,10 @@ namespace WinTool {
 			CreateLink(appInfo.PragmaFile, Path::UserDesktop(), appInfo.DisplayName);
 		}
 		if (appInfo.AutoBoot) {
-			WinTool::SetAutoBoot(appInfo.PragmaFile, true);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUser ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
 		}
 		else {
-			WinTool::SetAutoBoot(appInfo.PragmaFile, false);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUser ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
 		}
 		// 关闭注册表键
 		RegCloseKey(hKey);

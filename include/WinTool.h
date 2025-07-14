@@ -75,6 +75,8 @@ namespace WinTool {
 		bool DesktopLink = true;
 		// 是否开机启动
 		bool AutoBoot = false;
+		//为所有用户注册
+		bool AllUser = false;
 	};
 	//给进程提权
 	extern BOOL EnablePrivilege(HANDLE process = NULL);
@@ -96,10 +98,14 @@ namespace WinTool {
 	extern bool RegisterLicenser(const Text::String& exeFilename, const Text::String& softwareData);
 	//获取软件许可证书
 	extern Text::String FindLicenser(const Text::String& exeFilename);
-	//设置程序自启动
-	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true);
-	//获取程序自启动状态
-	extern bool GetAutoBootStatus(const Text::String& filename);
+	//设置程序自启动 rootKey参数:HKEY_CURRENT_USER(当前用户), HKEY_LOCAL_MACHINE//所有用户(需要管理员)
+	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true, HKEY rootKey = HKEY_CURRENT_USER);
+	//获取程序自启动状态 rootKey参数:HKEY_CURRENT_USER(当前用户), HKEY_LOCAL_MACHINE//所有用户(需要管理员)
+	extern bool GetAutoBootStatus(const Text::String& filename, HKEY rootKey = HKEY_CURRENT_USER);
+	//检查计划任务
+	extern bool GetTaskBootStatus(const std::wstring& taskName);
+	//添加到启动计划任务
+	extern bool AddTaskBoot(const std::wstring& taskName, const std::wstring& exeFile);
 	//寻找进程中的窗口
 	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息

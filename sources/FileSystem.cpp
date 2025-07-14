@@ -372,22 +372,13 @@ namespace Path {
 	}
 	bool Equal(const Text::String& path1, const Text::String& path2)
 	{
-		WCHAR canonicalPath1[MAX_PATH], canonicalPath2[MAX_PATH];
-		if (!PathCanonicalizeW(canonicalPath1, path1.unicode().c_str())) {
-			return false; // 规范化第一个路径失败
-		}
-		if (!PathCanonicalizeW(canonicalPath2, path2.unicode().c_str())) {
-			return false; // 规范化第二个路径失败
-		}
-		return std::wcscmp(canonicalPath1, canonicalPath2) == 0;
+		Text::String a = path1.trim();
+		a.erase('\\');
+		a.erase('/');
 
-		//auto a = str1;
-		//a = a.replace("\\", "/");
-		//a = a.replace("//", "/");
-
-		//auto b = str1;
-		//b = b.replace("\\", "/");
-		//b = b.replace("//", "/");
-		//return (a == b);
+		Text::String b = path2.trim();
+		b.erase('\\');
+		b.erase('/');
+		return (a == b);
 	}
 };

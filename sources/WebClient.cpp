@@ -34,9 +34,7 @@ bool g_curl_bInit = false;
 std::mutex g_curl_mtx;
 
 //接收响应body
-size_t g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone);
-//接收下载文件
-size_t g_curl_download_callback(char* contents, size_t size, size_t nmemb, void* _fielname);
+size_t g_curl_write_callback(char* contents, size_t size, size_t nmemb, void* respone);
 //接受上传或者下载进度
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow);
 
@@ -53,35 +51,40 @@ WebClient::WebClient() {
 		g_curl_mtx.unlock();
 	}
 }
+
+void WebClient::Cancel() {
+	content.cancel = true;
+}
+
 WebClient::~WebClient() {
-
 }
-size_t __g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone) {
+
+size_t g_curl_write_callback(char* ptr, size_t size, size_t nmemb, void* userdata) {
 	size_t count = size * nmemb;
-	if (respone) {
-		std::string* str = (std::string*)respone;
-		(*str).append(contents, count);
-	}
-	//CURLE_WRITE_ERROR
+	auto* ct = (WebClient::Content*)userdata;
+	do
+	{
+		if (ct == NULL) {
+			break;
+		}
+		if (ct->cancel) {//已取消请求
+			return 0;
+		}
+		if (ct->type == 0) { //基本请求
+			auto* response = (std::string*)ct->tag;
+			response->append(ptr, count);
+			break;
+		}
+		if (ct->type == 1) { //文件下载
+			auto* ofs = (std::ofstream*)ct->tag;
+			ofs->write(ptr, count);
+			ofs->flush();
+			break;
+		}
+	} while (false);
 	return count;
 };
 
-size_t g_curl_receive_callback(char* contents, size_t size, size_t nmemb, void* respone) {
-	WebClient* wc = (WebClient*)respone;
-	if (wc->CallBack) {
-		return wc->CallBack(contents, size, nmemb, wc->ResponseData);
-	}
-	return __g_curl_receive_callback(contents, size, nmemb, wc->ResponseData);
-};
-
-size_t g_curl_download_callback(char* contents, size_t size, size_t nmemb, void* fielname) {
-	std::ofstream  ofs((wchar_t*)fielname, std::ios::app | std::ios::binary);
-	size_t count = size * nmemb;
-	ofs.write(contents, count);
-	ofs.flush();
-	ofs.close();
-	return count;
-}
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow)
 {
 	if (dltotal != 0 && ptr) {
@@ -99,7 +102,10 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 	if (!curl) {
 		return curl;
 	}
-	this->ResponseData = strResponse;
+
+	this->content.type = 0;
+	this->content.cancel = false;
+	this->content.tag = strResponse;
 	if (!Proxy.empty()) {
 		curl_easy_setopt(curl, CURLOPT_PROXY, Proxy.c_str()); //代理服务器地址
 	}
@@ -113,10 +119,8 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);	//根据主机验证证书的名称
 	curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());//设置url地址
 	curl_easy_setopt(curl, CURLOPT_TIMEOUT, nTimeout);//设置超时
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_receive_callback);//接受回调
-
-	//curl_easy_setopt(curl, CURLOPT_WRITEDATA, &strResponse);//
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, this);//
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, &this->content);//
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_write_callback);//接受回调
 
 	for (auto& it : Header) {
 		auto hd = it.first + ":" + it.second;
@@ -182,7 +186,6 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 	curl_formadd(&formpost, &lastptr, CURLFORM_PTRNAME, field.c_str(), CURLFORM_FILE, filename.c_str(), CURLFORM_END);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
 
-
 	if (progressCallback) {
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//接受上传下载进度
 		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//将函数回调函数设置传入指针
@@ -193,7 +196,6 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 	if (formpost) {
 		curl_formfree(formpost);
 	}
-
 
 	return CleanUp(curl, code);
 };
@@ -238,8 +240,10 @@ int WebClient::DownloadFile(const std::string& url, const std::wstring& _filenam
 		return CURLE_FAILED_INIT;
 	}
 	File::Delete(_filename);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_download_callback);//接受下载的回调函数
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, _filename.c_str()); //保存文件名
+
+	std::ofstream ofs(_filename, std::ios::app | std::ios::binary);
+	this->content.tag = &ofs;
+	this->content.type = 1;
 
 	if (progressCallback) {
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//接受上传下载进度
@@ -250,21 +254,24 @@ int WebClient::DownloadFile(const std::string& url, const std::wstring& _filenam
 	CURLcode  code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 };
-int WebClient::FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::string& outFileName, int nTimeout) {
+int WebClient::FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::wstring& outFileName, int nTimeout) {
 
 	std::string resp;
 	CURL* curl = Init(strUrl, &resp, nTimeout);
 	if (!curl) {
 		return CURLE_FAILED_INIT;
 	}
+
+	std::ofstream ofs(outFileName, std::ios::app | std::ios::binary);
+	this->content.tag = &ofs;
+	this->content.type = 1;
+
 	if (!user.empty() && !pwd.empty()) {
 		curl_easy_setopt(curl, CURLOPT_USERPWD, (user + ":" + pwd).c_str());
 	}
 	else {
 		curl_easy_setopt(curl, CURLOPT_USERPWD, "");
 	}
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, g_curl_download_callback);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, outFileName.c_str());
 	CURLcode code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 }
