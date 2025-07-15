@@ -101,11 +101,11 @@ namespace WinTool {
 	//设置程序自启动 rootKey参数:HKEY_CURRENT_USER(当前用户), HKEY_LOCAL_MACHINE//所有用户(需要管理员)
 	extern bool SetAutoBoot(const Text::String& filename = L"", bool enable = true, HKEY rootKey = HKEY_CURRENT_USER);
 	//获取程序自启动状态 rootKey参数:HKEY_CURRENT_USER(当前用户), HKEY_LOCAL_MACHINE//所有用户(需要管理员)
-	extern bool GetAutoBootStatus(const Text::String& filename, HKEY rootKey = HKEY_CURRENT_USER);
+	extern bool IsAutoBoot(const Text::String& _keyName, HKEY rootKey = HKEY_CURRENT_USER);
 	//检查计划任务
-	extern bool GetTaskBootStatus(const std::wstring& taskName);
+	extern bool IsInTask(const Text::String& _taskName);
 	//添加到启动计划任务
-	extern bool AddTaskBoot(const std::wstring& taskName, const std::wstring& exeFile);
+	extern bool AddBootTask(const Text::String& _taskName, const Text::String& _exeFile);
 	//寻找进程中的窗口
 	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息
@@ -143,10 +143,10 @@ namespace WinTool {
 	/// 直接执行可执行文件并获取返回内容
 	extern Text::String ExecuteCMD(const Text::String& cmdStr, std::function<void(const Text::String&)> callback = NULL, HANDLE* outHandle = NULL);
 	///获取首选网卡的mac地址
-	extern  Text::String GetMacAddress();
+	extern Text::String GetMacAddress();
 	/// 获取操作系统的版本号
 	extern Text::String GetWinVersion();
-	/// 弹出选择文件对话框
+	/// 弹出选择文件对话框(filter传入参数的方式存在问题 以后改)
 	extern Text::String ShowFileDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a File", const Text::String& filter = "All Files\0*.*\0");
 	/// 弹出选择目录对话框
 	extern Text::String ShowFolderDialog(HWND ownerWnd = NULL, const Text::String& defaultPath = "", const Text::String& title = "Select a directory");
@@ -164,4 +164,6 @@ namespace WinTool {
 	extern bool IsRunning(const Text::String& productName = "", bool lock = true);
 	/// 添加一个程序到防火墙规则 ps:需要管理员权限运行
 	extern void AddFirewallRule(const Text::String& programFile);
+	//是否接管异常(仅限正式环境调用 使用vs启动会被vs接管异常)
+	extern bool IsExceptionHijacked();
 };

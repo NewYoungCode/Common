@@ -285,21 +285,18 @@ namespace WinTool {
 	{
 		return TerminateProcess(hProcess, exitCode);
 	}
-	bool GetAutoBootStatus(const Text::String& filename, HKEY rootKey) {
-		std::wstring bootstart = filename.empty() ? Path::StartFileName().unicode() : filename.unicode();
-		std::wstring appName = Path::GetFileNameWithoutExtension(bootstart).unicode();
+	bool IsAutoBoot(const Text::String& _keyName, HKEY rootKey) {
+		std::wstring keyName = _keyName.unicode();
 		const wchar_t* regPath = L"Software\\Microsoft\\Windows\\CurrentVersion\\Run";
 
 		HKEY hSubKey = nullptr;
 		if (RegOpenKeyExW(rootKey, regPath, 0, KEY_READ, &hSubKey) == ERROR_SUCCESS) {
 			WCHAR wBuff[MAX_PATH]{ 0 };
 			DWORD size = sizeof(wBuff);
-			if (RegGetValueW(hSubKey, nullptr, appName.c_str(), RRF_RT_REG_SZ, nullptr, wBuff, &size) == ERROR_SUCCESS) {
+			if (RegGetValueW(hSubKey, nullptr, keyName.c_str(), RRF_RT_REG_SZ, nullptr, wBuff, &size) == ERROR_SUCCESS) {
 				Text::String value = wBuff;
-				if (Path::Equal(bootstart, value)) {
-					RegCloseKey(hSubKey);
-					return true;  // 找到了匹配的启动项
-				}
+				RegCloseKey(hSubKey);
+				return true;  // 找到了匹配的启动项
 			}
 			RegCloseKey(hSubKey);
 		}
@@ -335,7 +332,8 @@ namespace WinTool {
 		return success;
 	}
 
-	bool GetTaskBootStatus(const std::wstring& taskName) {
+	bool IsInTask(const Text::String& _taskName) {
+		std::wstring taskName = _taskName.unicode();
 		bool success = false;
 		HRESULT hr = S_OK;
 		ITaskService* pService = nullptr;
@@ -373,7 +371,11 @@ namespace WinTool {
 		CoUninitialize();
 		return success;
 	}
-	bool AddTaskBoot(const std::wstring& taskName, const std::wstring& exeFile) {
+	bool AddBootTask(const Text::String& _taskName, const Text::String& _exeFile) {
+
+		std::wstring taskName = _taskName.unicode();
+		std::wstring exeFile = _exeFile.unicode();
+
 		bool success = false;
 		HRESULT hr = S_OK;
 
@@ -1312,6 +1314,22 @@ namespace WinTool {
 	bool testNtPort(_NtQueryInformationProcess NtQueryInformationProcess);
 	bool testNtObjectHandle(_NtQueryInformationProcess NtQueryInformationProcess);
 	bool testFlag(_NtQueryInformationProcess NtQueryInformationProcess);
+	bool IsExceptionHijacked()
+	{
+		volatile int triggered = 0;
+		__try {
+			// 故意触发异常（非法指针解引用）
+			volatile int* p = nullptr;
+			triggered = *p; // 访问 0 地址
+			printf("%d", triggered);
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER) {
+			// 如果进入这里，说明异常被我们程序自己捕获了
+			return false; // 未被劫持
+		}
+		// 如果能走到这里，说明异常没有被捕获，可能被调试器接管了
+		return true;
+	}
 
 	bool testBeginDebugged()
 	{

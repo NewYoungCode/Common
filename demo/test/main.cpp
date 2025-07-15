@@ -1,166 +1,384 @@
+#include "test.h"
+
+//int main() {
+//
+//	Text::String linkName = L"C:\\Users\\ly\\Downloads";
+//	Text::String target = L"D:\\down";
+//
+//	Text::String cmd = "cmd.exe /c mklink /j " + linkName + " " + target;
+//	auto ret = WinTool::ExecuteCmdLine(cmd);
+//
+//	//新增openssl,zlib库
+//
+//	std::cout << "PCID:" << WinTool::GetComputerID() << std::endl;
+//
+//	//二维码的使用
+//	//QrenCode::Generate("https://www.baidu.com", L"d:/aa.bmp");
+//	auto bmp = QrenCode::Generate("https://www.baidu.com");
+//	::DeleteObject(bmp);
+//
+//	WinTool::GetWinVersion();
+//
+//	JsonValue obj("aa");
+//	Json::Value jv;
+//
+//	WebClient wc;
+//
+//	Text::String resp;
+//	wc.HttpGet("https://songsearch.kugou.com/song_search_v2?platform=WebFilter&pagesize=20&page=1&keyword=dj", &resp);
+//
+//	auto w = resp.ansi();
+//	std::cout << w;
+//
+//	obj = jv;
+//
+//	//获取com端口名称
+//	auto coms = WinTool::GetComPorts();
+//
+//	return 0;
+//}
+//
 #include <windows.h>
-#include <taskschd.h>
 #include <comdef.h>
-#include <string>
+#include <Wbemidl.h>
 #include <iostream>
+#pragma comment(lib, "wbemuuid.lib")
 
-#pragma comment(lib, "taskschd.lib")
-#pragma comment(lib, "comsuppw.lib")
-#pragma comment(lib, "ole32.lib")
+std::wstring lastCmd;
+IWbemServices* pSvc = nullptr;
 
-bool GetTaskBootStatus(const std::wstring& taskName) {
-    bool success = false;
-    HRESULT hr = S_OK;
-    ITaskService* pService = nullptr;
-    ITaskFolder* pRootFolder = nullptr;
-    IRegisteredTask* pTask = nullptr;
+bool initWMI() {
+	HRESULT hres;
 
-    do {
-        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-        if (FAILED(hr)) break;
+	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) return false;
 
-        hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
-            RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
-            NULL, EOAC_NONE, NULL);
-        if (FAILED(hr)) break;
+	hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+	if (FAILED(hres)) return false;
 
-        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
-            IID_ITaskService, (void**)&pService);
-        if (FAILED(hr) || !pService) break;
+	IWbemLocator* pLoc = nullptr;
+	hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+		IID_IWbemLocator, (LPVOID*)&pLoc);
+	if (FAILED(hres)) return false;
 
-        hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
-        if (FAILED(hr)) break;
+	hres = pLoc->ConnectServer(
+		_bstr_t(L"ROOT\\CIMV2"),
+		NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	pLoc->Release();
+	if (FAILED(hres)) return false;
 
-        hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
-        if (FAILED(hr)) break;
+	hres = CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
+		NULL, RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE);
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pSvc = nullptr;
+		return false;
+	}
 
-        hr = pRootFolder->GetTask(_bstr_t(taskName.c_str()), &pTask);
-        if (SUCCEEDED(hr) && pTask) {
-            success = true;
-        }
-    } while (false);
-
-    if (pTask) pTask->Release();
-    if (pRootFolder) pRootFolder->Release();
-    if (pService) pService->Release();
-    CoUninitialize();
-    return success;
-}
-bool AddTaskBoot(const std::wstring& taskName, const std::wstring& exeFile) {
-    bool success = false;
-    HRESULT hr = S_OK;
-
-    ITaskService* pService = nullptr;
-    ITaskFolder* pRootFolder = nullptr;
-    ITaskDefinition* pTask = nullptr;
-    IPrincipal* pPrincipal = nullptr;
-    ITriggerCollection* pTriggerCollection = nullptr;
-    ITrigger* pTrigger = nullptr;
-    IActionCollection* pActionCollection = nullptr;
-    IAction* pAction = nullptr;
-    IExecAction* pExecAction = nullptr;
-    IRegisteredTask* pRegisteredTask = nullptr;
-
-    do {
-        hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-        if (FAILED(hr)) break;
-
-        hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
-            RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
-            NULL, EOAC_NONE, NULL);
-        if (FAILED(hr)) break;
-
-        hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
-            IID_ITaskService, (void**)&pService);
-        if (FAILED(hr) || !pService) break;
-
-        hr = pService->Connect(_variant_t(), _variant_t(), _variant_t(), _variant_t());
-        if (FAILED(hr)) break;
-
-        hr = pService->GetFolder(_bstr_t(L"\\"), &pRootFolder);
-        if (FAILED(hr)) break;
-
-        // 删除旧任务（忽略错误）
-        pRootFolder->DeleteTask(_bstr_t(taskName.c_str()), 0);
-
-        hr = pService->NewTask(0, &pTask);
-        if (FAILED(hr)) break;
-
-        hr = pTask->get_Principal(&pPrincipal);
-        if (FAILED(hr)) break;
-        pPrincipal->put_RunLevel(TASK_RUNLEVEL_HIGHEST);
-        pPrincipal->put_LogonType(TASK_LOGON_SERVICE_ACCOUNT);
-        pPrincipal->put_UserId(_bstr_t(L"SYSTEM"));
-
-        hr = pTask->get_Triggers(&pTriggerCollection);
-        if (FAILED(hr)) break;
-
-        hr = pTriggerCollection->Create(TASK_TRIGGER_BOOT, &pTrigger);
-        if (FAILED(hr)) break;
-
-        hr = pTask->get_Actions(&pActionCollection);
-        if (FAILED(hr)) break;
-
-        hr = pActionCollection->Create(TASK_ACTION_EXEC, &pAction);
-        if (FAILED(hr)) break;
-
-        hr = pAction->QueryInterface(IID_IExecAction, (void**)&pExecAction);
-        if (FAILED(hr)) break;
-
-        hr = pExecAction->put_Path(_bstr_t(exeFile.c_str()));
-        if (FAILED(hr)) break;
-
-        hr = pRootFolder->RegisterTaskDefinition(
-            _bstr_t(taskName.c_str()),
-            pTask,
-            TASK_CREATE_OR_UPDATE,
-            _variant_t(L"SYSTEM"),
-            _variant_t(),
-            TASK_LOGON_SERVICE_ACCOUNT,
-            _variant_t(L""),
-            &pRegisteredTask);
-        if (FAILED(hr)) break;
-
-        success = true;
-    } while (false);
-
-    if (pRegisteredTask) pRegisteredTask->Release();
-    if (pExecAction) pExecAction->Release();
-    if (pAction) pAction->Release();
-    if (pActionCollection) pActionCollection->Release();
-    if (pTrigger) pTrigger->Release();
-    if (pTriggerCollection) pTriggerCollection->Release();
-    if (pPrincipal) pPrincipal->Release();
-    if (pTask) pTask->Release();
-    if (pRootFolder) pRootFolder->Release();
-    if (pService) pService->Release();
-    CoUninitialize();
-    return success;
+	return true;
 }
 
-#include "WinTool.h"
-int wmain() {
+void find(const std::wstring& exeName) {
+	if (!pSvc) return;
 
-    WinTool::SetAutoBoot(L"C:/Program Files/Ezboo/ezboo.exe", true);
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	HRESULT hres = pSvc->ExecQuery(
+		bstr_t("WQL"),
+		bstr_t("SELECT ProcessId, Name, CommandLine FROM Win32_Process"),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL,
+		&pEnumerator);
 
-    WinTool::GetAutoBootStatus(L"C:/Program Files/Ezboo/ezboo.exe");
+	if (FAILED(hres)) return;
 
-    WinTool::SetAutoBoot(L"C:/Program Files/Ezboo/ezboo.exe", false);
+	IWbemClassObject* pclsObj = nullptr;
+	ULONG uReturn = 0;
 
-    const std::wstring taskName = L"MyElevatedStartupTask";
-    const std::wstring exePath = L"C:\\Program Files\\Ezboo\\ezboo.exe";
+	while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
+		VARIANT vtName;
+		HRESULT hr = pclsObj->Get(L"Name", 0, &vtName, 0, 0);
+		if (SUCCEEDED(hr) && vtName.vt == VT_BSTR &&
+			exeName == vtName.bstrVal) {
 
-    if (GetTaskBootStatus(taskName)) {
-        std::wcout << L"任务已存在：" << taskName << std::endl;
-    }
-    else {
-        if (AddTaskBoot(taskName, exePath)) {
-            std::wcout << L"已创建系统启动自启任务：" << taskName << std::endl;
-        }
-        else {
-            std::wcerr << L"创建任务失败！" << std::endl;
-        }
-    }
+			VARIANT vtCmd;
+			hr = pclsObj->Get(L"CommandLine", 0, &vtCmd, 0, 0);
+			if (SUCCEEDED(hr) && vtCmd.vt == VT_BSTR) {
+				if (lastCmd != vtCmd.bstrVal && ::lstrlenW(vtCmd.bstrVal) != 0) {
+					std::wcout << L"CommandLine: " << vtCmd.bstrVal << std::endl;
+					lastCmd = vtCmd.bstrVal;
 
-    return 0;
+					VARIANT vtPid;
+					hr = pclsObj->Get(L"ProcessId", 0, &vtPid, 0, 0);
+					if (SUCCEEDED(hr)) {
+						std::wcout << L"PID: " << vtPid.uintVal << std::endl;
+					}
+					VariantClear(&vtPid);
+					std::wcout << L"-----------------------------" << std::endl;
+				}
+			}
+			VariantClear(&vtCmd);
+		}
+		VariantClear(&vtName);
+		pclsObj->Release();
+	}
+
+	pEnumerator->Release();
 }
+
+#pragma comment(lib, "wbemuuid.lib")
+// 获取 WMI 中的 UUID（设备标识符）
+std::string GetDeviceUUID() {
+	std::string result;
+	HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) return "";
+
+	hres = CoInitializeSecurity(
+		NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemLocator* pLoc = nullptr;
+	hres = CoCreateInstance(CLSID_WbemLocator, 0,
+		CLSCTX_INPROC_SERVER, IID_IWbemLocator, (LPVOID*)&pLoc);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemServices* pSvc = nullptr;
+	hres = pLoc->ConnectServer(
+		BSTR(L"ROOT\\CIMV2"), NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	if (FAILED(hres)) {
+		pLoc->Release();
+		CoUninitialize();
+		return "";
+	}
+
+	hres = CoSetProxyBlanket(
+		pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+		RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE);
+
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	hres = pSvc->ExecQuery(
+		BSTR(L"WQL"),
+		BSTR(L"SELECT UUID FROM Win32_ComputerSystemProduct"),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
+
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "";
+	}
+
+	IWbemClassObject* pclsObj = nullptr;
+	ULONG uReturn = 0;
+
+	if (pEnumerator) {
+		while (pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn) == S_OK) {
+			VARIANT vtProp;
+			VariantInit(&vtProp);
+			hres = pclsObj->Get(L"UUID", 0, &vtProp, 0, 0);
+			if (SUCCEEDED(hres) && vtProp.vt == VT_BSTR) {
+				std::wstring wstr(vtProp.bstrVal, SysStringLen(vtProp.bstrVal));
+				result = Text::String(wstr);
+			}
+			VariantClear(&vtProp);
+			pclsObj->Release();
+		}
+		pEnumerator->Release();
+	}
+
+	pSvc->Release();
+	pLoc->Release();
+	CoUninitialize();
+
+	return result;
+}
+std::string GetMotherboardID() {
+	HRESULT hres;
+
+	// 初始化 COM
+	hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+	if (FAILED(hres)) return "COM init failed";
+
+	// 设置默认安全性
+	hres = CoInitializeSecurity(
+		NULL, -1, NULL, NULL,
+		RPC_C_AUTHN_LEVEL_DEFAULT,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE, NULL);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "Security init failed";
+	}
+
+	IWbemLocator* pLoc = nullptr;
+	hres = CoCreateInstance(
+		CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+		IID_IWbemLocator, (LPVOID*)&pLoc);
+	if (FAILED(hres)) {
+		CoUninitialize();
+		return "WbemLocator creation failed";
+	}
+
+	IWbemServices* pSvc = nullptr;
+	hres = pLoc->ConnectServer(
+		_bstr_t(L"ROOT\\CIMV2"),
+		NULL, NULL, 0, NULL, 0, 0, &pSvc);
+	if (FAILED(hres)) {
+		pLoc->Release();
+		CoUninitialize();
+		return "WMI connection failed";
+	}
+
+	hres = CoSetProxyBlanket(
+		pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
+		NULL, RPC_C_AUTHN_LEVEL_CALL,
+		RPC_C_IMP_LEVEL_IMPERSONATE,
+		NULL, EOAC_NONE);
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "SetProxyBlanket failed";
+	}
+
+	IEnumWbemClassObject* pEnumerator = nullptr;
+	hres = pSvc->ExecQuery(
+		bstr_t("WQL"),
+		bstr_t("SELECT SerialNumber FROM Win32_BaseBoard"),
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
+	if (FAILED(hres)) {
+		pSvc->Release();
+		pLoc->Release();
+		CoUninitialize();
+		return "Query failed";
+	}
+
+	IWbemClassObject* pClassObject = nullptr;
+	ULONG uReturn = 0;
+	std::string serialNumber = "unknown";
+
+	if (pEnumerator) {
+		HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pClassObject, &uReturn);
+		if (uReturn > 0 && SUCCEEDED(hr)) {
+			VARIANT vtProp;
+			hr = pClassObject->Get(L"SerialNumber", 0, &vtProp, 0, 0);
+			if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
+				serialNumber = _bstr_t(vtProp.bstrVal);
+				VariantClear(&vtProp);
+			}
+			pClassObject->Release();
+		}
+		pEnumerator->Release();
+	}
+
+	pSvc->Release();
+	pLoc->Release();
+	CoUninitialize();
+
+	return serialNumber;
+}
+int main() {
+
+	bool bind = WinTool::CheckDebug();
+
+	WinTool::AddFirewallRule(Path::StartFileName());
+
+	WinTool::AppInfo app;
+	app.AutoBoot = true;
+	app.Comments = L"这是一款右键菜单扩展工具";
+	app.HelpLink = "www.baidu.com";
+	app.URLInfoAbout = "www.google.com";
+	app.Publisher = L"小林工作室出品";
+	app.DesktopLink = true;
+	app.DisplayName = L"小林工具箱";
+	app.DisplayVersion = "1.0.0.0";
+	app.PragmaFile = "D:\\Program Files\\ShellExt\\setup.exe";
+	app.UninstallString = "D:\\Program Files\\ShellExt\\setup.exe -un ";
+
+	//注册产品
+	WinTool::RegisterApp(app);
+
+	//获取版本信息
+	auto a = WinTool::GetAppValue("setup", "DisplayVersion");
+	//修改版本信息
+	auto b = WinTool::SetAppValue("setup", "DisplayVersion", "1.2.0.0");
+	//再次获取版本信息
+	auto c = WinTool::GetAppValue("setup", "DisplayVersion");
+
+	//删除程序注册信息
+	WinTool::UnRegisterApp("setup");
+
+	while (true)
+	{
+		auto id = GetMotherboardID();
+		auto id2 = GetDeviceUUID();
+	}
+
+	auto data = WinTool::ExecuteCMD("fh_loader.exe");
+
+	::MessageBox(0, data.unicode().c_str(), L"结果", MB_OK);
+	return 0;
+
+	auto file = WinTool::ShowFileDialog(0, "", L"选择镜像文件", "IMG Files (*.img)\0*.img\0");
+	if (File::Exists(file)) {
+		//ExecuteCommand("fastboot flash init_boot \"" + file + "\"");
+	}
+
+	WinTool::GetComputerID();
+
+	while (true)
+	{
+		WinTool::ExecuteCMD("adb devices");
+	}
+
+	//auto ret = WinTool::ExecuteCMD("fastboot devices");
+	/*std::fstream file("D:/Android_Pad_File/tools/TIK-5-169-win/unpack/system_a.img", std::ios::in | std::ios::out | std::ios::binary);
+	file.seekp(0xDCC1BFC0);
+	std::vector<char> zeroData(64, 0);
+	file.write(zeroData.data(), 64);
+	auto b=file.good();
+	file.close();
+	return 0;
+*/
+
+	while (true)
+	{
+		auto apps = WinTool::GetApps();
+		for (auto& it : apps) {
+			Log::Info(it.first);
+			if (it.first.find("USB") != size_t(-1)) {
+				break;
+			}
+		}
+	}
+
+	if (!initWMI()) {
+		std::cerr << "WMI 初始化失败。" << std::endl;
+		return 1;
+	}
+	for (;;) {
+		find(L"fh_loader.exe");
+		Sleep(0); // 稍微调大点避免频繁刷WMI
+	}
+	if (pSvc) {
+		pSvc->Release();
+	}
+	CoUninitialize();
+	return 0;
+}
+
