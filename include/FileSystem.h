@@ -66,11 +66,10 @@ namespace Path {
 	extern Text::String GetDirectoryName(const Text::String& _filename);
 	//获取文件名称+后缀
 	extern Text::String GetFileName(const Text::String& _filename);
-
 	//获取用户桌面路径
-	extern Text::String UserDesktop();
+	extern Text::String UserDesktop(bool publicUser = true);
 	//获取开始菜单路径
-	extern  Text::String  StartPrograms();
+	extern Text::String StartPrograms(bool publicUser = true);
 	//获取文件后缀名(后缀名)
 	extern Text::String GetExtension(const Text::String& _filename);
 	//获取进程所在绝对路径目录

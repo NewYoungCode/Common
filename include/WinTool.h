@@ -34,10 +34,12 @@ namespace WinTool {
 		Text::String IP;
 		Text::String MAC;
 	};
+
 	typedef struct {
 		unsigned long processId;
 		HWND best_handle;
 	}handle_data;
+
 	typedef struct _MyAdpterInfo
 	{
 		std::vector<std::string> Ip;
@@ -46,6 +48,7 @@ namespace WinTool {
 		std::string Name;
 		UINT Type;
 	}MyAdpterInfo;
+
 	struct AppInfo {
 		/// app名称
 		Text::String DisplayName;
@@ -76,7 +79,7 @@ namespace WinTool {
 		// 是否开机启动
 		bool AutoBoot = false;
 		//为所有用户注册
-		bool AllUser = false;
+		bool AllUsers = true;
 	};
 	//给进程提权
 	extern BOOL EnablePrivilege(HANDLE process = NULL);

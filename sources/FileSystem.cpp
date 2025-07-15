@@ -285,6 +285,7 @@ namespace Path {
 		newStr = newStr.substr(bPos + 1, ePos - bPos - 1);
 		return newStr;
 	}
+
 	Text::String GetDirectoryName(const Text::String& _filename) {
 		Text::String str = _filename;
 		Text::String& newStr = str;
@@ -292,32 +293,32 @@ namespace Path {
 		int pos = newStr.rfind("/");
 		return _filename.substr(0, pos);
 	}
+
 	Text::String GetExtension(const Text::String& _filename) {
 		size_t pos = _filename.rfind(".");
 		return pos == size_t(-1) ? "" : _filename.substr(pos);
 	}
+
 	Text::String GetFileName(const Text::String& filename) {
 		return Path::GetFileNameWithoutExtension(filename) + Path::GetExtension(filename);
 	}
 
-	Text::String UserDesktop() {
+	Text::String UserDesktop(bool allUsers) {
 		WCHAR buf[MAX_PATH]{ 0 };
-		SHGetSpecialFolderPathW(0, buf, CSIDL_DESKTOPDIRECTORY, 0);//获取当前用户桌面路径
-		Text::String userDesktop(buf);
-		return  userDesktop;
+		int csidl = allUsers ? CSIDL_COMMON_DESKTOPDIRECTORY : CSIDL_DESKTOPDIRECTORY;
+		if (SHGetSpecialFolderPathW(nullptr, buf, csidl, FALSE)) {
+			return Text::String(buf);
+		}
+		return L""; // 获取失败
 	}
 
-	Text::String StartPrograms() {
+	Text::String StartPrograms(bool allUsers) {
 		PWSTR path = nullptr;
 		std::wstring result;
-		HRESULT hr = SHGetKnownFolderPath(FOLDERID_CommonPrograms, 0, NULL, &path);
+		HRESULT hr = SHGetKnownFolderPath(allUsers ? FOLDERID_CommonPrograms : FOLDERID_Programs, 0, NULL, &path);
 		if (SUCCEEDED(hr)) {
 			result = path;
 			CoTaskMemFree(path); // 释放内存
-		}
-		else {
-			// 如果失败你可以选择记录日志或设置默认路径
-			result = L"C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs";
 		}
 		return result;
 	}
@@ -325,6 +326,7 @@ namespace Path {
 	Text::String StartPath() {
 		return Path::GetDirectoryName(StartFileName());
 	}
+
 	Text::String __FileSytem_StartFileName;
 	const Text::String& StartFileName() {
 		if (__FileSytem_StartFileName.empty()) {
@@ -334,6 +336,7 @@ namespace Path {
 		}
 		return __FileSytem_StartFileName;
 	}
+
 	Text::String GetTempPath()
 	{
 		WCHAR user[MAX_PATH]{ 0 };

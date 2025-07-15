@@ -722,18 +722,19 @@ namespace WinTool {
 		RegSetSoftware(hKey, L"HelpLink", appInfo.HelpLink);
 		RegSetSoftware(hKey, L"InstallDate", Time::Now().ToString("yyyy-MM-dd"));//安装日期
 		RegSetSoftware(hKey, L"Comments", appInfo.Comments);
+		RegSetSoftware(hKey, L"AllUsers", std::to_string(appInfo.AllUsers));
 
 		//创建开始菜单程序
-		CreateLink(appInfo.PragmaFile, Path::StartPrograms(), appInfo.DisplayName);
+		CreateLink(appInfo.PragmaFile, Path::StartPrograms(appInfo.AllUsers), appInfo.DisplayName);
 		if (appInfo.DesktopLink) {
 			//创建桌面快捷方式
-			CreateLink(appInfo.PragmaFile, Path::UserDesktop(), appInfo.DisplayName);
+			CreateLink(appInfo.PragmaFile, Path::UserDesktop(appInfo.AllUsers), appInfo.DisplayName);
 		}
 		if (appInfo.AutoBoot) {
-			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUser ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUsers ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
 		}
 		else {
-			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUser ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
+			WinTool::SetAutoBoot(appInfo.PragmaFile, true, appInfo.AllUsers ? HKEY_LOCAL_MACHINE : HKEY_CURRENT_USER);
 		}
 		// 关闭注册表键
 		RegCloseKey(hKey);
@@ -745,9 +746,12 @@ namespace WinTool {
 		auto PragmaFile = GetAppValue(appName_en, "PragmaFile");
 
 		//删除开始菜单快捷方式
-		DeleteLink(Path::StartPrograms(), PragmaFile, DisplayName);
+		DeleteLink(Path::StartPrograms(true), PragmaFile, DisplayName);
+		DeleteLink(Path::StartPrograms(false), PragmaFile, DisplayName);
+
 		//删除桌面快捷方式
-		DeleteLink(Path::UserDesktop(), PragmaFile, DisplayName);
+		DeleteLink(Path::UserDesktop(true), PragmaFile, DisplayName);
+		DeleteLink(Path::UserDesktop(false), PragmaFile, DisplayName);
 
 		Text::String regKeyPath = g_regKeyPath;
 		regKeyPath.append("\\" + appName_en);

