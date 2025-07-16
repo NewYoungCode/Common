@@ -103,35 +103,45 @@ namespace File {
 		}
 		return true;
 	}
-	void ReadFile(const  Text::String& filename, FileStream* outFileStream) {
+	bool ReadFile(const Text::String& filename, FileStream* outFileStream) {
 		outFileStream->clear();
-		std::ifstream* ifs = new std::ifstream(filename.unicode().c_str(), std::ios::binary);
-		ifs->seekg(0, std::ios::end);
-		auto size = ifs->tellg();
+		std::ifstream ifs(filename.unicode().c_str(), std::ios::binary);
+		if (!ifs.is_open()) {
+			return false;
+		}
+		ifs.seekg(0, std::ios::end);
+		std::streamsize size = ifs.tellg();
+		if (size == std::streamsize(-1)) {
+			return false;
+		}
 		outFileStream->resize(size);
-		ifs->seekg(0);
-		ifs->read((char*)outFileStream->c_str(), size);
-		ifs->close();
-		delete ifs;
+		ifs.seekg(0);
+		ifs.read((char*)outFileStream->c_str(), size);
+		return ifs.good();
 	}
-	void WriteFile(const FileStream* fileStream, const Text::String& filename)
-	{
+
+	bool WriteFile(const FileStream* fileStream, const Text::String& filename) {
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary);
-		ofs->write(fileStream->c_str(), fileStream->size());
-		ofs->flush();
-		ofs->close();
-		delete ofs;
+		std::ofstream ofs(filename.unicode(), std::ios::binary);
+		if (!ofs.is_open()) {
+			return false;
+		}
+		ofs.write(fileStream->c_str(), fileStream->size());
+		ofs.flush();
+		return ofs.good();
 	}
-	void WriteFile(const char* fileStream, size_t count, const Text::String& filename)
-	{
+
+	bool WriteFile(const char* fileStream, size_t count, const Text::String& filename) {
 		File::Delete(filename);
-		std::ofstream* ofs = new std::ofstream(filename.unicode(), std::ios::binary);
-		ofs->write(fileStream, count);
-		ofs->flush();
-		ofs->close();
-		delete ofs;
+		std::ofstream ofs(filename.unicode(), std::ios::binary);
+		if (!ofs.is_open()) {
+			return false;
+		}
+		ofs.write(fileStream, count);
+		ofs.flush();
+		return ofs.good();
 	}
+
 	bool Copy(const Text::String& src_filename, const Text::String& des_filename, bool overwrite)
 	{
 		if (overwrite) {

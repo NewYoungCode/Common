@@ -29,11 +29,11 @@ namespace File {
 	//文件移动或者改名
 	extern bool Move(const Text::String& oldname, const Text::String& newname);
 	//读取文件并out返回
-	extern void ReadFile(const  Text::String& filename, FileStream* fileStream);
+	extern bool ReadFile(const  Text::String& filename, FileStream* fileStream);
 	//写入文件
-	extern void WriteFile(const FileStream* fileStream, const Text::String& filename);
+	extern bool WriteFile(const FileStream* fileStream, const Text::String& filename);
 	//写入文件
-	extern void WriteFile(const char* fileStream, size_t count, const Text::String& filename);
+	extern bool WriteFile(const char* fileStream, size_t count, const Text::String& filename);
 	//拷贝文件
 	extern bool Copy(const  Text::String& filename, const  Text::String& des_filename, bool overwrite = true);
 	//获取文件字节大小
