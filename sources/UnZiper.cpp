@@ -3969,14 +3969,14 @@ bool UnZiper::Find(int index, ZipItem* item)
 {
 	return !FindZipItem((HZIP_U)this->ptr, index, item);;
 }
-bool UnZiper::UnZipItem(const ZipItem& ze, void** data)
+bool UnZiper::UnZipItem(const ZipItem& ze, byte** data)
 {
 	if (ze.isDir()) {
 		return true;
 	}
 	auto ret = 0;
 	if (ze.unc_size > 0) {
-		*data = new char[ze.unc_size];
+		*data = new byte[ze.unc_size];
 		ret = UnzipItem((HZIP_U)this->ptr, ze, *data, ze.unc_size);
 	}
 	return !ret;
