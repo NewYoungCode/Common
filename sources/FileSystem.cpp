@@ -58,13 +58,7 @@ namespace FileSystem {
 namespace File {
 	bool Exists(const Text::String& filename) {
 		DWORD dwAttr = ::GetFileAttributesW(filename.unicode().c_str());
-		if (dwAttr == DWORD(-1)) {
-			return false;
-		}
-		if (dwAttr & FILE_ATTRIBUTE_ARCHIVE) {
-			return true;
-		}
-		return false;
+		return (dwAttr != INVALID_FILE_ATTRIBUTES && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY));
 	}
 	bool Create(const Text::String& filename) {
 		if (File::Exists(filename)) {

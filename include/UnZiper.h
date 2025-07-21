@@ -20,6 +20,7 @@ struct ZipItem
 	}
 };
 
+typedef unsigned char byte;
 /// <summary>
 /// 专门负责解压缩的类
 /// </summary>
