@@ -14,9 +14,9 @@
 namespace Text {
 
 	//-----------------------------------------------Copy Start-----------------------------------------------
-		/// <summary>
-		/// utf8字符串
-		/// </summary>
+	/// <summary>
+	/// utf8字符串
+	/// </summary>
 	class UI_EXPORT String :public std::string {
 	public:
 		String();
@@ -42,7 +42,7 @@ namespace Text {
 		//去除前后空格
 		String trim()const;
 		//find value count
-		size_t count(const String& value);
+		size_t count(const String& value)const;
 		std::vector<String> split(const String& ch)const;
 		bool operator==(const wchar_t* szbuf)const;
 		bool operator==(const std::wstring& wStr)const;
