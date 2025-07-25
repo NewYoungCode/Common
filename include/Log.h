@@ -5,7 +5,6 @@
 #include "Time.hpp"
 namespace Log {
 	//是否启用日志
-	extern bool Enable;
 	extern bool WriteFile;
 	extern void WriteLog(const Text::String& log);
 
@@ -17,7 +16,6 @@ namespace Log {
 	/// <param name="formatStr"></param>
 	/// <param name="...args"></param>
 	inline Text::String Info(const Text::String& formatStr, const T &...args) {
-		if (!Enable)return "";
 		// 计算格式化后的字符串所需的内存大小
 		int bufSize = ::snprintf(nullptr, 0, formatStr.c_str(), args...) + 2;  // +1是为了换行符和结束符 \n '\0'
 		char* buf = new char[bufSize];
@@ -33,5 +31,20 @@ namespace Log {
 		OutputDebugStringA(ansi.c_str());
 		WriteLog(info);
 		return info;
+	}
+
+	template<typename ...T>
+	/// <summary>
+	/// 打印utf8的字符(仅DEBU模式下生效)
+	/// </summary>
+	/// <typeparam name="...T"></typeparam>
+	/// <param name="formatStr"></param>
+	/// <param name="...args"></param>
+	inline Text::String Debug(const Text::String& formatStr, const T &...args) {
+#ifdef  _DEBUG
+		return Info(formatStr.c_str(), std::forward<const T&>(args)...);
+#else
+		return "";
+#endif //  _DEBUG
 	}
 };
