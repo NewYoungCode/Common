@@ -88,7 +88,6 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 }
 int main(int count, const char** args)
 {
-	Log::Enable = true;
 	Log::WriteFile = true;
 	Server svr;
 

@@ -200,7 +200,6 @@ void CloseProcess() {
 
 int main() {
 
-	Log::Enable = true;
 	system("title System optimization");
 
 	auto a = inputString(L"C盘数据移动至哪个盘符?(A-Z):");

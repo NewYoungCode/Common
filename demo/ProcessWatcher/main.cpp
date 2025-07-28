@@ -20,7 +20,6 @@ int main() {
 
 	HWND hwnd = ::GetConsoleWindow();//获取控制台句柄
 
-	Log::Enable = true;
 	std::vector<std::string> list;
 
 	std::string fileData;
