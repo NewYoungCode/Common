@@ -81,6 +81,9 @@ namespace WinTool {
 		//为所有用户注册
 		bool AllUsers = true;
 	};
+
+	//启用生成dmp文件方便进行调试
+	extern void EnableCrashDumps();
 	//给进程提权
 	extern BOOL EnablePrivilege(HANDLE process = NULL);
 	//创捷快捷方式
