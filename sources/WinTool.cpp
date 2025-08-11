@@ -1091,33 +1091,100 @@ namespace WinTool {
 		return vname;
 	}
 
-	Text::String ShowFileDialog(HWND ownerWnd, const Text::String& defaultPath, const Text::String& title, const Text::String& filter) {
+	std::vector<Text::String> GetSelectedFiles(OPENFILENAMEW& ofn) {
+		std::vector<Text::String> files;
+
+		WCHAR* szOpenFileNames = ofn.lpstrFile;
+		WCHAR szPath[MAX_PATH * 2];
+		//把第一个文件名前的复制到szPath,即:
+		//如果只选了一个文件,就复制到最后一个'/'
+		//如果选了多个文件,就复制到第一个NULL字符
+		lstrcpynW(szPath, szOpenFileNames, ofn.nFileOffset);
+		//当只选了一个文件时,下面这个NULL字符是必需的.
+		//这里不区别对待选了一个和多个文件的情况
+		szPath[ofn.nFileOffset] = '\0';
+		int nLen = lstrlenW(szPath);
+
+		if (szPath[nLen - 1] != '\\')   //如果选了多个文件,则必须加上'//'
+		{
+			lstrcatW(szPath, L"\\");
+		}
+
+		WCHAR* p = szOpenFileNames + ofn.nFileOffset; //把指针移到第一个文件
+
+		while (*p)
+		{
+			WCHAR szFileName[MAX_PATH * 2]{ 0 };
+			lstrcatW(szFileName, szPath);  //给文件名加上路径  
+			lstrcatW(szFileName, p);    //加上文件名  
+			files.push_back(szFileName);
+			p += lstrlenW(p) + 1;     //移至下一个文件
+		}
+		return files;
+	}
+
+	std::vector<Text::String> ShowFileDialog(HWND ownerWnd, const Text::String& filter, bool multiSelect) {
+
+		std::vector<Text::String> out;
+
 		OPENFILENAMEW ofn;       // 打开文件对话框结构体
-		WCHAR szFile[512]{ 0 };       // 选择的文件名
+		WCHAR szFile[MAX_PATH * 100]{ 0 };       // 选择的文件名
 		// 初始化OPENFILENAME结构体
 		ZeroMemory(&ofn, sizeof(ofn));
 		ofn.lStructSize = sizeof(ofn);
 		ofn.lpstrFile = szFile;
 		ofn.lpstrFile[0] = '\0';
 		ofn.hwndOwner = ownerWnd;
-		ofn.nMaxFile = sizeof(szFile);
-		ofn.lpstrFilter = L"All Files\0*.*\0";
+		ofn.nMaxFile = sizeof(szFile) / sizeof(WCHAR);
+
+		// 按分号分组
+		auto groups = filter.split(";");
+		std::wstring result;
+		for (const auto& group : groups) {
+			// 组内用逗号分割
+			auto subs = group.split(",");
+
+			// 用分号拼接，Windows过滤器多扩展名间用分号
+			std::wstring combined;
+			for (const auto& sub : subs) {
+				if (!combined.empty()) combined += L";";
+				combined += sub.trim().unicode(); // 去除空白
+			}
+			// 描述文字
+			std::wstring desc = L"(" + combined + L")";
+
+			result.append(desc);
+			result.push_back(L'\0');
+			result.append(combined);
+			result.push_back(L'\0');
+		}
+		result.push_back(L'\0'); // 过滤器字符串双\0结尾
+
+		ofn.lpstrFilter = result.c_str();
 		ofn.nFilterIndex = 1;
+
 		ofn.lpstrFileTitle = NULL;
 		ofn.nMaxFileTitle = 0;
 		ofn.lpstrInitialDir = NULL;
-		ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+		if (multiSelect) {
+			ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT | OFN_EXPLORER | OFN_ENABLESIZING;
+		}
+		else {
+			ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER | OFN_ENABLESIZING;
+		}
 
 		auto oldWorkDir = Path::StartPath();
 		do
 		{
 			// 显示文件对话框
 			if (GetOpenFileNameW(&ofn) == TRUE) {
+				out = GetSelectedFiles(ofn);
 				break;
 			}
 		} while (false);
 		::SetCurrentDirectoryW(oldWorkDir.unicode().c_str());
-		return szFile;
+		return out;
 	}
 
 	Text::String ShowFolderDialog(HWND ownerWnd, const Text::String& defaultPath, const Text::String& title) {
