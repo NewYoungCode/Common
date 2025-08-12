@@ -241,13 +241,13 @@ namespace Directory {
 		for (auto& it : result) {
 			if (it.IsFile()) {
 				if (!File::Delete(it.FileName)) {
-					wprintf(L"无法删除文件: %s\n", it.FileName.c_str());
+					wprintf(L"无法删除文件: %s\n", it.FileName.unicode().c_str());
 					allDeleted = false;
 				}
 			}
 			else {
 				if (!Directory::Delete(it.FileName)) {
-					wprintf(L"无法删除子目录: %s\n", it.FileName.c_str());
+					wprintf(L"无法删除子目录: %s\n", it.FileName.unicode().c_str());
 					allDeleted = false;
 				}
 			}
