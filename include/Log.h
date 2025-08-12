@@ -4,7 +4,7 @@
 #include "FileSystem.h"
 #include "Time.hpp"
 namespace Log {
-	//是否启用日志
+	//是否将输出写入日志文件
 	extern bool WriteFile;
 	extern void WriteLog(const Text::String& log);
 
