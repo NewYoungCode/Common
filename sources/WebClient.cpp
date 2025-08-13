@@ -33,6 +33,12 @@
 bool g_curl_bInit = false;
 std::mutex g_curl_mtx;
 
+struct StructCallback
+{
+	std::function<void(long long dltotal, long long dlnow)> progressCallback;
+	ULONGLONG lastUpdate = 0;
+};
+
 //接收响应body
 size_t g_curl_write_callback(char* contents, size_t size, size_t nmemb, void* respone);
 //接受上传或者下载进度
@@ -87,10 +93,19 @@ size_t g_curl_write_callback(char* ptr, size_t size, size_t nmemb, void* userdat
 
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow)
 {
-	if (dltotal != 0 && ptr) {
-		//下载回调函数
-		typedef std::function<void(long long dltotal, long long dlnow)> ProgressFunc;
-		(*(ProgressFunc*)ptr)(dltotal, dlnow);
+	if (!ptr || dltotal <= 0) return 0;
+
+	StructCallback* cb = static_cast<StructCallback*>(ptr);
+	ULONGLONG tick = ::GetTickCount64();
+	bool isComplete = (dlnow >= dltotal);
+
+	if (!isComplete && tick - cb->lastUpdate < 100) {
+		return 0; // 限制 100ms 更新一次
+	}
+	cb->lastUpdate = tick;
+
+	if (cb->progressCallback) {
+		cb->progressCallback(dltotal, dlnow);
 	}
 	return 0;
 }
@@ -186,9 +201,14 @@ int WebClient::UploadFile(const std::string& url, const std::string& filename, c
 	curl_formadd(&formpost, &lastptr, CURLFORM_PTRNAME, field.c_str(), CURLFORM_FILE, filename.c_str(), CURLFORM_END);
 	curl_easy_setopt(curl, CURLOPT_HTTPPOST, formpost);
 
+	StructCallback struct_cb;
 	if (progressCallback) {
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//接受上传下载进度
-		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//将函数回调函数设置传入指针
+		//curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//将函数回调函数设置传入指针
+		//curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//进度回调
+		struct_cb.progressCallback = progressCallback;
+		struct_cb.lastUpdate = ::GetTickCount64();
+		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &struct_cb);
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//进度回调
 	}
 
@@ -245,9 +265,14 @@ int WebClient::DownloadFile(const std::string& url, const std::wstring& _filenam
 	this->content.tag = &ofs;
 	this->content.type = 1;
 
+	StructCallback struct_cb;
 	if (progressCallback) {
 		curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);//接受上传下载进度
-		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//将函数回调函数设置传入指针
+		//curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &progressCallback);//将函数回调函数设置传入指针
+		//curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//进度回调
+		struct_cb.progressCallback = progressCallback;
+		struct_cb.lastUpdate = ::GetTickCount64();
+		curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &struct_cb);
 		curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, g_curl_progress_callback);//进度回调
 	}
 
