@@ -6,17 +6,17 @@
 
 namespace Text {
 	//-----------------------------------------------Copy Start-----------------------------------------------
-	//size_t String::length() const {
-	//	auto* p = this->c_str();
-	//	size_t pos = 0, count = 0;
-	//	while (p[pos] && pos < this->size()) {
-	//		if ((p[pos] & 0xc0) != 0x80) {
-	//			++count;
-	//		}
-	//		++pos;
-	//	}
-	//	return count;
-	//}
+	size_t String::utf8Length() const {
+		auto* p = this->c_str();
+		size_t pos = 0, count = 0;
+		while (p[pos] && pos < this->size()) {
+			if ((p[pos] & 0xc0) != 0x80) {
+				++count;
+			}
+			++pos;
+		}
+		return count;
+	}
 	String::String() {}
 	String::~String() {}
 	String::String(const String& _right)noexcept :std::string(_right) {}

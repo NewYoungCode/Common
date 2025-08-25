@@ -12,11 +12,10 @@
 #endif // _WINDLL
 
 namespace Text {
-
 	//-----------------------------------------------Copy Start-----------------------------------------------
-	/// <summary>
-	/// utf8字符串
-	/// </summary>
+			/// <summary>
+			/// utf8字符串
+			/// </summary>
 	class UI_EXPORT String :public std::string {
 	public:
 		String();
@@ -29,8 +28,8 @@ namespace Text {
 		String(const char* szbuf)noexcept;
 		String(const wchar_t* szbuf)noexcept;
 		String(const std::wstring& wstr)noexcept;
-		//获取utf8字符串的字符串长度
-		/*virtual size_t length() const final;*/
+		//返回utf8字符个数
+		size_t utf8Length() const;
 		std::wstring unicode() const;
 		std::string ansi() const;
 		void erase(char _ch);
@@ -49,7 +48,7 @@ namespace Text {
 
 		template<typename ...T>
 		inline String format(const T &...args) {
-			auto bufSize = ::snprintf(nullptr, 0, this->c_str(), std::forward<const T&>(args)...) + 1;  // +1是为了'结束符\0'
+			auto bufSize = ::snprintf(NULL, 0, this->c_str(), std::forward<const T&>(args)...) + 1;  // +1是为了'结束符\0'
 			char* buf = new char[bufSize] {0};
 			auto count = ::sprintf_s(buf, bufSize, this->c_str(), std::forward<const T&>(args)...);
 			String ret(buf);
