@@ -22,7 +22,7 @@ float ConfigIni::ReadFloat(const Text::String& key, float defaultValue) {
 			outResult = std::to_string(defaultValue);
 			WriteString(key, outResult);
 		}
-		return std::stoi(outResult);
+		return std::stof(outResult);
 	}
 	catch (const std::exception& ex)
 	{
