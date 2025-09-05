@@ -639,7 +639,7 @@ namespace Util {
 				case '\n': result += "%0A"; break;
 				case '\'': result += "%27"; break;
 				case ',': result += "%2C"; break;
-				case ':': result += "%3A"; break; // ok? probably...
+					//case ':': result += "%3A"; break; // ok? probably...
 				case ';': result += "%3B"; break;
 				default:
 					auto c = static_cast<uint8_t>(s[i]);
