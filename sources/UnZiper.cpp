@@ -3969,7 +3969,7 @@ bool UnZiper::Find(int index, ZipItem* item)
 {
 	return !FindZipItem((HZIP_U)this->ptr, index, item);;
 }
-bool UnZiper::UnZipItem(const ZipItem& ze, byte** data)
+bool UnZiper::UnZipItem(const ZipItem& ze, uint8_t** data)
 {
 	if (ze.isDir()) {
 		return true;

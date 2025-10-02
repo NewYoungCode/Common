@@ -20,7 +20,6 @@ struct ZipItem
 	}
 };
 
-typedef unsigned char byte;
 /// <summary>
 /// 专门负责解压缩的类
 /// </summary>
@@ -32,7 +31,7 @@ public:
 	UnZiper(const char* fileData, unsigned int size, const std::string& password = "");
 	bool Find(const std::string& itemName, ZipItem* item);
 	bool Find(int index, ZipItem* item);
-	bool UnZipItem(const ZipItem& item, byte** data);
+	bool UnZipItem(const ZipItem& item, uint8_t** data);
 	int GetCount();
 	virtual ~UnZiper();
 public:
@@ -50,8 +49,14 @@ public:
 			}
 			else {
 				File::Delete(itemName);
-				byte* data = NULL;
+				uint8_t* data = NULL;
 				zip->UnZipItem(ze, &data);
+
+				Text::String dir = Path::GetDirectoryName(itemName);
+				if (!Directory::Exists(dir)) {
+					Directory::Create(dir);
+				}
+
 				std::ofstream ofs(itemName.unicode(), std::ios::binary);
 				ofs.write((char*)data, ze.unc_size);
 				ofs.flush();
