@@ -1,4 +1,4 @@
-#include "JsonValue.h"
+﻿#include "JsonValue.h"
 #if USEJSONCPP
 //JObject::JObject(const Json::Value&right) {
 //	Json::Value temp(right);

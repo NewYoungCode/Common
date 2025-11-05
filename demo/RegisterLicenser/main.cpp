@@ -1,4 +1,4 @@
-#include <sstream>
+﻿#include <sstream>
 #include "WebClient.h"
 #include "FileSystem.h"
 #include "Text.h"

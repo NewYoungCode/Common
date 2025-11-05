@@ -1,4 +1,4 @@
-#include "Ziper.h"
+﻿#include "Ziper.h"
 #include <tchar.h>
 #pragma warning (disable:4996) 
 

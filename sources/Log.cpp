@@ -1,4 +1,4 @@
-#include "Log.h"
+﻿#include "Log.h"
 namespace Log {
 	//是否启用日志
 	bool WriteFile = true;

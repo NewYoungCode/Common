@@ -1,4 +1,4 @@
-/*
+﻿/*
    base64.cpp and base64.h
 
    base64 encoding and decoding with C++.

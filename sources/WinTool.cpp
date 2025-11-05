@@ -1,4 +1,4 @@
-#include "WinTool.h"
+﻿#include "WinTool.h"
 
 #include <ShlObj.h>
 #include <ShObjIdl.h>
@@ -1342,7 +1342,7 @@ namespace WinTool {
 		return false;
 	}
 
-	void inline __EnumerateInstalledSoftware(HKEY hRootKey, REGSAM viewFlag, std::map<Text::String, Text::String>& list) {
+	inline void  __EnumerateInstalledSoftware(HKEY hRootKey, REGSAM viewFlag, std::map<Text::String, Text::String>& list) {
 		HKEY hKey;
 		const wchar_t* subkey = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall";
 

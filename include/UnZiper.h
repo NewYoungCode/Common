@@ -1,6 +1,18 @@
-#pragma once
+﻿#pragma once
 #include "Text.h"
 #include "FileSystem.h"
+
+// ---------------------------------------------------------------------------
+// ZipUtils  (zip/unzip for Win32 and Windows CE)
+// Original author: Lucian Wischik  (http://www.wischik.com/lu/programmer/zip_utils.html)
+// License: Public Domain
+//
+// This code is released into the public domain. You may freely use it in
+// commercial or non-commercial software, modify it, and redistribute it.
+// No attribution is required, though the original author appreciates mention.
+//
+// Based on zlib by Jean-loup Gailly and Mark Adler.
+// ---------------------------------------------------------------------------
 
 DECLARE_HANDLE(HZIP_U);
 
