@@ -39,6 +39,9 @@ namespace PostForm {
 	};
 }
 
+//全局初始化curl
+extern int CurlGlobalInit();
+
 class WebClient
 {
 public:

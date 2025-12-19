@@ -10,17 +10,17 @@
 #ifdef  _WIN64
 
 #ifdef  _DEBUG
-#pragma comment (lib,"X64/json_libd.lib")
+#pragma comment (lib,"X64/jsoncpp/Debug/jsoncpp.lib")
 #else
-#pragma comment (lib,"X64/json_lib.lib")
+#pragma comment (lib,"X64/jsoncpp/Release/jsoncpp.lib")
 #endif
 
 #else
 
 #ifdef  _DEBUG
-#pragma comment (lib,"json_libd.lib")
+#pragma comment (lib,"jsoncpp/Debug/jsoncpp.lib")
 #else
-#pragma comment (lib,"json_lib.lib")
+#pragma comment (lib,"jsoncpp/Release/jsoncpp.lib")
 #endif
 
 #endif

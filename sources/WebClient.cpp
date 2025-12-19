@@ -31,7 +31,7 @@
 
 //curl的初始化
 bool g_curl_bInit = false;
-std::mutex g_curl_mtx;
+//std::mutex g_curl_mtx;
 
 struct StructCallback
 {
@@ -44,17 +44,23 @@ size_t g_curl_write_callback(char* contents, size_t size, size_t nmemb, void* re
 //接受上传或者下载进度
 int g_curl_progress_callback(void* ptr, __int64 dltotal, __int64 dlnow, __int64 ultotal, __int64 ulnow);
 
+int CurlGlobalInit() {
+	if (!g_curl_bInit) {
+		CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
+		if (code == CURLE_OK) {
+			g_curl_bInit = true;
+		}
+		return code;
+	}
+	return CURLcode::CURLE_OK;
+}
+
 //定义
 WebClient::WebClient() {
 	{
-		g_curl_mtx.lock();
-		if (!g_curl_bInit) {
-			CURLcode code = curl_global_init(CURL_GLOBAL_ALL);
-			if (code == CURLE_OK) {
-				g_curl_bInit = true;
-			}
-		}
-		g_curl_mtx.unlock();
+		//g_curl_mtx.lock();
+		CurlGlobalInit();
+		//g_curl_mtx.unlock();
 	}
 }
 
