@@ -72,22 +72,17 @@ namespace WinTool {
 		HRESULT hres;
 
 		// 初始化 COM
-		hres = CoInitializeEx(0, COINIT_MULTITHREADED);
-		if (FAILED(hres)) return "";
+		hres = ::CoInitializeEx(0, COINIT_MULTITHREADED);
 
 		// 设置默认安全性
-		hres = CoInitializeSecurity(
+		hres = ::CoInitializeSecurity(
 			NULL, -1, NULL, NULL,
 			RPC_C_AUTHN_LEVEL_DEFAULT,
 			RPC_C_IMP_LEVEL_IMPERSONATE,
 			NULL, EOAC_NONE, NULL);
-		if (FAILED(hres)) {
-			CoUninitialize();
-			return "";
-		}
 
 		IWbemLocator* pLoc = nullptr;
-		hres = CoCreateInstance(
+		hres = ::CoCreateInstance(
 			CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
 			IID_IWbemLocator, (LPVOID*)&pLoc);
 		if (FAILED(hres)) {
@@ -347,15 +342,15 @@ namespace WinTool {
 		IRegisteredTask* pTask = nullptr;
 
 		do {
-			hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-			if (FAILED(hr)) break;
+			hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+			//if (FAILED(hr)) break;
 
-			hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+			hr = ::CoInitializeSecurity(NULL, -1, NULL, NULL,
 				RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
 				NULL, EOAC_NONE, NULL);
-			if (FAILED(hr)) break;
+			//if (FAILED(hr)) break;
 
-			hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+			hr = ::CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
 				IID_ITaskService, (void**)&pService);
 			if (FAILED(hr) || !pService) break;
 
@@ -397,15 +392,15 @@ namespace WinTool {
 		IRegisteredTask* pRegisteredTask = nullptr;
 
 		do {
-			hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-			if (FAILED(hr)) break;
+			hr = ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
+			//if (FAILED(hr)) break;
 
-			hr = CoInitializeSecurity(NULL, -1, NULL, NULL,
+			hr = ::CoInitializeSecurity(NULL, -1, NULL, NULL,
 				RPC_C_AUTHN_LEVEL_PKT_PRIVACY, RPC_C_IMP_LEVEL_IMPERSONATE,
 				NULL, EOAC_NONE, NULL);
-			if (FAILED(hr)) break;
+			//if (FAILED(hr)) break;
 
-			hr = CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
+			hr = ::CoCreateInstance(CLSID_TaskScheduler, NULL, CLSCTX_INPROC_SERVER,
 				IID_ITaskService, (void**)&pService);
 			if (FAILED(hr) || !pService) break;
 

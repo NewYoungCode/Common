@@ -60,14 +60,17 @@ private:
 	long CleanUp(void* curl, int code);
 	std::map<std::string, std::string> Header;
 	void* curl_header = NULL;//类型参见 curl_slist
+	std::string cookieStr;
+	std::map<std::string, std::string> Cookies;
 public:
-	std::string Cookies;
 	std::string Proxy;
 	WebClient();
 	virtual ~WebClient();
 	//取消请求/下载
 	void Cancel();
 	void AddHeader(const std::string& key, const std::string& value);
+	void AddCookie(const std::string& key, const std::string& value);
+	Text::String GetCookie()const;
 	void RemoveHeader(const std::string& key);
 	int HttpGet(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
 	int HttpPost(const std::string& strUrl, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);

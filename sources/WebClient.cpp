@@ -133,9 +133,13 @@ CURL* WebClient::Init(const std::string& strUrl, std::string* strResponse, int n
 
 	//初始化cookie引擎
 	curl_easy_setopt(curl, CURLOPT_COOKIEFILE, "");    //初始化cookie引擎,才能正确接收到cookie数据.
-	if (!Cookies.empty()) {
-		curl_easy_setopt(curl, CURLOPT_COOKIE, Cookies.c_str());
+	std::string cookieStr;
+	for (auto& it : Cookies) {
+		if (!cookieStr.empty()) cookieStr += "; ";  // 分号+空格分隔
+		cookieStr += it.first + "=" + it.second;
 	}
+	curl_easy_setopt(curl, CURLOPT_COOKIE, cookieStr.c_str());
+
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, false);	// 验证对方的SSL证书
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, false);	//根据主机验证证书的名称
 	curl_easy_setopt(curl, CURLOPT_URL, strUrl.c_str());//设置url地址
@@ -160,13 +164,19 @@ long WebClient::CleanUp(void* curl, int code) {
 
 		struct curl_slist* cookies = NULL;
 		curl_easy_getinfo((CURL*)curl, CURLINFO_COOKIELIST, &cookies);       //获得cookie数据  
-		int i = 1;
-		while (cookies)
-		{
-			//printf("%s\n", cookies->data);
-			Cookies.append(cookies->data);
-			cookies = cookies->next;
-			i++;
+
+		if (cookies) {
+			cookieStr.clear(); // 清空旧的 cookies，避免累积
+			struct curl_slist* current = cookies;
+			while (current)
+			{
+				if (!cookieStr.empty()) {
+					cookieStr.append("; "); // 添加分隔符
+				}
+				cookieStr.append(current->data);
+				current = current->next;
+			}
+			curl_slist_free_all(cookies); // 释放 cookie list 内存
 		}
 	}
 
@@ -309,6 +319,14 @@ int WebClient::FtpDownLoad(const std::string& strUrl, const std::string& user, c
 void WebClient::AddHeader(const std::string& key, const std::string& value)
 {
 	Header.insert(std::pair<std::string, std::string>(key, value));
+}
+void WebClient::AddCookie(const std::string& key, const std::string& value)
+{
+	Cookies[key] = value;
+}
+Text::String WebClient::GetCookie()const
+{
+	return cookieStr;
 }
 void WebClient::RemoveHeader(const std::string& key)
 {

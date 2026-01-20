@@ -183,7 +183,6 @@ namespace Util {
 			if (length > 0)
 				update(buffer, length);
 		}
-		in.close();
 	}
 
 	/* MD5 block update operation. Continues an MD5 message-digest
@@ -436,18 +435,22 @@ namespace Util {
 
 	std::string Base64Encode(const  char* text, int text_len)
 	{
-		unsigned int i, j;
-		std::string base64Str;
-		for (i = 0, j = 0; i + 3 <= text_len; i += 3)
-		{
-			base64Str += __base64__alphabet_map[text[i] >> 2];                             //取出第一个字符的前6位并找出对应的结果字符
-			base64Str += __base64__alphabet_map[((text[i] << 4) & 0x30) | (text[i + 1] >> 4)];     //将第一个字符的后2位与第二个字符的前4位进行组合并找到对应的结果字符
-			base64Str += __base64__alphabet_map[((text[i + 1] << 2) & 0x3c) | (text[i + 2] >> 6)];   //将第二个字符的后4位与第三个字符的前2位组合并找出对应的结果字符
-			base64Str += __base64__alphabet_map[text[i + 2] & 0x3f];                         //取出第三个字符的后6位并找出结果字符
+		if (!text || text_len <= 0) {
+			return "";
 		}
-		if (i < text_len)
+
+		size_t i, j;
+		std::string base64Str;
+		for (i = 0, j = 0; i + 3 <= (size_t)text_len; i += 3)
 		{
-			unsigned int tail = text_len - i;
+			base64Str += __base64__alphabet_map[text[i] >> 2];
+			base64Str += __base64__alphabet_map[((text[i] << 4) & 0x30) | (text[i + 1] >> 4)];
+			base64Str += __base64__alphabet_map[((text[i + 1] << 2) & 0x3c) | (text[i + 2] >> 6)];
+			base64Str += __base64__alphabet_map[text[i + 2] & 0x3f];
+		}
+		if (i < (size_t)text_len)
+		{
+			size_t tail = text_len - i;
 			if (tail == 1)
 			{
 				base64Str += __base64__alphabet_map[text[i] >> 2];
@@ -471,39 +474,43 @@ namespace Util {
 	}
 	std::string  Base64Decode(const  char* code, int code_len)
 	{
-		//assert();  //如果它的条件返回错误，则终止程序执行。4的倍数。
-		if ((code_len & 0x03) == 0) {
+		if (!code || code_len <= 0) {
+			return "";
+		}
+
+		// Base64 编码后的长度必须是 4 的倍数
+		if ((code_len & 0x03) != 0) {
 			return "";
 		}
 		std::string str;
 
-		unsigned int i, j = 0;
+		size_t i, j = 0;
 		unsigned char quad[4];
-		for (i = 0; i < code_len; i += 4)
+		for (i = 0; i < (size_t)code_len; i += 4)
 		{
 			for (unsigned int k = 0; k < 4; k++)
 			{
-				quad[k] = __base64__reverse_map[code[i + k]];//分组，每组四个分别依次转换为base64表内的十进制数
+				quad[k] = __base64__reverse_map[(unsigned char)code[i + k]];
 			}
 
-			//assert(quad[0] < 64 && quad[1] < 64);
-			if (quad[0] < 64 && quad[1] < 64) {
+			// 检查前两个字符必须是有效的 base64 字符
+			if (quad[0] >= 64 || quad[1] >= 64) {
 				return "";
 			}
 
-			str += (quad[0] << 2) | (quad[1] >> 4); //取出第一个字符对应base64表的十进制数的前6位与第二个字符对应base64表的十进制数的前2位进行组合
+			str += (quad[0] << 2) | (quad[1] >> 4);
 
 			if (quad[2] >= 64)
 				break;
 			else if (quad[3] >= 64)
 			{
-				str += (quad[1] << 4) | (quad[2] >> 2); //取出第二个字符对应base64表的十进制数的后4位与第三个字符对应base64表的十进制数的前4位进行组合
+				str += (quad[1] << 4) | (quad[2] >> 2);
 				break;
 			}
 			else
 			{
 				str += (quad[1] << 4) | (quad[2] >> 2);
-				str += (quad[2] << 6) | quad[3];//取出第三个字符对应base64表的十进制数的后2位与第4个字符进行组合
+				str += (quad[2] << 6) | quad[3];
 			}
 		}
 		return str;
@@ -517,7 +524,7 @@ namespace Util {
 	namespace detail {
 
 		inline bool is_hex(char c, int& v) {
-			if (0x20 <= c && isdigit(c)) {
+			if (isdigit(c)) {
 				v = c - '0';
 				return true;
 			}
@@ -576,7 +583,7 @@ namespace Util {
 				buff[2] = static_cast<char>(0x80 | (code & 0x3F));
 				return 3;
 			}
-			else if (code < 0xE000) { // D800 - DFFF is invalid...
+			else if (code < 0xE000) {
 				return 0;
 			}
 			else if (code < 0x10000) {
