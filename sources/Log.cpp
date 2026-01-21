@@ -11,7 +11,7 @@ namespace Log {
 		Text::String logPath = Path::GetAppTempPath() + "_Log";
 #endif
 		Directory::Create(logPath);
-		Text::String logFile = logPath + "\\" + Time::Now().ToString("yyyy-MM-dd") + ".log";
+		Text::String logFile = logPath + "\\" + DateTime::Now().ToString("yyyy-MM-dd") + ".log";
 		std::ofstream ofs(logFile.unicode(), std::ios::binary | std::ios::app);
 		ofs.write(log.c_str(), log.size());
 		ofs.flush();

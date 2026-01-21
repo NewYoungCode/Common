@@ -27,7 +27,7 @@
 
 #include "FileSystem.h"
 #include "Util.h"
-#include "Time.hpp"
+#include "DateTime.h"
 #include "base64.h"
 
 namespace WinTool {
@@ -757,7 +757,7 @@ namespace WinTool {
 
 		RegSetSoftware(hKey, L"URLInfoAbout", appInfo.URLInfoAbout);
 		RegSetSoftware(hKey, L"HelpLink", appInfo.HelpLink);
-		RegSetSoftware(hKey, L"InstallDate", Time::Now().ToString("yyyy-MM-dd"));//安装日期
+		RegSetSoftware(hKey, L"InstallDate", DateTime::Now().ToString("yyyy-MM-dd"));//安装日期
 		RegSetSoftware(hKey, L"Comments", appInfo.Comments);
 		RegSetSoftware(hKey, L"AllUsers", std::to_string(appInfo.AllUsers));
 

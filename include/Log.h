@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include <iostream>
 #include "FileSystem.h"
-#include "Time.hpp"
+#include "DateTime.h"
 namespace Log {
 	//是否将输出写入日志文件
 	extern bool WriteFile;
@@ -22,7 +22,7 @@ namespace Log {
 		buf[count] = '\n';
 		buf[count + 1] = 0;
 		Text::String info(buf);
-		info = Time::Now().ToString("HH:mm:ss ") + info;
+		info = DateTime::Now().ToString("HH:mm:ss ") + info;
 		delete[] buf;
 		//转为本地可识别的编码
 		auto ansi = info.ansi();
@@ -48,7 +48,7 @@ namespace Log {
 		buf[count] = '\n';
 		buf[count + 1] = 0;
 		Text::String info(buf);
-		info = Time::Now().ToString("HH:mm:ss ") + info;
+		info = DateTime::Now().ToString("HH:mm:ss ") + info;
 		delete[] buf;
 		//转为本地可识别的编码
 		auto ansi = info.ansi();
