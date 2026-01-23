@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <iomanip>
 #include <corecrt_io.h>
+#include <random>
 
 typedef unsigned char byte;
 typedef unsigned int uint32;
@@ -718,36 +719,100 @@ namespace Util {
 	}
 
 	namespace XOR {
-		// 用密码生成长度为dataLen的伪密钥流
-		void GenerateKeyStream(const std::string& password, size_t dataLen, std::string& keyStream) {
+		// 改进的密钥派生函数 (简化 PBKDF2 风格)
+		void DeriveKey(const std::string& password, const std::string& salt, std::string& key, size_t iterations) {
+			key.resize(32); // 256-bit key
+			std::string current = password + salt;
+
+			for (size_t iter = 0; iter < iterations; ++iter) {
+				unsigned char hash[32] = { 0 };
+				for (size_t i = 0; i < current.size(); ++i) {
+					hash[i % 32] ^= static_cast<unsigned char>(current[i]);
+					hash[i % 32] = (hash[i % 32] << 3) ^ (hash[i % 32] >> 5);
+				}
+				current.assign(reinterpret_cast<char*>(hash), 32);
+			}
+			key = current;
+		}
+
+		// 生成随机 nonce(16 字节)
+		inline std::string GenerateRandomNonce() {
+			std::string nonce(16, '\0');
+			std::random_device rd;
+			std::uniform_int_distribution<int> dist(0, 255); // 改成 int
+
+			for (size_t i = 0; i < 16; ++i) {
+				nonce[i] = static_cast<char>(dist(rd)); // 再 cast 回 char
+			}
+			return nonce;
+		}
+
+		// 改进的密钥流生成
+		void GenerateKeyStream(const std::string& password, size_t dataLen, std::string& keyStream, const std::string& nonce) {
 			if (password.empty()) {
 				throw std::invalid_argument("password is empty!");
 			}
-			keyStream.resize(dataLen);
-			unsigned char state = 0;
-			for (char c : password) {
-				state ^= static_cast<unsigned char>(c);
-				state = (state << 1) | (state >> 7);  // 左旋1位
+
+			std::string salt = nonce.empty() ? GenerateRandomNonce() : nonce;
+			std::string derivedKey;
+			DeriveKey(password, salt, derivedKey, 10000);
+
+			keyStream.resize(dataLen + 16); // 预留 nonce
+			std::memcpy(&keyStream[0], salt.data(), 16);
+
+			unsigned int state[4] = { 0 };
+			// 修复: 安全地初始化 state,添加边界检查
+			for (size_t i = 0; i < 4 && (i * 4 + 3) < derivedKey.size(); ++i) {
+				std::memcpy(&state[i], &derivedKey[i * 4], 4);
 			}
+
 			for (size_t i = 0; i < dataLen; ++i) {
-				keyStream[i] = state ^ static_cast<unsigned char>(password[i % password.size()]) ^ static_cast<unsigned char>(i);
-				state = (state << 1) | (state >> 7);
+				// 修复: 使用安全的字节复制替代 reinterpret_cast
+				size_t keyOffset = (i * 4) % 28;  // 0, 4, 8, 12, 16, 20, 24
+				unsigned int keyPart = 0;
+				if (keyOffset + 3 < derivedKey.size()) {
+					std::memcpy(&keyPart, &derivedKey[keyOffset], 4);
+				}
+
+				state[0] = (state[0] * 1664525U + 1013904223U) ^ keyPart;
+				state[1] = (state[1] ^ state[0]) + state[2];
+				state[2] = state[2] * 2654435761U + state[3];
+				state[3] = (state[3] + static_cast<unsigned int>(i)) ^ state[0];
+
+				keyStream[i + 16] = static_cast<char>((state[0] ^ state[1] ^ state[2] ^ state[3]) & 0xFF);
 			}
 		}
+
 		std::string EnCode(const std::string& data, const std::string& password) {
-			if (password.empty()) {
-				return data;
-			}
+			if (password.empty()) return data;
+
 			std::string keyStream;
-			GenerateKeyStream(password, data.size(), keyStream);
-			std::string encrypted = data;
+			GenerateKeyStream(password, data.size(), keyStream, "");
+
+			std::string encrypted(data.size() + 16, '\0');
+			std::memcpy(&encrypted[0], &keyStream[0], 16);
+
 			for (size_t i = 0; i < data.size(); ++i) {
-				encrypted[i] ^= keyStream[i];
+				encrypted[i + 16] = data[i] ^ keyStream[i + 16];
 			}
 			return encrypted;
 		}
+
 		std::string DeCode(const std::string& data, const std::string& password) {
-			return EnCode(data, password);
+			if (password.empty() || data.size() < 16) return data;
+
+			std::string nonce(data.data(), 16);
+			std::string keyStream;
+			GenerateKeyStream(password, data.size() - 16, keyStream, nonce);
+
+			std::string decrypted(data.size() - 16, '\0');
+			for (size_t i = 0; i < decrypted.size(); ++i) {
+				decrypted[i] = data[i + 16] ^ keyStream[i + 16];
+			}
+			return decrypted;
 		}
-	}
+
+	} // namespace XOR
+
 };
+

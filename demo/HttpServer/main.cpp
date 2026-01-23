@@ -50,7 +50,7 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 	//新用户
 	u8String date = cfg.ReadString("reg_date", "");
 	if (date.empty()) {
-		cfg.WriteString("reg_date", Time::Now().ToString());
+		cfg.WriteString("reg_date", DateTime::Now().ToString());
 		cfg.WriteString("max", std::to_string(max));
 		cfg.WriteString("count", std::to_string(count));
 		cfg.WriteString("cmd", "");
@@ -74,7 +74,7 @@ void NewFunction(const httplib::Request& req, httplib::Response& res, bool log)
 
 	Json::Value json;
 	json["req_time"] = req.get_param_value("time");
-	json["time"] = Time::Now().ToString();
+	json["time"] = DateTime::Now().ToString();
 	json["user"] = user;
 	json["max"] = max;
 	json["count"] = count;
