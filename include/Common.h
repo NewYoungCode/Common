@@ -28,3 +28,8 @@
 #include "FileSystem.h"
 #include "DateTime.h"
 #include "WinTool.h"
+#include "WebClient.h"
+#include "JsonValue.h"
+#include "Log.h"
+#include "ThreadPool.hpp"
+#include "ConfigIni.h"
