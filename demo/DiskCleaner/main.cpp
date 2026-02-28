@@ -1,6 +1,4 @@
-﻿
-
-#include <sstream>
+﻿#include <sstream>
 #include "Text.h"
 #include "WinTool.h"
 #include "Log.h"

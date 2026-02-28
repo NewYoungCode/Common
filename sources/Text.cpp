@@ -3,17 +3,21 @@
 #include <list>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 namespace Text {
 	//-----------------------------------------------Copy Start-----------------------------------------------
 	size_t String::utf8Length() const {
-		auto* p = this->c_str();
-		size_t pos = 0, count = 0;
-		while (p[pos] && pos < this->size()) {
-			if ((p[pos] & 0xc0) != 0x80) {
+		const char* p = this->c_str();
+		const char* end = p + this->size();
+		size_t count = 0;
+		// 优化：避免重复调用 size()，使用指针遍历
+		while (p < end) {
+			// UTF-8 字符的首字节不是 10xxxxxx
+			if ((*p & 0xc0) != 0x80) {
 				++count;
 			}
-			++pos;
+			++p;
 		}
 		return count;
 	}
@@ -33,6 +37,7 @@ namespace Text {
 	}
 	String::String(const std::string& str)noexcept :std::string(str) {}
 	String::String(const char* szbuf)noexcept :std::string(szbuf) {}
+	String::String(const char* pStr, size_t count) noexcept :std::string(pStr, count) {}
 	String::String(const wchar_t* szbuf)noexcept {
 		if (szbuf == NULL)return;
 		UnicodeToUTF8(szbuf, this);
@@ -72,30 +77,61 @@ namespace Text {
 		Toupper(&str);
 		return str;
 	}
+
+	int String::toInt() const {
+		return std::stoi(c_str());
+	}
+	float String::toFloat()const {
+		return std::stof(c_str());
+	}
+	double String::toDouble()const {
+		return std::stod(c_str());
+	}
+	int64_t String::toInt64() const {
+		return std::stoll(c_str());
+	}
+
 	String String::trim()const {
-		String data = *this;
-		const char* raw = data.c_str();
-		size_t totalLen = data.size();
+		const char* raw = this->c_str();
+		size_t totalLen = this->size();
+
+		// 优化：直接使用 this 指针，避免复制
+		if (totalLen == 0) {
+			return String();
+		}
+
 		// 找起始位置
 		size_t start = 0;
 		while (start < totalLen && raw[start] == ' ') {
 			++start;
 		}
+
+		// 如果全是空格
+		if (start == totalLen) {
+			return String();
+		}
+
 		// 找结束位置（最后一个非空格字符之后的位置）
 		size_t end = totalLen;
 		while (end > start && raw[end - 1] == ' ') {
 			--end;
 		}
-		return std::string(raw + start, end - start);
+
+		return String(raw + start, end - start);
 	}
 	size_t String::count(const String& value)const
 	{
+		if (value.empty()) {
+			return 0;
+		}
 		size_t count = 0;
 		size_t pos = 0;
+		const size_t valueLen = value.size();
+		// 优化：缓存 value.size() 避免重复调用
 		while ((pos = this->find(value, pos)) != std::string::npos)
 		{
 			++count;
-			pos += value.size();
+			pos += valueLen;
 		}
 		return count;
 	}
@@ -111,6 +147,18 @@ namespace Text {
 		UnicodeToUTF8(wStr, &u8str);
 		return (*this == u8str);
 	}
+	bool String::operator!=(const wchar_t* szbuf) const
+	{
+		std::string u8str;
+		UnicodeToUTF8(szbuf, &u8str);
+		return (*this != u8str);
+	}
+	bool String::operator!=(const std::wstring& wStr) const
+	{
+		std::string u8str;
+		UnicodeToUTF8(wStr, &u8str);
+		return (*this != u8str);
+	}
 	std::wstring String::unicode() const {
 		std::wstring wstr;
 		UTF8ToUnicode(*this, &wstr);
@@ -121,18 +169,48 @@ namespace Text {
 		UTF8ToANSI(*this, &str);
 		return str;
 	}
+	String String::FromLocal(const std::string& localStr) {
+		std::string u8Str;
+		ANSIToUTF8(localStr, &u8Str);
+		return u8Str;
+	}
+	String String::ToString(double number, size_t keepBitSize) {
+		std::ostringstream oss;
+		oss << std::fixed << std::setprecision(keepBitSize) << number;
+		return oss.str();
+	}
 
 	void AnyToUnicode(const std::string& src_str, UINT codePage, std::wstring* out_wstr) {
+		if (src_str.empty()) {
+			out_wstr->clear();
+			return;
+		}
 		std::wstring& wstrCmd = *out_wstr;
-		auto bytes = ::MultiByteToWideChar(codePage, 0, src_str.c_str(), src_str.size(), NULL, 0);
-		wstrCmd.resize(bytes);
-		bytes = ::MultiByteToWideChar(codePage, 0, src_str.c_str(), src_str.size(), const_cast<wchar_t*>(wstrCmd.c_str()), wstrCmd.size());
+		// 优化：一次性分配正确大小的内存
+		int bytes = ::MultiByteToWideChar(codePage, 0, src_str.c_str(), (int)src_str.size(), NULL, 0);
+		if (bytes > 0) {
+			wstrCmd.resize(bytes);
+			::MultiByteToWideChar(codePage, 0, src_str.c_str(), (int)src_str.size(), &wstrCmd[0], bytes);
+		}
+		else {
+			wstrCmd.clear();
+		}
 	}
 	void UnicodeToAny(const std::wstring& wstr, UINT codePage, std::string* out_str) {
+		if (wstr.empty()) {
+			out_str->clear();
+			return;
+		}
 		std::string& strCmd = *out_str;
-		auto bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), NULL, 0, NULL, NULL);
-		strCmd.resize(bytes);
-		bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), wstr.size(), const_cast<char*>(strCmd.c_str()), strCmd.size(), NULL, NULL);
+		// 优化：一次性分配正确大小的内存
+		int bytes = ::WideCharToMultiByte(codePage, 0, wstr.c_str(), (int)wstr.size(), NULL, 0, NULL, NULL);
+		if (bytes > 0) {
+			strCmd.resize(bytes);
+			::WideCharToMultiByte(codePage, 0, wstr.c_str(), (int)wstr.size(), &strCmd[0], bytes, NULL, NULL);
+		}
+		else {
+			strCmd.clear();
+		}
 	}
 
 	//以下是静态函数
@@ -191,10 +269,11 @@ namespace Text {
 	void Tolower(std::string* str_in_out)
 	{
 		std::string& str = *str_in_out;
+		// 优化：直接修改字符串，避免 const_cast
 		for (size_t i = 0; i < str.size(); ++i)
 		{
-			char& ch = (char&)str.c_str()[i];
-			if (ch >= 65 && ch <= 90) {
+			char& ch = str[i];
+			if (ch >= 'A' && ch <= 'Z') {
 				ch += 32;
 			}
 		}
@@ -202,25 +281,19 @@ namespace Text {
 	void Toupper(std::string* str_in_out)
 	{
 		std::string& str = *str_in_out;
+		// 优化：直接修改字符串，避免 const_cast
 		for (size_t i = 0; i < str.size(); ++i)
 		{
-			char& ch = (char&)str.c_str()[i];
-			if (ch >= 97 && ch <= 122) {
+			char& ch = str[i];
+			if (ch >= 'a' && ch <= 'z') {
 				ch -= 32;
 			}
 		}
 	}
 	void Erase(std::string* str_in_out, char _char) {
-		const String& self = *str_in_out;
-		char* bufStr = new char[self.size() + 1] { 0 };
-		size_t pos = 0;
-		for (auto& it : self) {
-			if (_char == it)continue;
-			bufStr[pos] = it;
-			++pos;
-		}
-		*str_in_out = bufStr;
-		delete[] bufStr;
+		std::string& str = *str_in_out;
+		// 优化：使用 erase-remove idiom，避免内存分配
+		str.erase(std::remove(str.begin(), str.end(), _char), str.end());
 	}
 	size_t Replace(std::string* str_in_out, const std::string& oldText, const std::string& newText, bool replaceAll)
 	{
@@ -228,9 +301,13 @@ namespace Text {
 		size_t count = 0;
 		std::string& str = *str_in_out;
 		size_t pos = 0;
+		const size_t oldLen = oldText.size();
+		const size_t newLen = newText.size();
+		// 优化：缓存字符串长度，避免重复调用
 		while ((pos = str.find(oldText, pos)) != std::string::npos)
 		{
-			str.replace(pos, oldText.size(), newText);
+			str.replace(pos, oldLen, newText);
+			pos += newLen; // 跳过新插入的文本
 			++count;
 			if (!replaceAll) {
 				break;
@@ -240,38 +317,69 @@ namespace Text {
 	}
 	void Replace(std::string* str_in_out, char oldChar, char newChar)
 	{
-		for (auto& it : *str_in_out) {
-
-			if (it == oldChar) {
-				it = newChar;
+		// 优化：直接替换，不需要迭代器
+		std::string& str = *str_in_out;
+		for (size_t i = 0; i < str.size(); ++i) {
+			if (str[i] == oldChar) {
+				str[i] = newChar;
 			}
 		}
 	}
 
 	template<typename T>
-	void __Split(const std::string& str_in, const std::string& ch_, std::vector<T>* strs_out) {
+	void __Split(const std::string& str_in, const std::string& ch_, std::vector<T>* strs_out)
+	{
+		std::vector<T>& arr = *strs_out;
+		arr.clear();
+		if (str_in.empty() || ch_.empty()) return;
+
+		// 优化：预估分割数量，预留空间减少内存重新分配
+		size_t estimatedCount = 1;
+		size_t pos = 0;
+		while ((pos = str_in.find(ch_, pos)) != std::string::npos) {
+			++estimatedCount;
+			pos += ch_.size();
+		}
+		arr.reserve(estimatedCount);
+
+		size_t start = 0;
+		const size_t chLen = ch_.size();
+		while ((pos = str_in.find(ch_, start)) != std::string::npos)
+		{
+			if (pos > start) {
+				arr.emplace_back(str_in.substr(start, pos - start));
+			}
+			start = pos + chLen;
+		}
+		// 最后一个片段
+		if (start < str_in.size()) {
+			arr.emplace_back(str_in.substr(start));
+		}
+	}
+
+	template<typename T>
+	void __Split(const std::string& str_in, char ch, std::vector<T>* strs_out)
+	{
 		std::vector<T>& arr = *strs_out;
 		arr.clear();
 		if (str_in.empty()) return;
 
-		std::string buf = str_in;
-		size_t pos = buf.find(ch_);
-		if (pos == std::string::npos) {
-			arr.push_back(buf);
-			return;
+		// 优化：预估分割数量，预留空间
+		size_t estimatedCount = 1 + std::count(str_in.begin(), str_in.end(), ch);
+		arr.reserve(estimatedCount);
+
+		size_t start = 0;
+		size_t pos = 0;
+		while ((pos = str_in.find(ch, start)) != std::string::npos)
+		{
+			if (pos > start) {
+				arr.emplace_back(str_in.substr(start, pos - start));
+			}
+			start = pos + 1;
 		}
-		while (pos != std::string::npos) {
-			auto item = buf.substr(0, pos);
-			if (!item.empty()) {
-				arr.push_back(item);
-			}
-			buf = buf.erase(0, pos + ch_.size());
-			pos = buf.find(ch_);
-			if (pos == std::string::npos) {
-				if (!buf.empty()) {
-					arr.push_back(buf);
-				}
-			}
+		// 最后一个片段
+		if (start < str_in.size()) {
+			arr.emplace_back(str_in.substr(start));
 		}
 	}
 
@@ -281,16 +389,16 @@ namespace Text {
 		__Split<String>(*this, ch, &strs);
 		return strs;
 	}
+	std::vector<String> String::split(char ch) const
+	{
+		std::vector<String> strs;
+		__Split<String>(*this, ch, &strs);
+		return strs;
+	}
 
 	void Split(const std::string& str_in, const std::string& ch_, std::vector<std::string>* strs_out) {
 
 		__Split<std::string>(str_in, ch_, strs_out);
-	}
-
-	String ToString(double number, size_t keepBitSize) {
-		std::ostringstream oss;
-		oss << std::fixed << std::setprecision(keepBitSize) << number;
-		return oss.str();
 	}
 	//-----------------------------------------------Copy End-----------------------------------------------
 };

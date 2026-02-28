@@ -6,7 +6,7 @@
 #include "ConfigIni.h"
 #include "Text.h"
 #include "FileSystem.h"
-#include "JsonValue.h"
+#include "JsonCpp.hpp"
 #include "main.h"
 using namespace httplib;
 ConfigIni cfg(Path::StartPath() + "/users.ini");

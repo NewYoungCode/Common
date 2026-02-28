@@ -25,15 +25,16 @@
 
 #endif
 
-
-struct JsonValue :public Json::Value {
-private:
-	bool b = false;
-	Json::Reader rd;
-public:
-	bool IsJson();
-	//JObject(const Json::Value& right);
-	JsonValue& operator = (const Json::Value& other);
-	JsonValue(const std::string& jsonStr);
+namespace Json {
+	//字符串转换成json对象 失败则返回Json::nullValue
+	inline Json::Value Parse(const std::string& jsonStr)
+	{
+		Json::Reader rd;
+		Json::Value out;
+		if (rd.parse(jsonStr, out)) {
+			return out;
+		}
+		return Json::nullValue;
+	}
 };
 #endif

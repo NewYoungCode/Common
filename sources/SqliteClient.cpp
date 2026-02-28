@@ -204,7 +204,7 @@ bool SqliteClient::ExecuteQuery(const std::string& sql, Json::Value& result)
 {
 	std::string str;
 	bool ret = ExecuteQuery(sql, str);
-	result = JsonValue(str);
+	result = Json::Parse(str);
 	return ret;
 }
 

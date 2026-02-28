@@ -6,45 +6,49 @@
 #include <mutex>
 #include "Socket.h"
 
-std::mutex __socket_mtx;
-WSADATA __wsadata__;
-bool __socket_init = false;
-//初始化套接字库
-bool __func_socket_init() {
-	std::unique_lock<std::mutex> autoLock(__socket_mtx);
-	if (__socket_init == false) {
-		int code = ::WSAStartup(MAKEWORD(2, 2), &__wsadata__);
-		if (code == 0) {
-			__socket_init = true;
+namespace {
+	std::mutex __socket_mtx;
+	WSADATA __wsadata__;
+	bool __socket_init = false;
+	//初始化套接字库
+	bool __func_socket_init() {
+		std::unique_lock<std::mutex> autoLock(__socket_mtx);
+		if (__socket_init == false) {
+			int code = ::WSAStartup(MAKEWORD(2, 2), &__wsadata__);
+			if (code == 0) {
+				__socket_init = true;
+			}
+			else {
+				printf("__func_socket_init failed: %d\n", code);
+			}
 		}
-		else {
-			printf("__func_socket_init failed: %d\n", code);
-		}
+		return __socket_init;
 	}
-	return __socket_init;
-}
-//清理
-void __func_socket_cleanup() {
-	::WSACleanup();
-	__wsadata__.wVersion = 0;
-	__socket_init = false;
-}
+	//清理
+	void __func_socket_cleanup() {
+		::WSACleanup();
+		__wsadata__.wVersion = 0;
+		__socket_init = false;
+	}
 
-// 获取某个 SOCKET 的 sockaddr 信息（本地或远端，自动判断）
-// 返回值：0 = 成功（优先返回远端地址），1 = 返回本地地址，-1 = 失败
-int __func_get_sockaddr(SOCKET sock, sockaddr_in& outAddr) {
-	int len = sizeof(sockaddr_in);
-	memset(&outAddr, 0, len);
-	// 优先获取远端地址
-	if (getpeername(sock, (sockaddr*)&outAddr, &len) == 0) {
-		return 0; // 是远端地址
+	// 获取某个 SOCKET 的 sockaddr 信息（本地或远端，自动判断）
+	// 返回值：0 = 成功（优先返回远端地址），1 = 返回本地地址，-1 = 失败
+	int __func_get_sockaddr(SOCKET sock, sockaddr_in& outAddr) {
+		int len = sizeof(sockaddr_in);
+		memset(&outAddr, 0, len);
+		// 优先获取远端地址
+		if (getpeername(sock, (sockaddr*)&outAddr, &len) == 0) {
+			return 0; // 是远端地址
+		}
+		// 如果是本地 socket（如 listen socket），则 getpeername 会失败
+		if (getsockname(sock, (sockaddr*)&outAddr, &len) == 0) {
+			return 1; // 是本地地址
+		}
+		return -1; // 都失败了（无效 socket）
 	}
-	// 如果是本地 socket（如 listen socket），则 getpeername 会失败
-	if (getsockname(sock, (sockaddr*)&outAddr, &len) == 0) {
-		return 1; // 是本地地址
-	}
-	return -1; // 都失败了（无效 socket）
-}
+
+};
+
 
 std::vector<std::string> Socket::GetIpByName(const std::string& hostname) {
 	__func_socket_init();
