@@ -10,6 +10,10 @@ DateTime::DateTime(time_t second) {
 }
 
 DateTime::DateTime(const std::string& timeStr, const std::string& format) {
+	if (timeStr.empty()) {
+		m_time = 0;
+		return;
+	}
 	std::string formatStr = format;
 	Text::Replace(&formatStr, "yyyy", "%Y");
 	Text::Replace(&formatStr, "MM", "%m");

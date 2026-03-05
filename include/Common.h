@@ -21,4 +21,4 @@
 #include "JsonCpp.hpp"
 #include "Log.h"
 #include "ThreadPool.hpp"
-#include "ConfigIni.h"
+#include "IniConfig.h"

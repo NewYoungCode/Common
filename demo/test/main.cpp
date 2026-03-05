@@ -292,7 +292,14 @@ std::string GetMotherboardID() {
 
 	return serialNumber;
 }
+
+#include "IniConfig.h"
 int main() {
+
+	IniConfig config("c:/users/yang/desktop/config.ini");
+	config.WriteBool("test", "123", true);
+	config.WriteBool("test", "456", true);
+	config.WriteBool("test", "789", true);
 
 	auto sssss = Path::StartPrograms();
 	auto sssss2 = Path::UserDesktop();
