@@ -22,3 +22,19 @@
 #include "Log.h"
 #include "ThreadPool.hpp"
 #include "IniConfig.h"
+
+////如需使用fmt
+//#include "fmt/format.h"
+//#ifdef  _WIN64
+//#ifdef  _DEBUG
+//#pragma comment (lib,"X64/fmtd.lib")
+//#else
+//#pragma comment (lib,"X64/fmt.lib")
+//#endif
+//#else
+//#ifdef _DEBUG
+//#pragma comment(lib,"fmtd.lib")
+//#else
+//#pragma comment(lib,"fmt.lib")
+//#endif // !_DEBUG
+//#endif
