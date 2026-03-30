@@ -9,6 +9,24 @@
 
 #define USECURL 1 //是否使用curl 使用curl会导致库变得很大
 
+#ifdef  _WIN64
+
+#ifdef  NDEBUG
+#pragma comment (lib,"x64/libcurl.lib")
+#else
+#pragma comment (lib,"x64/libcurld.lib")
+#endif
+
+#else
+
+#ifdef NDEBUG
+#pragma comment (lib,"x86/libcurl.lib")
+#else
+#pragma comment (lib,"x86/libcurld.lib")
+#endif // !_DEBUG
+
+#endif
+
 #if USECURL
 namespace PostForm {
 	//字段类型

@@ -11,23 +11,7 @@
 #pragma comment(lib,"wldap32.lib")//curl需要的库
 #pragma comment(lib,"ws2_32.lib") //curl需要的库
 
-#ifdef  _WIN64
 
-#ifdef  _DEBUG
-#pragma comment (lib,"X64/libcurld.lib")
-#else
-#pragma comment (lib,"X64/libcurl.lib")
-#endif
-
-#else
-
-#ifdef _DEBUG
-#pragma comment(lib,"libcurld.lib")
-#else
-#pragma comment(lib,"libcurl.lib")
-#endif // !_DEBUG
-
-#endif
 
 //curl的初始化
 bool g_curl_bInit = false;
