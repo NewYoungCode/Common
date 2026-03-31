@@ -1,21 +1,27 @@
 #pragma once
-//如需使用fmt
-#include "fmt/format.h"
 
-#ifdef  _WIN64
-
-#ifdef  NDEBUG
-#pragma comment (lib,"x64/fmt.lib")
-#else
-#pragma comment (lib,"x64/fmtd.lib")
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable:4996)
 #endif
 
-#else
+#include <fmt/format.h>
 
-#ifdef NDEBUG
-#pragma comment (lib,"x86/fmt.lib")
-#else
-#pragma comment (lib,"x86/fmtd.lib")
-#endif // !_DEBUG
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
+
+#ifdef _WIN64
+#ifdef _DEBUG
+#pragma comment(lib, "x64/fmtd.lib")
+#else
+#pragma comment(lib, "x64/fmt.lib")
+#endif
+#else
+#ifdef _DEBUG
+#pragma comment(lib, "x86/fmtd.lib")
+#else
+#pragma comment(lib, "x86/fmt.lib")
+#endif
 #endif
