@@ -7,7 +7,7 @@
 //	bool b = s.Listen();
 //	for (; b;) {
 //		Socket client = s.Accep();
-//		printf("连接进入 %s %d\n", client.Address.c_str(), client.Port);
+//		printf("连接进入 %s %d\n", client.GetAddress().c_str(), client.GetPort());
 //
 //		std::string resp;
 //		size_t pos = -1;
@@ -19,7 +19,7 @@
 //			int len = client.Receive(buf, sizeof(buf));
 //			if (len == -1 || len == 0) {
 //				client.Close();
-//				printf("客户端断开 %s %d\n", client.Address.c_str(), client.Port);
+//				printf("客户端断开 %s %d\n", client.GetAddress().c_str(), client.GetPort());
 //				break;
 //			}
 //			if (!end) {
@@ -48,7 +48,7 @@
 //			}
 //			if (end && body.size() >= length) {
 //				client.Close();
-//				printf("服务端断开 %s %d\n", client.Address.c_str(), client.Port);
+//				printf("服务端断开 %s %d\n", client.GetAddress().c_str(), client.GetPort());
 //				break;
 //			}
 //		}
