@@ -15,7 +15,12 @@ set(commonLib ./lib)
 
 #通用库
 project(Common)
-file(GLOB commonFiles ./include/*.h ./include/*.hpp ./sources/*.cpp)
+file(GLOB commonFiles
+    ./include/*.h
+    ./include/*.hpp
+    ./sources/*.cpp
+    ./sources/sqlite/sqlite3.c
+)
 if(BUILD_SHARED_LIBS)
     add_library(Common SHARED ${commonFiles}) #dll库
 else()
