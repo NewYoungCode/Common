@@ -261,7 +261,7 @@ namespace WinTool {
 		HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, processId);
 		DWORD result = ::GetModuleFileNameExW(hProcess, NULL, buf, MAX_PATH);
 		CloseHandle(hProcess);
-		return buf;
+		return Path::Format(buf);
 	}
 	int CloseProcess(const std::vector<DWORD>& processIds) {
 		int count = 0;
@@ -1112,7 +1112,7 @@ namespace WinTool {
 			WCHAR szFileName[MAX_PATH * 2]{ 0 };
 			lstrcatW(szFileName, szPath);  //给文件名加上路径  
 			lstrcatW(szFileName, p);    //加上文件名  
-			files.push_back(szFileName);
+			files.push_back(Path::Format(szFileName));
 			p += lstrlenW(p) + 1;     //移至下一个文件
 		}
 		return files;
@@ -1248,7 +1248,7 @@ namespace WinTool {
 			PWSTR filePath = NULL;
 			hr = item->GetDisplayName(SIGDN_FILESYSPATH, &filePath);
 			if (SUCCEEDED(hr) && filePath) {
-				selectedPath = filePath;
+				selectedPath = Path::Format(filePath);
 				::CoTaskMemFree(filePath);
 			}
 			item->Release();
@@ -1435,7 +1435,7 @@ namespace WinTool {
 
 							if (RegQueryValueExW(hSubKey, L"InstallLocation", NULL, &type, (LPBYTE)installLocation, &sizeLoc) == ERROR_SUCCESS) {
 								if (type == REG_SZ) {
-									location = installLocation;
+									location = Path::Format(installLocation).unicode();
 								}
 							}
 							//避免重复
@@ -1617,7 +1617,7 @@ namespace WinTool {
 
 	bool IsRunning(const Text::String& productName, bool lock)
 	{
-		Text::String lockFile = Path::GetAppDataPath(productName) + "/__running.lock";
+		Text::String lockFile = Path::GetAppDataPath(productName) + "\\__running.lock";
 		auto hFile = ::CreateFileW(
 			lockFile.unicode().c_str(),
 			GENERIC_READ | GENERIC_WRITE,

@@ -33,12 +33,13 @@ public:
 	static void Zip(const Text::String& _dirName, const Text::String& outFileName, const Text::String& pwd = "", std::function<bool(const Text::String&, int, int)> callback = NULL) {
 		std::vector<FileSystem::FileInfo> result;
 		Ziper zip(outFileName.unicode(), pwd);
-		Text::String dirName = _dirName + "/";
+		Text::String dirName = _dirName + "\\";
 		dirName = Path::Format(dirName);
 		Directory::Find(dirName, result, "*.*", true);
 		for (int i = 0; i < result.size(); i++)
 		{
 			Text::String ItemNmae = result[i].FileName.replace(dirName, "");
+			ItemNmae = ItemNmae.replace('\\', '/');
 			if (result[i].IsFile()) {
 				zip.AddFile(ItemNmae.unicode(), result[i].FileName.unicode());
 			}

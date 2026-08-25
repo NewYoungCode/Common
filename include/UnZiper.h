@@ -53,7 +53,7 @@ public:
 		{
 			ZipItem ze;
 			zip->Find(i, &ze);
-			Text::String itemName = outDir + "/" + Text::String(ze.name);
+			Text::String itemName = Path::Format(outDir + "\\" + Text::String(ze.name));
 			if (ze.isDir()) {
 				if (!Directory::Create(itemName)) {
 					ok = false;

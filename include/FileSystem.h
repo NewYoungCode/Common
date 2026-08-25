@@ -88,7 +88,7 @@ namespace Path {
 	/// <returns></returns>
 	extern Text::String GetAppTempPath(const Text::String& appName = "");
 	/// <summary>
-	/// 获取应用程序数据存储目录 C:/Users/%s/AppData/Local/%s
+	/// 获取应用程序数据存储目录 C:\\Users\\%s\\AppData\\Local\\%s
 	/// </summary>
 	/// <returns></returns>
 	extern Text::String GetAppDataPath(const Text::String& appName = "");
@@ -111,10 +111,11 @@ namespace FileSystem {
 		const ULONGLONG FileSize = 0;
 		FileInfo() {}
 		FileInfo(const Text::String& fileName) {
-			if (File::Exists(fileName)) {
-				(Text::String)FileName = fileName;
+			Text::String normalizedFileName = Path::Format(fileName);
+			if (File::Exists(normalizedFileName)) {
+				(Text::String)FileName = normalizedFileName;
 				//获取大小
-				ifs = new std::ifstream(fileName.unicode(), std::ios::binary);
+				ifs = new std::ifstream(normalizedFileName.unicode(), std::ios::binary);
 				ifs->seekg(0, std::ios::end);
 				(ULONGLONG&)FileSize = ifs->tellg();
 			}

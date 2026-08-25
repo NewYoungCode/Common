@@ -22,15 +22,16 @@ namespace FileSystem {
 		return false;
 	}
 	size_t Find(const Text::String& directory, std::vector<FileSystem::FileInfo>& result, const Text::String& pattern, bool loopSubDir, FileType fileType) {
+		Text::String directoryPath = Path::Format(directory);
 		WIN32_FIND_DATAW findData;
-		Text::String searchPath = directory + "\\*";
+		Text::String searchPath = Path::Format(directoryPath + "\\*");
 		HANDLE hFind = ::FindFirstFileW(searchPath.unicode().c_str(), &findData);
 		if (hFind == INVALID_HANDLE_VALUE) return result.size();
 		do {
 			Text::String name = findData.cFileName;
 			// 忽略当前目录和上级目录
 			if (name == "." || name == "..") continue;
-			Text::String fullPath = directory + "\\" + name;
+			Text::String fullPath = Path::Format(directoryPath + "\\" + name);
 
 			FileSystem::FileInfo fileInfo;
 			fileInfo.dwFileAttributes = findData.dwFileAttributes;
@@ -172,63 +173,65 @@ namespace File {
 	}
 };
 
-namespace Directory {
+	namespace Directory {
 	bool Create(const Text::String& path) {
-		::CreateDirectoryW(path.unicode().c_str(), NULL);
-		if (Directory::Exists(path)) {
-			return true;
+		Text::String normalizedPath = Path::Format(path);
+		if (normalizedPath.empty()) {
+			return false;
 		}
-		//创建多级目录
-		if (path.find(":") != size_t(-1)) {
-			Text::String dir = path + "/";
-			dir = dir.replace("\\", "/");
-			dir = dir.replace("//", "/");
-			auto arr = dir.split("/");
-			Text::String root;
-			if (arr.size() > 0) {
-				root += arr[0] + "/";
-				for (size_t i = 1; i < arr.size(); i++)
-				{
-					if (arr[i].empty()) {
-						continue;
-					}
-					root += arr[i] + "/";
-					if (!Directory::Exists(root)) {
-						if (::CreateDirectoryW(root.unicode().c_str(), NULL) == FALSE) {
-							return false;
-						}
-					}
-				}
-			}
-		}
-		return Directory::Exists(path);
+
+		// SHCreateDirectoryExW creates intermediate directories for drive and UNC paths.
+		::SHCreateDirectoryExW(nullptr, normalizedPath.unicode().c_str(), nullptr);
+		return Directory::Exists(normalizedPath);
 	}
 	bool Copy(const Text::String& srcPath, const Text::String& desPath, bool overwrite)
 	{
-		Text::String basePath = srcPath;
-		basePath = basePath.replace("\\", "/");
-		basePath = basePath.replace("//", "/");
+		Text::String basePath = Path::Format(srcPath);
+		Text::String destinationPath = Path::Format(desPath);
+		if (!Directory::Exists(basePath)) {
+			return false;
+		}
 
-		if (Directory::Create(desPath) == false) {
+		// Do not recurse into the source when the destination is the source itself
+		// or one of its children.
+		Text::String sourceRoot = basePath;
+		while (sourceRoot.size() > 3 && !sourceRoot.empty() && sourceRoot.back() == '\\') {
+			sourceRoot.erase(sourceRoot.size() - 1, 1);
+		}
+		Text::String destinationRoot = destinationPath;
+		while (destinationRoot.size() > 3 && !destinationRoot.empty() && destinationRoot.back() == '\\') {
+			destinationRoot.erase(destinationRoot.size() - 1, 1);
+		}
+		Text::String sourceLower = sourceRoot.toLower();
+		Text::String destinationLower = destinationRoot.toLower();
+		if (destinationLower == sourceLower ||
+			(destinationLower.size() > sourceLower.size() &&
+			 destinationLower.rfind(sourceLower + "\\", 0) == 0)) {
+			return false;
+		}
+
+		if (Directory::Create(destinationPath) == false) {
 			return false;
 		}
 
 		std::vector<FileSystem::FileInfo>result;
-		Directory::Find(srcPath, result);
+		Directory::Find(basePath, result);
 		size_t errCount = 0;
 		for (auto& it : result) {
-			Text::String fileName = it.FileName;
-			fileName = fileName.replace(basePath, "");
+			Text::String fileName = Path::Format(it.FileName).replace(basePath, "");
+			if (!fileName.empty() && fileName.front() == '\\') {
+				fileName.erase(0, 1);
+			}
 			if (fileName.empty()) {
 				continue;
 			}
 			if (it.IsFile()) {
-				if (File::Copy(it.FileName, desPath + "/" + fileName, overwrite) == false) {
+				if (File::Copy(it.FileName, destinationPath + "\\" + fileName, overwrite) == false) {
 					++errCount;
 				}
 			}
 			else {
-				if (Directory::Copy(srcPath + "/" + fileName, desPath + "/" + fileName, overwrite) == false) {
+				if (Directory::Copy(basePath + "\\" + fileName, destinationPath + "\\" + fileName, overwrite) == false) {
 					++errCount;
 				}
 			}
@@ -297,27 +300,64 @@ namespace Directory {
 	}
 };
 namespace Path {
+	namespace {
+		Text::String __GetWindowsTempPath() {
+			DWORD capacity = MAX_PATH;
+			for (;;) {
+				std::vector<wchar_t> buffer(capacity);
+				DWORD length = ::GetTempPathW(capacity, buffer.data());
+				if (length == 0) {
+					return Text::String();
+				}
+				if (length < capacity) {
+					return Text::String(buffer.data());
+				}
+				capacity = length + 1;
+			}
+		}
+
+		Text::String __GetWindowsKnownFolder(REFKNOWNFOLDERID folderId) {
+			PWSTR path = nullptr;
+			if (FAILED(::SHGetKnownFolderPath(folderId, 0, NULL, &path)) || path == nullptr) {
+				return Text::String();
+			}
+			Text::String result(path);
+			::CoTaskMemFree(path);
+			return result;
+		}
+
+		Text::String __CombineWindowsPath(const Text::String& directory, const Text::String& name) {
+			if (directory.empty()) {
+				return Text::String();
+			}
+			std::vector<wchar_t> combined(MAX_PATH * 2);
+			if (::PathCombineW(combined.data(), directory.unicode().c_str(), name.unicode().c_str()) == nullptr) {
+				return Text::String();
+			}
+			return Text::String(combined.data());
+		}
+	}
+
 	Text::String GetFileNameWithoutExtension(const Text::String& _filename) {
-		Text::String str = _filename;
-		Text::String& newStr = str;
-		newStr = newStr.replace("\\", "/");
-		int bPos = newStr.rfind("/");
-		int ePos = newStr.rfind(".");
-		newStr = newStr.substr(bPos + 1, ePos - bPos - 1);
-		return newStr;
+		Text::String newStr = Path::Format(_filename);
+		size_t bPos = newStr.rfind("\\");
+		size_t ePos = newStr.rfind(".");
+		size_t start = bPos == size_t(-1) ? 0 : bPos + 1;
+		return ePos == size_t(-1) || ePos < start ? newStr.substr(start) : newStr.substr(start, ePos - start);
 	}
 
 	Text::String GetDirectoryName(const Text::String& _filename) {
-		Text::String str = _filename;
-		Text::String& newStr = str;
-		newStr = newStr.replace("\\", "/");
-		int pos = newStr.rfind("/");
-		return _filename.substr(0, pos);
+		Text::String newPath = Path::Format(_filename);
+		size_t pos = newPath.rfind("\\");
+		return pos == size_t(-1) ? Text::String() : newPath.substr(0, pos);
 	}
 
 	Text::String GetExtension(const Text::String& _filename) {
-		size_t pos = _filename.rfind(".");
-		return pos == size_t(-1) ? "" : _filename.substr(pos);
+		Text::String newPath = Path::Format(_filename);
+		size_t slash = newPath.rfind("\\");
+		size_t dot = newPath.rfind(".");
+		size_t start = slash == size_t(-1) ? 0 : slash + 1;
+		return dot == size_t(-1) || dot < start ? "" : newPath.substr(dot);
 	}
 
 	Text::String GetFileName(const Text::String& filename) {
@@ -328,7 +368,7 @@ namespace Path {
 		WCHAR buf[MAX_PATH]{ 0 };
 		int csidl = allUsers ? CSIDL_COMMON_DESKTOPDIRECTORY : CSIDL_DESKTOPDIRECTORY;
 		if (SHGetSpecialFolderPathW(nullptr, buf, csidl, FALSE)) {
-			return Text::String(buf);
+			return Path::Format(Text::String(buf));
 		}
 		return L""; // 获取失败
 	}
@@ -341,7 +381,7 @@ namespace Path {
 			result = path;
 			CoTaskMemFree(path); // 释放内存
 		}
-		return result;
+		return Path::Format(Text::String(result));
 	}
 
 	Text::String StartPath() {
@@ -353,45 +393,53 @@ namespace Path {
 		if (__FileSytem_StartFileName.empty()) {
 			std::vector<wchar_t> wPath(32768);
 			DWORD count = ::GetModuleFileNameW(NULL, wPath.data(), (DWORD)wPath.size());
-			__FileSytem_StartFileName = wPath.data();
+			__FileSytem_StartFileName = Path::Format(wPath.data());
 		}
 		return __FileSytem_StartFileName;
 	}
 
 	Text::String GetTempPath()
 	{
-		WCHAR user[MAX_PATH]{ 0 };
-		DWORD len = MAX_PATH;
-		::GetUserNameW(user, &len);
-		WCHAR temPath[MAX_PATH]{ 0 };
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp", user);
-		Directory::Create(temPath);
-		return Text::String(temPath);
+		return Path::Format(__GetWindowsTempPath());
 	}
 	Text::String GetAppTempPath(const Text::String& appName)
 	{
-		WCHAR user[MAX_PATH]{ 0 };
-		DWORD len = MAX_PATH;
-		::GetUserNameW(user, &len);
-		WCHAR temPath[MAX_PATH]{ 0 };
-		swprintf_s(temPath, L"C:/Users/%s/AppData/Local/Temp/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
-		Directory::Create(temPath);
-		return Text::String(temPath);
+		Text::String name = appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()) : appName;
+		Text::String appTempPath = __CombineWindowsPath(GetTempPath(), name);
+		appTempPath = Path::Format(appTempPath);
+		if (!appTempPath.empty()) {
+			Directory::Create(appTempPath);
+		}
+		return appTempPath;
 	}
 	Text::String GetAppDataPath(const Text::String& appName)
 	{
-		WCHAR user[MAX_PATH]{ 0 };
-		DWORD len = MAX_PATH;
-		::GetUserNameW(user, &len);
-		WCHAR localPath[MAX_PATH]{ 0 };
-		swprintf_s(localPath, L"C:/Users/%s/AppData/Local/%s", user, appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()).unicode().c_str() : appName.unicode().c_str());
-		Directory::Create(localPath);
-		return Text::String(localPath);
+		Text::String name = appName.empty() ? Path::GetFileNameWithoutExtension(Path::StartFileName()) : appName;
+		Text::String appDataPath = __CombineWindowsPath(__GetWindowsKnownFolder(FOLDERID_LocalAppData), name);
+		appDataPath = Path::Format(appDataPath);
+		if (!appDataPath.empty()) {
+			Directory::Create(appDataPath);
+		}
+		return appDataPath;
 	}
 	Text::String Format(const Text::String& path)
 	{
-		Text::String newPath = path.replace("\\", "/", true);
-		newPath = newPath.replace("//", "/", true);
+		// Windows 路径统一使用反斜杠；保留 UNC 路径开头的双反斜杠。
+		Text::String convertedPath = path.replace('/', '\\');
+		Text::String newPath;
+		newPath.reserve(convertedPath.size());
+		const bool preserveUncPrefix = convertedPath.size() >= 2 && convertedPath[0] == '\\' && convertedPath[1] == '\\';
+		size_t index = 0;
+		if (preserveUncPrefix) {
+			newPath += "\\\\";
+			index = 2;
+		}
+		for (; index < convertedPath.size(); ++index) {
+			if (convertedPath[index] == '\\' && !newPath.empty() && newPath.back() == '\\') {
+				continue;
+			}
+			newPath += convertedPath[index];
+		}
 		return newPath;
 	}
 	bool Equal(const Text::String& path1, const Text::String& path2)
