@@ -48,6 +48,7 @@ public:
 	Cookie GetCookie(const std::string& host);
 	int HttpGet(const HttpRequest& request, std::string* response = NULL, int nTimeout = 60);
 	int HttpPost(const HttpRequest& request, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);
+	int HttpDelete(const HttpRequest& request, std::string* response = NULL, int nTimeout = 60);
 	int DownloadFile(const HttpRequest& request, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
 	int SubmitForm(const HttpRequest& request, const std::vector<PostForm::Field>& fieldValues, std::string* response = NULL, int nTimeout = 99999);
 };

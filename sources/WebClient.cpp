@@ -564,6 +564,20 @@ int WebClient::HttpPost(const HttpRequest& request, const std::string& data, std
 	return code;
 }
 
+int WebClient::HttpDelete(const HttpRequest& request, std::string* response, int nTimeout)
+{
+	std::string tempResponse;
+	HttpTransport http;
+	http.Proxy = Proxy;
+	ApplyHeaders(request, http);
+
+	ApplyCookies(request.url, http);
+
+	int code = http.HttpDelete(request.url, response ? response : &tempResponse, nTimeout);
+	SaveCookies(request.url, http.GetCookie());
+	return code;
+}
+
 int WebClient::DownloadFile(const HttpRequest& request, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback, int nTimeout)
 {
 	HttpTransport http;

@@ -93,6 +93,7 @@ public:
 	void RemoveHeader(const std::string& key);
 	int HttpGet(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
 	int HttpPost(const std::string& strUrl, const std::string& data = "", std::string* response = NULL, int nTimeout = 60);
+	int HttpDelete(const std::string& strUrl, std::string* response = NULL, int nTimeout = 60);
 	int DownloadFile(const std::string& strUrl, const std::wstring& filename, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);
 	int FtpDownLoad(const std::string& strUrl, const std::string& user, const std::string& pwd, const std::wstring& outFileName, int nTimeout = 99999);
 	int UploadFile(const std::string& strUrl, const std::string& filename, const std::string& field, std::string* response = NULL, const std::function<void(long long dltotal, long long dlnow)>& progressCallback = NULL, int nTimeout = 99999);

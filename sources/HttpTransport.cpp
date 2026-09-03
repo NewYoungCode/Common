@@ -216,6 +216,15 @@ int HttpTransport::HttpPost(const std::string& url, const std::string& data, std
 	CURLcode code = curl_easy_perform(curl);
 	return CleanUp(curl, code);
 };
+int HttpTransport::HttpDelete(const std::string& strUrl, std::string* strResponse, int nTimeout) {
+	CURL* curl = Init(strUrl, strResponse, nTimeout);
+	if (!curl) {
+		return CURLE_FAILED_INIT;
+	}
+	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+	CURLcode code = curl_easy_perform(curl);
+	return CleanUp(curl, code);
+};
 int HttpTransport::UploadFile(const std::string& url, const std::string& filename, const std::string& field, std::string* respone, const std::function<void(long long dltotal, long long dlnow)>& progressCallback, int _timeout) {
 
 	CURL* curl = Init(url, respone, _timeout);
