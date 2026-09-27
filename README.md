@@ -31,6 +31,7 @@ Common/
 ├── Random.hpp      # 随机数工具封装
 ├── Regedit.hpp     # 注册表操作工具（Windows 专用）
 ├── Socket.h        # 网络 Socket 封装
+├── NamedPipe.h     # Windows 命名管道（字节流/长度前缀包）
 ├── Text.h          # 字符串工具类（大小写转换、编码等）
 ├── ThreadPool.hpp  # 通用线程池封装
 ├── Time.hpp        # 时间工具类（格式化、计时、获取时间戳等）
@@ -53,7 +54,30 @@ Common/
 ### 网络与通信
 - `WebClient.h`：封装 HTTP(S) 请求发送、响应处理
 - `Socket.h`：TCP/UDP Socket 支持，兼容 Windows
+- `NamedPipe.h`：Windows 命名管道字节流通信
 - `httplib.h`：轻量级 HTTP 服务/客户端支持（如 cpp-httplib）
+
+命名管道采用同步字节流模式，不添加消息边界。一次写入的数据可能需要多次读取，接收端应按双方约定的长度调用 `ReadExact`：
+
+```cpp
+#include "NamedPipe.h"
+
+// 服务端
+NamedPipe server;
+if (server.CreateServer(L"CommonPipe") && server.WaitForClient()) {
+    char data[3];
+    if (server.ReadExact(data, sizeof(data))) {
+        // 处理收到的字节
+    }
+}
+
+// 客户端
+NamedPipe client;
+if (client.ConnectClient(L"CommonPipe")) {
+    const char data[] = { 0x01, 0x02, 0x03 };
+    client.Write(data, sizeof(data));
+}
+```
 
 ### 压缩与打包
 - `Ziper.h` / `UnZiper.h`：支持 ZIP 文件的压缩和解压

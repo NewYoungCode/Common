@@ -6,9 +6,7 @@
 #include <psapi.h>
 #include <process.h>
 #include <comdef.h>
-#include <Wbemidl.h>
 #include <iostream>
-#pragma comment(lib, "wbemuuid.lib")
 #pragma comment(lib,"Iphlpapi.lib")
 #pragma comment(lib,"Ws2_32.lib")
 
@@ -34,6 +32,196 @@ namespace WinTool {
 #ifndef FormatError
 #define FormatError(x)	(x)
 #endif // FormatError
+	namespace {
+		// GetSystemFirmwareTable('RSMB') 返回的原始 SMBIOS 数据头。
+		#pragma pack(push, 1)
+		struct RawSMBIOSDataHeader {
+			BYTE Used20CallingMethod;
+			BYTE MajorVersion;
+			BYTE MinorVersion;
+			BYTE DmiRevision;
+			DWORD Length;
+		};
+		#pragma pack(pop)
+
+		std::string GetSmbiosString(const BYTE* stringTable, size_t stringTableSize, BYTE stringIndex)
+		{
+			if (stringIndex == 0 || stringTable == NULL || stringTableSize == 0) {
+				return "";
+			}
+
+			BYTE currentIndex = 1;
+			size_t offset = 0;
+			while (offset < stringTableSize) {
+				size_t end = offset;
+				while (end < stringTableSize && stringTable[end] != '\0') {
+					++end;
+				}
+
+				if (currentIndex == stringIndex) {
+					return std::string(reinterpret_cast<const char*>(stringTable + offset), end - offset);
+				}
+
+				if (end >= stringTableSize || end + 1 >= stringTableSize || stringTable[end + 1] == '\0') {
+					break;
+				}
+
+				offset = end + 1;
+				++currentIndex;
+			}
+
+			return "";
+		}
+
+		std::string TrimSmbiosString(const std::string& value)
+		{
+			size_t begin = 0;
+			size_t end = value.size();
+			while (begin < end && static_cast<unsigned char>(value[begin]) <= ' ') {
+				++begin;
+			}
+			while (end > begin && static_cast<unsigned char>(value[end - 1]) <= ' ') {
+				--end;
+			}
+			return value.substr(begin, end - begin);
+		}
+
+		bool IsUsableSmbiosValue(const std::string& value)
+		{
+			const std::string trimmed = TrimSmbiosString(value);
+			if (trimmed.empty()) {
+				return false;
+			}
+
+			std::string lower = trimmed;
+			for (size_t i = 0; i < lower.size(); ++i) {
+				if (lower[i] >= 'A' && lower[i] <= 'Z') {
+					lower[i] = static_cast<char>(lower[i] - 'A' + 'a');
+				}
+			}
+
+			return lower != "to be filled by o.e.m."
+				&& lower != "to be filled by o.e.m"
+				&& lower != "default string"
+				&& lower != "system serial number"
+				&& lower != "unknown"
+				&& lower != "none"
+				&& lower != "not specified"
+				&& lower != "n/a"
+				&& lower != "na"
+				&& lower != "0";
+		}
+
+		bool IsUsableSmbiosUuid(const BYTE* uuid)
+		{
+			if (uuid == NULL) {
+				return false;
+			}
+
+			bool allZero = true;
+			bool allFF = true;
+			for (size_t i = 0; i < 16; ++i) {
+				allZero = allZero && uuid[i] == 0x00;
+				allFF = allFF && uuid[i] == 0xFF;
+			}
+			return !allZero && !allFF;
+		}
+
+		std::string ReadSmbiosUuid(const BYTE* uuid)
+		{
+			static const char hex[] = "0123456789abcdef";
+			std::string result;
+			result.reserve(32);
+			for (size_t i = 0; i < 16; ++i) {
+				result.push_back(hex[(uuid[i] >> 4) & 0x0F]);
+				result.push_back(hex[uuid[i] & 0x0F]);
+			}
+			return result;
+		}
+
+		std::string ReadSmbiosComputerIdentity()
+		{
+			const DWORD kRawSmbiosProvider = 'RSMB';
+			UINT bufferSize = ::GetSystemFirmwareTable(kRawSmbiosProvider, 0, NULL, 0);
+			if (bufferSize < sizeof(RawSMBIOSDataHeader)) {
+				return "";
+			}
+
+			std::vector<BYTE> buffer(bufferSize);
+			UINT bytesReturned = ::GetSystemFirmwareTable(
+				kRawSmbiosProvider, 0, buffer.data(), bufferSize);
+			if (bytesReturned < sizeof(RawSMBIOSDataHeader)) {
+				return "";
+			}
+
+			const RawSMBIOSDataHeader* rawData =
+				reinterpret_cast<const RawSMBIOSDataHeader*>(buffer.data());
+			const DWORD availableTableLength =
+				bytesReturned - static_cast<UINT>(sizeof(RawSMBIOSDataHeader));
+			const DWORD tableLength =
+				rawData->Length < availableTableLength ? rawData->Length : availableTableLength;
+			const BYTE* table = buffer.data() + sizeof(RawSMBIOSDataHeader);
+
+			std::string baseBoardSerial;
+			std::string systemUuid;
+			size_t offset = 0;
+			while (offset + 4 <= tableLength) {
+				const BYTE* structure = table + offset;
+				const BYTE structureType = structure[0];
+				const BYTE structureLength = structure[1];
+				if (structureLength < 4 || offset + structureLength > tableLength) {
+					break;
+				}
+
+				size_t structureEnd = offset + structureLength;
+				while (structureEnd + 1 < tableLength
+					&& !(table[structureEnd] == 0 && table[structureEnd + 1] == 0)) {
+					++structureEnd;
+				}
+				if (structureEnd + 1 < tableLength) {
+					structureEnd += 2;
+				}
+
+				const BYTE* stringTable = table + offset + structureLength;
+				const size_t stringTableSize =
+					structureEnd - (offset + structureLength);
+
+				// SMBIOS Type 2：Baseboard Information，Serial Number 位于偏移 0x07。
+				if (structureType == 2
+					&& structureLength > 0x07
+					&& baseBoardSerial.empty()) {
+					const std::string serial = GetSmbiosString(
+						stringTable, stringTableSize, structure[0x07]);
+					if (IsUsableSmbiosValue(serial)) {
+						baseBoardSerial = TrimSmbiosString(serial);
+					}
+				}
+
+				// SMBIOS Type 1：System Information，UUID 位于偏移 0x08，长度 16 字节。
+				if (structureType == 1
+					&& structureLength >= 0x18
+					&& systemUuid.empty()
+					&& IsUsableSmbiosUuid(structure + 0x08)) {
+					systemUuid = ReadSmbiosUuid(structure + 0x08);
+				}
+
+				if (structureType == 127) {
+					break;
+				}
+				if (structureEnd <= offset) {
+					break;
+				}
+				offset = structureEnd;
+			}
+
+			// 优先使用主板序列号，保持原 WMI 实现的标识来源不变。
+			if (!baseBoardSerial.empty()) {
+				return baseBoardSerial;
+			}
+			return systemUuid;
+		}
+	}
+
 	// 获取系统信息
 	void SafeGetNativeSystemInfo(__out LPSYSTEM_INFO lpSystemInfo)
 	{
@@ -69,84 +257,11 @@ namespace WinTool {
 	}
 
 	Text::String GetComputerID() {
-		HRESULT hres;
-
-		// 初始化 COM
-		hres = ::CoInitializeEx(0, COINIT_MULTITHREADED);
-
-		// 设置默认安全性
-		hres = ::CoInitializeSecurity(
-			NULL, -1, NULL, NULL,
-			RPC_C_AUTHN_LEVEL_DEFAULT,
-			RPC_C_IMP_LEVEL_IMPERSONATE,
-			NULL, EOAC_NONE, NULL);
-
-		IWbemLocator* pLoc = nullptr;
-		hres = ::CoCreateInstance(
-			CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
-			IID_IWbemLocator, (LPVOID*)&pLoc);
-		if (FAILED(hres)) {
-			CoUninitialize();
+		const std::string identity = ReadSmbiosComputerIdentity();
+		if (identity.empty()) {
 			return "";
 		}
-
-		IWbemServices* pSvc = nullptr;
-		hres = pLoc->ConnectServer(
-			_bstr_t(L"ROOT\\CIMV2"),
-			NULL, NULL, 0, NULL, 0, 0, &pSvc);
-		if (FAILED(hres)) {
-			pLoc->Release();
-			CoUninitialize();
-			return "";
-		}
-
-		hres = CoSetProxyBlanket(
-			pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE,
-			NULL, RPC_C_AUTHN_LEVEL_CALL,
-			RPC_C_IMP_LEVEL_IMPERSONATE,
-			NULL, EOAC_NONE);
-		if (FAILED(hres)) {
-			pSvc->Release();
-			pLoc->Release();
-			CoUninitialize();
-			return "";
-		}
-
-		IEnumWbemClassObject* pEnumerator = nullptr;
-		hres = pSvc->ExecQuery(
-			bstr_t("WQL"),
-			bstr_t("SELECT SerialNumber FROM Win32_BaseBoard"),
-			WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
-			NULL, &pEnumerator);
-		if (FAILED(hres)) {
-			pSvc->Release();
-			pLoc->Release();
-			CoUninitialize();
-			return "";
-		}
-
-		IWbemClassObject* pClassObject = nullptr;
-		ULONG uReturn = 0;
-		std::string serialNumber = "";
-
-		if (pEnumerator) {
-			HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pClassObject, &uReturn);
-			if (uReturn > 0 && SUCCEEDED(hr)) {
-				VARIANT vtProp;
-				hr = pClassObject->Get(L"SerialNumber", 0, &vtProp, 0, 0);
-				if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
-					serialNumber = _bstr_t(vtProp.bstrVal);
-					VariantClear(&vtProp);
-				}
-				pClassObject->Release();
-			}
-			pEnumerator->Release();
-		}
-
-		pSvc->Release();
-		pLoc->Release();
-		CoUninitialize();
-		return Util::MD5FromString(serialNumber);
+		return Util::MD5FromString(identity);
 	}
 
 	Text::String GetUserName()

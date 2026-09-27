@@ -296,6 +296,7 @@ std::string GetMotherboardID() {
 #include "IniConfig.h"
 int main() {
 
+	auto cpuid = WinTool::GetComputerID();
 	IniConfig config("c:/users/yang/desktop/config.ini");
 	config.WriteBool("test", "123", true);
 	config.WriteBool("test", "456", true);
