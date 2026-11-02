@@ -116,6 +116,10 @@ namespace WinTool {
 	extern HWND FindMainWindow(DWORD processId);
 	//获取进程信息
 	extern std::vector<PROCESSENTRY32W> FindProcessInfo(const Text::String& _proccname);
+	//检查 TCP 监听端口（IPv4/IPv6）；占用时返回 true，并输出进程文件名和 PID。
+	//多个进程监听时优先返回其他进程；仅本进程监听时返回本进程。
+	//返回 false 时输出清空；GetLastError()==ERROR_SUCCESS 表示空闲，否则表示查询失败。
+	extern bool IsPortInUse(int port, Text::String& processName, DWORD& processId);
 	//根据进程名称打开进程
 	extern HANDLE OpenProcess(const Text::String& _proccname);
 	//获取进程ID集合

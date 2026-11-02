@@ -1,4 +1,9 @@
-﻿#include "WinTool.h"
+﻿#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <tcpmib.h>
+
+#include "WinTool.h"
 
 #include <ShlObj.h>
 #include <ShObjIdl.h>
@@ -33,8 +38,46 @@ namespace WinTool {
 #define FormatError(x)	(x)
 #endif // FormatError
 	namespace {
+		template<typename Table>
+		DWORD AppendPortListenerProcessIds(ULONG addressFamily, int port,
+			std::vector<DWORD>& processIds)
+		{
+			DWORD bufferSize = 0;
+			DWORD result = ::GetExtendedTcpTable(nullptr, &bufferSize, FALSE, addressFamily,
+				TCP_TABLE_OWNER_PID_LISTENER, 0);
+			if (result != ERROR_INSUFFICIENT_BUFFER && result != NO_ERROR) {
+				return result;
+			}
+			if (bufferSize == 0) {
+				return NO_ERROR;
+			}
+
+			std::vector<BYTE> buffer;
+			// 两次查询间监听表可能增长，按系统返回的新大小重试。
+			for (int attempt = 0; attempt < 3; ++attempt) {
+				buffer.resize(bufferSize);
+				result = ::GetExtendedTcpTable(buffer.data(), &bufferSize, FALSE, addressFamily,
+					TCP_TABLE_OWNER_PID_LISTENER, 0);
+				if (result != ERROR_INSUFFICIENT_BUFFER) {
+					break;
+				}
+			}
+			if (result != NO_ERROR) {
+				return result;
+			}
+
+			const auto* table = reinterpret_cast<const Table*>(buffer.data());
+			for (DWORD i = 0; i < table->dwNumEntries; ++i) {
+				const auto& row = table->table[i];
+				if (ntohs(static_cast<u_short>(row.dwLocalPort)) == port) {
+					processIds.push_back(row.dwOwningPid);
+				}
+			}
+			return NO_ERROR;
+		}
+
 		// GetSystemFirmwareTable('RSMB') 返回的原始 SMBIOS 数据头。
-		#pragma pack(push, 1)
+#pragma pack(push, 1)
 		struct RawSMBIOSDataHeader {
 			BYTE Used20CallingMethod;
 			BYTE MajorVersion;
@@ -42,7 +85,7 @@ namespace WinTool {
 			BYTE DmiRevision;
 			DWORD Length;
 		};
-		#pragma pack(pop)
+#pragma pack(pop)
 
 		std::string GetSmbiosString(const BYTE* stringTable, size_t stringTableSize, BYTE stringIndex)
 		{
@@ -328,6 +371,45 @@ namespace WinTool {
 		CloseHandle(hSnapshot);
 		return infos;
 	}
+
+	bool IsPortInUse(int port, Text::String& processName, DWORD& processId)
+	{
+		processName.clear();
+		processId = 0;
+		if (port <= 0 || port > 65535) {
+			::SetLastError(ERROR_INVALID_PARAMETER);
+			return false;
+		}
+
+		std::vector<DWORD> processIds;
+		DWORD result = AppendPortListenerProcessIds<MIB_TCPTABLE_OWNER_PID>(AF_INET, port, processIds);
+		if (result == NO_ERROR) {
+			result = AppendPortListenerProcessIds<MIB_TCP6TABLE_OWNER_PID>(AF_INET6, port, processIds);
+		}
+		if (result != NO_ERROR || processIds.empty()) {
+			::SetLastError(result);
+			return false;
+		}
+
+		const DWORD currentProcessId = ::GetCurrentProcessId();
+		processId = processIds.front();
+		for (DWORD candidate : processIds) {
+			if (candidate != currentProcessId &&
+				(processId == currentProcessId || candidate < processId)) {
+				processId = candidate;
+			}
+		}
+		processName = L"未知进程";
+		for (const PROCESSENTRY32W& process : FindProcessInfo(L"")) {
+			if (process.th32ProcessID == processId) {
+				processName = process.szExeFile;
+				break;
+			}
+		}
+		::SetLastError(ERROR_SUCCESS);
+		return true;
+	}
+
 	std::vector<DWORD> FindProcessId(const Text::String& _proccname)
 	{
 		std::vector<DWORD> processIds;
