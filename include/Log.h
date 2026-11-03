@@ -3,13 +3,14 @@
 #include <mutex>
 #include "FileSystem.h"
 #include "DateTime.h"
+#include "fmt.hpp"
 namespace Log {
 	//是否将输出写入日志文件
 	extern bool WriteFile;
 	extern void WriteLog(const Text::String& log);
 	extern std::mutex global_log_mutex;
 	/// <summary>
-	/// 打印utf8的字符
+	/// 使用fmt库格式化且打印utf8的字符
 	/// </summary>
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
@@ -20,14 +21,7 @@ namespace Log {
 		Text::String info;
 		size_t count = sizeof...(args);
 		if (count > 0) {
-			// 计算格式化后的字符串所需的内存大小
-			int bufSize = ::snprintf(nullptr, 0, formatStr.c_str(), args...) + 2;  // +1是为了换行符和结束符 \n '\0'
-			char* buf = new char[bufSize];
-			auto count = ::sprintf_s(buf, bufSize, formatStr.c_str(), std::forward<const T&>(args)...);
-			buf[count] = '\n';
-			buf[count + 1] = 0;
-			info = buf;
-			delete[] buf;
+			info = fmt::format(formatStr, std::forward<const T&>(args)...) + "\n";
 		}
 		else {
 			info = formatStr + "\n";
@@ -42,7 +36,7 @@ namespace Log {
 	}
 
 	/// <summary>
-	/// 打印utf8的字符(仅Debug模式下生效)
+	/// 使用fmt库格式化且打印utf8的字符(仅Debug模式下生效)
 	/// </summary>
 	/// <typeparam name="...T"></typeparam>
 	/// <param name="formatStr"></param>
@@ -54,14 +48,7 @@ namespace Log {
 		Text::String info;
 		size_t count = sizeof...(args);
 		if (count > 0) {
-			// 计算格式化后的字符串所需的内存大小
-			int bufSize = ::snprintf(nullptr, 0, formatStr.c_str(), args...) + 2;  // +1是为了换行符和结束符 \n '\0'
-			char* buf = new char[bufSize];
-			auto count = ::sprintf_s(buf, bufSize, formatStr.c_str(), std::forward<const T&>(args)...);
-			buf[count] = '\n';
-			buf[count + 1] = 0;
-			info = buf;
-			delete[] buf;
+			info = fmt::format(formatStr, std::forward<const T&>(args)...) + "\n";
 		}
 		else {
 			info = formatStr + "\n";
